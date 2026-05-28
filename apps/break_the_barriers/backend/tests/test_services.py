@@ -256,3 +256,56 @@ def test_volume_detector_cost_calculation():
     assert profile.estimated_tokens == expected_tokens
     assert profile.estimated_cost_usd == expected_cost
 
+
+# -------------------------------------------------------------
+# 6. JobManager Tests
+# -------------------------------------------------------------
+
+def test_job_manager_semaphore_limits():
+    from backend.app.services.job_manager import SEMAPHORE_LIMITS
+    assert SEMAPHORE_LIMITS["S"] == 3
+    assert SEMAPHORE_LIMITS["M"] == 8
+    assert SEMAPHORE_LIMITS["L"] == 10
+    assert SEMAPHORE_LIMITS["XL"] == 5
+
+def test_run_translation_job_updates_status(db_session):
+    """_run_translation_job should mark the job done or failed (never leave it pending)."""
+    from backend.app.models_db import DBJob
+    from backend.app.services.job_manager import _run_translation_job
+    from backend.app.database import get_db
+    from backend.app.main import app
+    from fastapi.testclient import TestClient
+
+    # Create a job record first
+    job = DBJob(
+        doc_id="clean_code",
+        page_num=1,
+        stage="translate",
+        volume_tier="S",
+        quality_tier="high",
+    )
+    db_session.add(job)
+    db_session.commit()
+    db_session.refresh(job)
+    job_id = job.id
+
+    # Extract pages so page 1 exists
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.post("/api/docs/clean_code/extract")
+    app.dependency_overrides.clear()
+
+    # Run the translation job synchronously
+    _run_translation_job(job_id, "clean_code", 1, "vi", "high")
+
+    # Job must not be left pending or running
+    db_session.expire_all()
+    updated = db_session.query(DBJob).filter(DBJob.id == job_id).first()
+    assert updated.status in ("done", "failed"), f"Unexpected status: {updated.status}"
+
