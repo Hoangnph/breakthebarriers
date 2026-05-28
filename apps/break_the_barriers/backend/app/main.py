@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.database import engine, Base, get_db, SessionLocal
 from backend.app.models_db import DBDocument
-from backend.app.routers import documents, extraction, translation, compilation, volume
+from backend.app.routers import documents, extraction, translation, compilation, volume, jobs
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,6 +27,7 @@ app.include_router(extraction.router)
 app.include_router(translation.router)
 app.include_router(compilation.router)
 app.include_router(volume.router)
+app.include_router(jobs.router)
 
 
 @app.on_event("startup")

@@ -46,3 +46,8 @@ class VolumeProfileResponse(BaseModel):
     recommended_quality: str
     processing_path: str
     estimated_duration_min: int
+
+
+class TranslateAllRequest(BaseModel):
+    target_lang: str = "vi"
+    quality_tier: Optional[str] = None
