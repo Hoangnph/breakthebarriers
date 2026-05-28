@@ -179,7 +179,7 @@ def test_delete_document(client):
 def test_get_document_pages(client):
     # Extract first
     client.post("/api/docs/clean_code/extract")
-    
+
     # Success case
     response = client.get("/api/docs/clean_code/pages")
     assert response.status_code == 200
@@ -190,7 +190,47 @@ def test_get_document_pages(client):
     assert "status" in pages[0]
     assert "has_original" in pages[0]
     assert "has_translated" in pages[0]
-    
+
     # 404 Case
     response_404 = client.get("/api/docs/invalid_id/pages")
     assert response_404.status_code == 404
+
+def test_get_volume_profile(client):
+    response = client.get("/api/docs/clean_code/volume")
+    assert response.status_code == 200
+    data = response.json()
+    assert "tier" in data
+    assert "estimated_cost_usd" in data
+    assert "processing_path" in data
+    assert data["page_count"] == 10
+    assert data["tier"] == "S"  # clean_code has 10 pages → S tier
+    assert data["processing_path"] == "asyncio"
+    assert data["recommended_quality"] == "high"
+
+def test_get_volume_profile_not_found(client):
+    response = client.get("/api/docs/nonexistent_doc/volume")
+    assert response.status_code == 404
+
+def test_get_volume_profile_quality_override(client):
+    response_fast = client.get("/api/docs/clean_code/volume?quality_override=fast")
+    response_high = client.get("/api/docs/clean_code/volume?quality_override=high")
+    assert response_fast.status_code == 200
+    assert response_high.status_code == 200
+    data_fast = response_fast.json()
+    data_high = response_high.json()
+    # fast (1x multiplier) should have fewer tokens than high (3x multiplier)
+    assert data_fast["estimated_tokens"] < data_high["estimated_tokens"]
+
+def test_upload_auto_detects_volume(client):
+    files = {"file": ("small_book.pdf", b"%PDF-1.4 mock content", "application/pdf")}
+    response = client.post("/api/docs/upload", files=files)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["filename"] == "small_book.pdf"
+    assert data["status"] == "raw"
+    # Upload should not fail due to volume detection
+    # Verify the doc was created (volume detection happened silently)
+    list_response = client.get("/api/docs")
+    assert list_response.status_code == 200
+    doc_ids = [d["id"] for d in list_response.json()]
+    assert "small_book" in doc_ids
