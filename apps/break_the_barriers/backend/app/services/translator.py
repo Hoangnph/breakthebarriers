@@ -58,76 +58,63 @@ class Translator:
         return reconstructed_blocks
 
     @staticmethod
-    def translate_text_agentic(text: str, target_lang: str = "vi", glossary: Dict[str, str] = None) -> str:
+    def translate_text_agentic(text: str, target_lang: str = "vi", glossary: Dict[str, str] = None, quality: str = "high") -> str:
         """
-        Translates text to target language using the High-Fidelity 3-step agentic pipeline.
+        Translates text to target language using the High-Fidelity agentic pipeline.
         In TDD testing or offline/no API key, it falls back to an intelligent dictionary mapping to ensure test stability.
+        quality: "fast" (draft only), "balanced" (draft + verify), "high" (draft + glossary refine + verify)
         """
         api_key = os.getenv("GEMINI_API_KEY")
         is_pytest = "pytest" in sys.modules
-        
-        # Safe TDD/Offline check: if under pytest or no API key, use mock translation
+
         if is_pytest or not api_key:
             return Translator._translate_mock(text, target_lang, glossary)
-            
+
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-flash-latest")
-            
-            # Map standard language codes to friendly English names for prompt guidance
+            from google import genai as google_genai
+
+            client = google_genai.Client(api_key=api_key)
+            MODEL = "gemini-2.0-flash"
+
             lang_names = {
-                "vi": "Vietnamese",
-                "en": "English",
-                "zh": "Chinese",
-                "ja": "Japanese",
-                "ko": "Korean",
-                "fr": "French",
-                "de": "German"
+                "vi": "Vietnamese", "en": "English", "zh": "Chinese",
+                "ja": "Japanese", "ko": "Korean", "fr": "French", "de": "German"
             }
             lang_name = lang_names.get(target_lang.lower(), target_lang)
-            
-            # --- PHASE 1: Draft Translation & Spelling Restoration ---
+
+            # PHASE 1: Draft Translation
             prompt_draft = (
                 f"You are a professional book translator and editor.\n"
-                f"Your task is to translate the source text to high-fidelity {lang_name}, OR if the source text is already {lang_name} but has mangled/missing characters and letters due to PDF extraction errors (e.g., missing ă, â, đ, ê, ô, ơ, ư, or tone marks in Vietnamese, like 'Khng' instead of 'Không'), restore and correct it to standard, elegant {lang_name}.\n\n"
+                f"Translate the source text to high-fidelity {lang_name}, OR restore mangled PDF characters.\n"
                 f"Rules:\n"
-                f"1. Strictly preserve placeholders like '[s:span_id]' (e.g. '[s:s1]', '[s:s2]') in their exact original positions. Do not translate, omit, or modify them.\n"
-                f"2. Translate the source text to beautiful, fluent {lang_name}.\n"
-                f"3. If the input is already in {lang_name} but has missing accents/letters/characters, restore and correct it to elegant, authentic {lang_name}.\n\n"
-                f"Source Text:\n{text}\n\n"
-                f"{lang_name} Draft:"
+                f"1. Strictly preserve placeholders like '[s:span_id]' in exact positions.\n"
+                f"2. Translate to beautiful, fluent {lang_name}.\n"
+                f"3. If input is already {lang_name} with missing accents, restore them.\n\n"
+                f"Source Text:\n{text}\n\n{lang_name} Draft:"
             )
-            response_draft = model.generate_content(prompt_draft)
-            draft_text = response_draft.text.strip()
-            
-            # --- PHASE 2: Terminology Refinement with Glossary ---
+            draft_text = client.models.generate_content(model=MODEL, contents=prompt_draft).text.strip()
+
+            if quality == "fast":
+                return draft_text
+
+            # PHASE 2: Glossary Refinement (only for quality="high")
             refined_text = draft_text
-            if glossary:
-                glossary_str = "\n".join([f"- '{eng}': '{vie}'" for eng, vie in glossary.items()])
+            if quality == "high" and glossary:
+                glossary_str = "\n".join([f"- '{e}': '{v}'" for e, v in glossary.items()])
                 prompt_refine = (
-                    f"You are an editor. Refine the following {lang_name} translation/restoration using the provided glossary dictionary rules.\n"
-                    f"Make sure placeholders like '[s:span_id]' are strictly preserved and not modified.\n\n"
-                    f"Glossary Rules:\n{glossary_str}\n\n"
-                    f"Draft:\n{draft_text}\n\n"
-                    f"Refined {lang_name}:"
+                    f"Refine the {lang_name} translation using the glossary. Preserve '[s:span_id]' placeholders.\n\n"
+                    f"Glossary:\n{glossary_str}\n\nDraft:\n{draft_text}\n\nRefined {lang_name}:"
                 )
-                response_refine = model.generate_content(prompt_refine)
-                refined_text = response_refine.text.strip()
-                
-            # --- PHASE 3: Verification & Output Alignment ---
+                refined_text = client.models.generate_content(model=MODEL, contents=prompt_refine).text.strip()
+
+            # PHASE 3: Verification (for quality="balanced" and "high")
             prompt_verify = (
-                f"Check the final {lang_name} translation/restoration for natural flow and absolute structural integrity.\n"
-                f"1. Make sure all original placeholders like '[s:span_id]' are present in their original form.\n"
-                f"2. Output ONLY the final translated/restored {lang_name} string, without any introductory/concluding text or markdown wrapping.\n\n"
-                f"Source Text:\n{text}\n\n"
-                f"Translated/Restored {lang_name}:\n{refined_text}\n\n"
-                f"Final {lang_name} Output:"
+                f"Check the {lang_name} translation for natural flow. Ensure all '[s:span_id]' placeholders are intact.\n"
+                f"Output ONLY the final {lang_name} string.\n\n"
+                f"Source:\n{text}\n\nTranslated:\n{refined_text}\n\nFinal {lang_name} Output:"
             )
-            response_verify = model.generate_content(prompt_verify)
-            final_translation = response_verify.text.strip()
-            
-            return final_translation
+            return client.models.generate_content(model=MODEL, contents=prompt_verify).text.strip()
+
         except Exception as e:
             logger.error(f"Gemini API Translation failed: {e}. Falling back to mock translator.")
             return Translator._translate_mock(text, target_lang, glossary)
