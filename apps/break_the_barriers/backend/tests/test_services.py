@@ -203,3 +203,56 @@ def test_dbjob_can_be_created(db_session):
     assert job.retries == 0
     assert job.page_num is None
 
+
+# -------------------------------------------------------------
+# 5. VolumeDetector Tests
+# -------------------------------------------------------------
+
+def test_volume_detector_tier_s():
+    from backend.app.services.volume_detector import VolumeDetector
+    profile = VolumeDetector.detect(page_count=30)
+    assert profile.tier == "S"
+    assert profile.processing_path == "asyncio"
+    assert profile.recommended_quality == "high"
+    assert profile.estimated_spans == 30 * 40
+    assert profile.estimated_cost_usd > 0
+
+def test_volume_detector_tier_m():
+    from backend.app.services.volume_detector import VolumeDetector
+    profile = VolumeDetector.detect(page_count=100)
+    assert profile.tier == "M"
+    assert profile.processing_path == "asyncio"
+    assert profile.recommended_quality == "balanced"
+
+def test_volume_detector_tier_l():
+    from backend.app.services.volume_detector import VolumeDetector
+    profile = VolumeDetector.detect(page_count=300)
+    assert profile.tier == "L"
+    assert profile.processing_path == "celery"
+    assert profile.recommended_quality == "fast"
+
+def test_volume_detector_tier_xl():
+    from backend.app.services.volume_detector import VolumeDetector
+    profile = VolumeDetector.detect(page_count=600)
+    assert profile.tier == "XL"
+    assert profile.processing_path == "celery"
+
+def test_volume_detector_quality_override():
+    from backend.app.services.volume_detector import VolumeDetector
+    profile = VolumeDetector.detect(page_count=300, quality_override="high")
+    assert profile.tier == "L"
+    assert profile.recommended_quality == "fast"
+    # cost with override=high (3x multiplier) > cost with fast (1x)
+    profile_fast = VolumeDetector.detect(page_count=300)
+    assert profile.estimated_tokens > profile_fast.estimated_tokens
+
+def test_volume_detector_cost_calculation():
+    from backend.app.services.volume_detector import VolumeDetector, AVG_SPANS_PER_PAGE, AVG_TOKENS_PER_SPAN, GEMINI_PRICE_PER_1M_TOKENS
+    profile = VolumeDetector.detect(page_count=10, quality_override="fast")
+    expected_spans = 10 * AVG_SPANS_PER_PAGE
+    expected_tokens = expected_spans * AVG_TOKENS_PER_SPAN * 1  # fast multiplier = 1
+    expected_cost = round((expected_tokens / 1_000_000) * GEMINI_PRICE_PER_1M_TOKENS, 4)
+    assert profile.estimated_spans == expected_spans
+    assert profile.estimated_tokens == expected_tokens
+    assert profile.estimated_cost_usd == expected_cost
+
