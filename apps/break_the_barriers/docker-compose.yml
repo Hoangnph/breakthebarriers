@@ -51,8 +51,6 @@ services:
     command: >
       celery -A backend.app.workers.celery_app worker
       --loglevel=info -Q celery-high,celery-low
-    profiles:
-      - celery
 
 volumes:
   postgres_data:

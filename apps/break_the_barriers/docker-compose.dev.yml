@@ -34,5 +34,12 @@ services:
     depends_on:
       - app
 
+  worker:
+    volumes:
+      - ./backend:/app/backend
+    command: >
+      celery -A backend.app.workers.celery_app worker
+      --loglevel=info -Q celery-high,celery-low --autoscale=4,1
+
 volumes:
   app_data:
