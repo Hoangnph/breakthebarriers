@@ -144,23 +144,45 @@ def test_deinterpolate_translation():
     assert result["s1"] == "Nhập môn"
     assert result["s2"] == "Lập trình"
     assert result["s3"] == "Dòng chữ thứ hai"
-    
+
     # 2. Reordered placeholders (common in grammar shifts)
     block_text_reordered = "C_trans [s:s3] A_trans [s:s2] B_trans"
     result_reordered = Translator.deinterpolate_translation(block_text_reordered, span_ids)
     assert result_reordered["s1"] == "C_trans"
     assert result_reordered["s3"] == "A_trans"
     assert result_reordered["s2"] == "B_trans"
-    
+
     # 3. Spacing/Casing variation in tags
     block_text_spacing = "Nhập môn [s: s2] Lập trình [S:s3] Dòng chữ thứ hai"
     result_spacing = Translator.deinterpolate_translation(block_text_spacing, span_ids)
     assert result_spacing["s1"] == "Nhập môn"
     assert result_spacing["s2"] == "Lập trình"
     assert result_spacing["s3"] == "Dòng chữ thứ hai"
-    
+
     # 4. Fallback when no valid tags are found
     block_text_fallback = "Bản dịch lỗi không chứa thẻ"
     result_fallback = Translator.deinterpolate_translation(block_text_fallback, span_ids)
     assert result_fallback["s1"] == "Bản dịch lỗi không chứa thẻ"
+
+
+# -------------------------------------------------------------
+# 4. Core Tests
+# -------------------------------------------------------------
+
+def test_is_mock_run_returns_true_in_pytest():
+    from backend.app.core import is_mock_run
+    assert is_mock_run("any_doc") is True
+
+def test_estimate_pdf_pages_fallback_on_invalid_file(tmp_path):
+    from backend.app.core import estimate_pdf_pages
+    fake_pdf = tmp_path / "fake.pdf"
+    fake_pdf.write_bytes(b"not a real pdf")
+    assert estimate_pdf_pages(str(fake_pdf)) == 10
+
+def test_estimate_pdf_pages_reads_count(tmp_path):
+    from backend.app.core import estimate_pdf_pages
+    pdf_content = b"%PDF-1.4\n/Count 42\n"
+    fake_pdf = tmp_path / "test.pdf"
+    fake_pdf.write_bytes(pdf_content)
+    assert estimate_pdf_pages(str(fake_pdf)) == 42
 
