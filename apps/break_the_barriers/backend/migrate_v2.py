@@ -16,7 +16,7 @@ cur.execute("""
     ALTER TABLE documents
     ADD COLUMN IF NOT EXISTS volume_tier VARCHAR DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS quality_tier VARCHAR DEFAULT 'high',
-    ADD COLUMN IF NOT EXISTS estimated_cost_usd FLOAT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS estimated_cost_usd DOUBLE PRECISION DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS estimated_duration_min INT DEFAULT NULL;
 """)
 
