@@ -27,6 +27,20 @@ def _get_semaphore(tier: str) -> asyncio.Semaphore:
     return _semaphores[tier]
 
 
+def dispatch_celery_job(
+    job_id: str, doc_id: str, page_num: int, target_lang: str, quality: str, tier: str
+) -> str:
+    """Send job to Celery queue. L → celery-high, XL → celery-low."""
+    from backend.app.workers.tasks import translate_page_task
+
+    queue = "celery-high" if tier == "L" else "celery-low"
+    result = translate_page_task.apply_async(
+        args=[job_id, doc_id, page_num, target_lang, quality],
+        queue=queue,
+    )
+    return result.id
+
+
 def _run_translation_job(
     job_id: str, doc_id: str, page_num: int, target_lang: str, quality: str
 ) -> None:
@@ -91,13 +105,35 @@ async def dispatch_all_translation_jobs(
     quality: str,
     tier: str,
 ) -> None:
-    """Launch all translation jobs concurrently, bounded by tier semaphore."""
-    tasks = [
-        dispatch_translation_job(job_id, doc_id, page_num, target_lang, quality, tier)
-        for job_id, page_num in jobs
-    ]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    for i, result in enumerate(results):
-        if isinstance(result, Exception):
-            job_id, page_num = jobs[i]
-            logger.error(f"Job {job_id} page {page_num} unhandled exception: {result}")
+    """Route: S/M → asyncio semaphore pool, L/XL → Celery priority queues."""
+    if tier in ("L", "XL"):
+        # Celery path — dispatch synchronously, store task IDs
+        celery_ids: dict = {}
+        for job_id, page_num in jobs:
+            task_id = dispatch_celery_job(job_id, doc_id, page_num, target_lang, quality, tier)
+            celery_ids[job_id] = task_id
+            logger.info(f"Queued Celery task {task_id} for job {job_id} page {page_num} tier {tier}")
+
+        # Persist celery_task_id + mark as running in DB
+        db = get_background_db()
+        try:
+            from backend.app.models_db import DBJob
+            for job_id, task_id in celery_ids.items():
+                job = db.query(DBJob).filter(DBJob.id == job_id).first()
+                if job:
+                    job.celery_task_id = task_id
+                    job.status = "running"
+            db.commit()
+        finally:
+            db.close()
+    else:
+        # asyncio path — S/M with semaphore concurrency control
+        tasks = [
+            dispatch_translation_job(job_id, doc_id, page_num, target_lang, quality, tier)
+            for job_id, page_num in jobs
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                job_id, page_num = jobs[i]
+                logger.error(f"Job {job_id} page {page_num} unhandled exception: {result}")

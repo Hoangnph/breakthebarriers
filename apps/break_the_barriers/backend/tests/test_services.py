@@ -309,3 +309,88 @@ def test_run_translation_job_updates_status(db_session):
     updated = db_session.query(DBJob).filter(DBJob.id == job_id).first()
     assert updated.status in ("done", "failed"), f"Unexpected status: {updated.status}"
 
+
+def test_dispatch_celery_job_sends_to_queue(monkeypatch):
+    """dispatch_celery_job should call apply_async on translate_page_task."""
+    from backend.app.services.job_manager import dispatch_celery_job
+
+    task_ids_sent = []
+
+    class FakeAsyncResult:
+        def __init__(self): self.id = "fake-celery-task-id"
+
+    def fake_apply_async(args, queue):
+        task_ids_sent.append({"args": args, "queue": queue})
+        return FakeAsyncResult()
+
+    monkeypatch.setattr(
+        "backend.app.workers.tasks.translate_page_task.apply_async",
+        fake_apply_async,
+    )
+
+    result = dispatch_celery_job("job-1", "big_doc", 5, "vi", "fast", "L")
+    assert result == "fake-celery-task-id"
+    assert len(task_ids_sent) == 1
+    assert task_ids_sent[0]["queue"] == "celery-high"  # L → celery-high
+    assert task_ids_sent[0]["args"] == ["job-1", "big_doc", 5, "vi", "fast"]
+
+def test_dispatch_celery_job_xl_uses_low_queue(monkeypatch):
+    """XL tier should use celery-low queue."""
+    from backend.app.services.job_manager import dispatch_celery_job
+
+    queues_used = []
+
+    class FakeResult:
+        id = "fake-id"
+
+    def fake_apply_async(args, queue):
+        queues_used.append(queue)
+        return FakeResult()
+
+    monkeypatch.setattr(
+        "backend.app.workers.tasks.translate_page_task.apply_async",
+        fake_apply_async,
+    )
+
+    dispatch_celery_job("job-1", "big_doc", 1, "vi", "fast", "XL")
+    assert queues_used == ["celery-low"]
+
+def test_dispatch_all_routes_sm_to_asyncio(monkeypatch):
+    """S/M tier must NOT call Celery dispatch."""
+    import asyncio
+    from backend.app.services.job_manager import dispatch_all_translation_jobs
+
+    celery_called = []
+
+    def fake_celery(job_id, doc_id, page_num, target_lang, quality, tier):
+        celery_called.append(job_id)
+        return "fake-id"
+
+    monkeypatch.setattr("backend.app.services.job_manager.dispatch_celery_job", fake_celery)
+
+    asyncio.run(dispatch_all_translation_jobs(
+        jobs=[("j1", 1), ("j2", 2)],
+        doc_id="doc", target_lang="vi", quality="high", tier="S",
+    ))
+    assert celery_called == []
+
+def test_dispatch_all_routes_lxl_to_celery(monkeypatch):
+    """L/XL tier must call Celery for every job."""
+    import asyncio
+    from backend.app.services.job_manager import dispatch_all_translation_jobs
+
+    celery_called = []
+
+    def fake_celery(job_id, doc_id, page_num, target_lang, quality, tier):
+        celery_called.append((job_id, tier))
+        return "fake-id"
+
+    monkeypatch.setattr("backend.app.services.job_manager.dispatch_celery_job", fake_celery)
+
+    asyncio.run(dispatch_all_translation_jobs(
+        jobs=[("j1", 1), ("j2", 2)],
+        doc_id="doc", target_lang="vi", quality="fast", tier="L",
+    ))
+    assert set(jid for jid, _ in celery_called) == {"j1", "j2"}
+    assert all(tier == "L" for _, tier in celery_called)
+
