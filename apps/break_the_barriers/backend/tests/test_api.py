@@ -359,3 +359,86 @@ def test_progress_stream_returns_sse(client, db_session):
             assert "percent" in data
             assert "status" in data
             break
+
+
+def test_translate_all_sm_does_not_call_celery(client, monkeypatch, db_session):
+    """S tier (10 pages = clean_code) must use asyncio path — Celery never called."""
+    from backend.app.models_db import DBDocument
+
+    # Set volume_tier explicitly so translate-all uses S (not the "M" fallback)
+    doc = db_session.query(DBDocument).filter(DBDocument.id == "clean_code").first()
+    doc.volume_tier = "S"
+    db_session.commit()
+
+    celery_calls = []
+
+    def fake_celery(job_id, doc_id, page_num, target_lang, quality, tier):
+        celery_calls.append(job_id)
+        return "fake-task-id"
+
+    monkeypatch.setattr(
+        "backend.app.services.job_manager.dispatch_celery_job",
+        fake_celery,
+    )
+
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+
+    assert resp.status_code == 200
+    assert resp.json()["volume_tier"] == "S"
+    assert celery_calls == [], f"S tier must NOT use Celery, got: {celery_calls}"
+
+
+def test_translate_all_lxl_calls_celery(client, monkeypatch, db_session):
+    """XL tier must dispatch every page to Celery."""
+    from backend.app.models_db import DBDocument, DBPage
+    from backend.app.database import get_db
+    from backend.app.main import app
+    from fastapi.testclient import TestClient
+
+    # Create XL document
+    xl_doc = DBDocument(
+        id="xl_book",
+        filename="xl_book.pdf",
+        total_pages=10,
+        status="raw",
+        volume_tier="XL",
+        quality_tier="fast",
+    )
+    db_session.add(xl_doc)
+    db_session.commit()
+
+    celery_calls = []
+
+    def fake_celery(job_id, doc_id, page_num, target_lang, quality, tier):
+        celery_calls.append({"job_id": job_id, "tier": tier, "queue": "celery-low" if tier == "XL" else "celery-high"})
+        return "fake-task-id"
+
+    monkeypatch.setattr(
+        "backend.app.services.job_manager.dispatch_celery_job",
+        fake_celery,
+    )
+
+    def override():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override
+    c = TestClient(app)
+
+    # Extract pages (mock creates pages for total_pages=10)
+    c.post("/api/docs/xl_book/extract")
+
+    resp = c.post("/api/docs/xl_book/translate-all", json={"target_lang": "vi", "quality_tier": "fast"})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["volume_tier"] == "XL"
+    assert data["total_pages"] > 0
+    assert len(celery_calls) == data["total_pages"], (
+        f"Expected {data['total_pages']} Celery calls, got {len(celery_calls)}"
+    )
+    assert all(c["tier"] == "XL" for c in celery_calls)
