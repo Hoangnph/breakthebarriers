@@ -1,0 +1,22 @@
+{
+  "0": "high-quality, human-labeled data or to refine generative AI outputs to meet specific",
+  "1": "quality standards.",
+  "2": "Visual summary:",
+  "3": "Fig.1: Human in the loop design pattern",
+  "4": "Key Takeaways",
+  "5": "Key takeaways include:",
+  "6": "",
+  "7": "Human-in-the-Loop (HITL) integrates human intelligence and judgment into AI",
+  "8": "workflows.",
+  "9": "",
+  "10": "It's crucial for safety, ethics, and effectiveness in complex or high-stakes",
+  "11": "scenarios.",
+  "12": "",
+  "13": "Key aspects include human oversight, intervention, feedback for learning, and",
+  "14": "decision augmentation.",
+  "15": "",
+  "16": "Escalation policies are essential for agents to know when to hand off to a human.",
+  "17": "",
+  "18": "HITL allows for responsible AI deployment and continuous improvement.",
+  "19": "8"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Hình 3: Hỗ Trợ Đánh Giá cho Google ADK",
+  "1": "Giao diện UI dựa trên web cho phép tạo phiên tương tác và lưu vào các eval set hiện có hoặc mới,",
+  "2": "hiển thị trạng thái đánh giá. Tích hợp Pytest cho phép chạy các file test như",
+  "3": "một phần của integration test bằng cách gọi AgentEvaluator.evaluate, chỉ định",
+  "4": "module agent và đường dẫn file test.",
+  "5": "Giao diện dòng lệnh tạo điều kiện cho đánh giá tự động bằng cách cung cấp đường dẫn",
+  "6": "module agent và file eval set, với các tùy chọn để chỉ định file cấu hình hoặc in",
+  "7": "kết quả chi tiết. Các eval cụ thể trong một eval set lớn hơn có thể được chọn để thực thi",
+  "8": "bằng cách liệt kê chúng sau tên file eval set, phân tách bằng dấu phẩy.",
+  "9": "Nhìn Lướt Qua",
+  "10": "Là gì: Các hệ thống agentic và LLM hoạt động trong các môi trường phức tạp, động",
+  "11": "nơi hiệu suất của chúng có thể giảm sút theo thời gian. Tính xác suất và không xác định",
+  "12": "của chúng có nghĩa là kiểm tra phần mềm truyền thống không đủ để đảm bảo độ tin cậy.",
+  "13": "Đánh giá các hệ thống đa tác tử động là một thách thức đáng kể vì bản chất luôn thay đổi",
+  "14": "của chúng và môi trường của chúng đòi hỏi phát triển các phương pháp kiểm tra thích ứng",
+  "15": "và các chỉ số tinh vi có thể đo lường thành công cộng tác vượt ra ngoài hiệu suất cá nhân.",
+  "16": "Các vấn đề như trôi dạt dữ liệu, các tương tác không mong đợi, gọi công cụ, và lệch khỏi mục tiêu",
+  "17": "dự định có thể phát sinh sau khi",
+  "18": "16"
+}

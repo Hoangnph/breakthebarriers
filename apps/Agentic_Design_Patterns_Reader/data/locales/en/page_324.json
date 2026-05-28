@@ -1,0 +1,19 @@
+{
+  "0": "To ensure reliability in critical applications, the paradigm is shifting from simple,",
+  "1": "prompt-driven agents to advanced \"contractors\" bound by formal agreements. These",
+  "2": "contractor agents operate on explicit, verifiable terms, allowing them to negotiate,",
+  "3": "decompose tasks, and self-validate their work to meet rigorous quality standards. This",
+  "4": "structured approach transforms agents from unpredictable tools into accountable",
+  "5": "systems capable of handling complex, high-stakes tasks. Ultimately, this evolution is",
+  "6": "crucial for building the trust required to deploy sophisticated agentic AI in",
+  "7": "mission-critical domains.",
+  "8": "References",
+  "9": "Relevant research includes:",
+  "10": "1. ADK Web: https://github.com/google/adk-web",
+  "11": "2. ADK Evaluate: https://google.github.io/adk-docs/evaluate/",
+  "12": "3. Survey on Evaluation of LLM-based Agents, https://arxiv.org/abs/2503.16416",
+  "13": "4. Agent-as-a-Judge: Evaluate Agents with Agents, https://arxiv.org/abs/2410.10934",
+  "14": "5. Agent Companion, gulli et al:",
+  "15": "https://www.kaggle.com/whitepaper-agent-companion",
+  "16": "19"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Visual summary",
+  "1": "Fig. 1: Guardrail design pattern",
+  "2": "Key Takeaways",
+  "3": "",
+  "4": "Guardrails are essential for building responsible, ethical, and safe Agents by",
+  "5": "preventing harmful, biased, or off-topic responses.",
+  "6": "",
+  "7": "They can be implemented at various stages, including input validation, output",
+  "8": "filtering, behavioral prompting, tool use restrictions, and external moderation.",
+  "9": "",
+  "10": "A combination of different guardrail techniques provides the most robust",
+  "11": "protection.",
+  "12": "",
+  "13": "Guardrails require ongoing monitoring, evaluation, and refinement to adapt to",
+  "14": "evolving risks and user interactions.",
+  "15": "",
+  "16": "Effective guardrails are crucial for maintaining user trust and protecting the",
+  "17": "reputation of the Agents and its developers.",
+  "18": "19"
+}

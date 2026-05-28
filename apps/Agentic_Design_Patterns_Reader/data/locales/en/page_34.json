@@ -1,0 +1,15 @@
+{
+  "0": "Fig. 2: Prompt Chaining Pattern: Agents receive a series of prompts from the user, with",
+  "1": "the output of each agent serving as the input for the next in the chain.",
+  "2": "Key Takeaways",
+  "3": "Here are some key takeaways:",
+  "4": " Prompt Chaining breaks down complex tasks into a sequence of smaller, focused steps.",
+  "5": "This is occasionally known as the Pipeline pattern.",
+  "6": " Each step in a chain involves an LLM call or processing logic, using the output of the",
+  "7": "previous step as input.",
+  "8": " This pattern improves the reliability and manageability of complex interactions with",
+  "9": "language models.",
+  "10": " Frameworks like LangChain/LangGraph, and Google ADK provide robust tools to",
+  "11": "define, manage, and execute these multi-step sequences.",
+  "12": "12"
+}

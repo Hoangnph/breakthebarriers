@@ -1,0 +1,22 @@
+{
+  "0": "current directory and all its nested sub directories, and print the",
+  "1": "total count\"",
+  "2": "# goals_input = (",
+  "3": "#",
+  "4": "\"Code simple to understand, Functionally correct, Handles",
+  "5": "comprehensive edge cases, Ignore recommendations for performance,",
+  "6": "Ignore recommendations for test suite use like unittest or pytest\"",
+  "7": "# )",
+  "8": "# run_code_agent(use_case_input, goals_input)",
+  "9": "# Ví dụ 3",
+  "10": "# use_case_input = \"Write code which takes a command line input",
+  "11": "of a word doc or docx file and opens it and counts the number of",
+  "12": "words, and characters in it and prints all\"",
+  "13": "# goals_input = \"Code simple to understand, Functionally",
+  "14": "correct, Handles edge cases\"",
+  "15": "# run_code_agent(use_case_input, goals_input)",
+  "16": "Cùng với brief này, bạn cung cấp một checklist chất lượng nghiêm ngặt, đại diện cho",
+  "17": "các objective mà code cuối cùng phải đạt - những tiêu chí như \"solution must be simple\", \"it",
+  "18": "must be functionally correct\", hoặc \"it needs to handle unexpected edge cases.\"",
+  "19": "8"
+}

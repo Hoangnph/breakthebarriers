@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Quản lý Dịch thuật Trang - Smart Documentations</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Trình quản lý tiến độ dịch thuật từng trang sách - break_the_barriers AI Engine.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="preview_style.css">
+</head>
+<body>
+
+    <!-- Background glowing decorative spheres -->
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-brain logo-icon"></i>
+            <span class="logo-text">Smart Docs Manager</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link-btn">
+                <i class="fas fa-home"></i> Bàn làm việc
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Page Header -->
+        <section class="page-title-section">
+            <span class="badge">Quản lý Tiến độ & Xem trước Trang</span>
+            <h1 id="title-doc-name">Đang tải tài liệu...</h1>
+            <p>Kiểm soát tiến trình dịch thuật từng trang sách bằng AI, xem trước bản dịch gốc và chuyển đổi thông minh sang Trình đọc Song ngữ.</p>
+        </section>
+
+        <!-- Global Action Toolbar -->
+        <section class="toolbar-section">
+            <div class="doc-info-block">
+                <div class="doc-name" id="toolbar-doc-filename">Tên tài liệu...</div>
+                <div class="doc-meta">
+                    <span id="meta-total-pages"><i class="fas fa-book-open"></i> 0 trang</span>
+                    <span id="meta-translated-pages"><i class="fas fa-check-circle"></i> Đã dịch: 0/0</span>
+                    <span id="meta-doc-status"><i class="fas fa-info-circle"></i> Trạng thái: Đang tải</span>
+                </div>
+            </div>
+            <div class="toolbar-actions">
+                <!-- Segmented View Switcher -->
+                <div class="view-switcher" id="view-switcher">
+                    <button class="switch-btn active" id="btn-view-grid" title="Dạng Lưới">
+                        <i class="fas fa-th-large"></i> Lưới
+                    </button>
+                    <button class="switch-btn" id="btn-view-details" title="Dạng Chi Tiết">
+                        <i class="fas fa-columns"></i> Chi tiết
+                    </button>
+                </div>
+                <button class="btn-action-global btn-secondary" id="btn-back-dashboard">
+                    <i class="fas fa-arrow-left"></i> Bàn làm việc
+                </button>
+                <button class="btn-action-global btn-secondary" id="btn-open-reader-global" style="display: none;">
+                    <i class="fas fa-book-reader"></i> Mở Trình đọc
+                </button>
+                <div class="lang-selector-wrapper">
+                    <label for="select-target-lang" class="lang-label"><i class="fas fa-globe"></i> Dịch sang:</label>
+                    <select id="select-target-lang" class="lang-select">
+                        <option value="vi" selected>Tiếng Việt</option>
+                        <option value="en">Tiếng Anh (English)</option>
+                        <option value="zh">Tiếng Trung (Chinese)</option>
+                        <option value="ja">Tiếng Nhật (Japanese)</option>
+                        <option value="ko">Tiếng Hàn (Korean)</option>
+                        <option value="fr">Tiếng Pháp (French)</option>
+                        <option value="de">Tiếng Đức (German)</option>
+                    </select>
+                </div>
+                <button class="btn-action-global btn-orange" id="btn-translate-remaining" disabled>
+                    <i class="fas fa-magic"></i> Dịch toàn bộ trang còn lại
+                </button>
+            </div>
+        </section>
+
+        <!-- Page Cards Grid -->
+        <section class="pages-grid" id="pages-grid">
+            <!-- Dynamic Page Cards will be generated here -->
+            <div class="empty-pages-view" id="empty-pages-view">
+                <i class="fas fa-spinner fa-spin"></i>
+                <h3>Đang nạp cấu trúc trang...</h3>
+                <p>Vui lòng đợi giây lát để hệ thống quét dữ liệu từ cơ sở dữ liệu PostgreSQL.</p>
+            </div>
+        </section>
+
+        <!-- Page Details Workspace -->
+        <section class="details-workspace" id="details-workspace" style="display: none;">
+            <!-- Left Sidebar: Page List with Mini Previews -->
+            <div class="workspace-sidebar" id="workspace-sidebar">
+                <!-- Sidebar items will be dynamically rendered here -->
+            </div>
+
+            <!-- Right Viewport: Large Preview & Interactive Actions -->
+            <div class="workspace-viewport" id="workspace-viewport">
+                <div class="viewport-header">
+                    <div class="viewport-page-info">
+                        <span class="viewport-page-label" id="viewport-active-page-label">Trang 1</span>
+                        <span class="status-badge status-raw" id="viewport-active-status-badge">
+                            <i class="fas fa-file-signature"></i> Chưa Dịch
+                        </span>
+                    </div>
+                    <!-- Segmented Viewport State Switcher -->
+                    <div class="viewport-lang-toggle" id="viewport-lang-toggle">
+                        <button class="lang-switch-btn" id="btn-state-original" data-state="original">Original</button>
+                        <button class="lang-switch-btn active" id="btn-state-html" data-state="html">HTML</button>
+                        <button class="lang-switch-btn" id="btn-state-translated" data-state="translated">Translated</button>
+                    </div>
+                </div>
+
+                <!-- Active Page Preview Container -->
+                <div class="large-preview-container" id="large-preview-container">
+                    <iframe class="large-preview-iframe" id="large-preview-iframe" sandbox="allow-same-origin allow-scripts"></iframe>
+                </div>
+
+                <!-- Actions Shelf inside Viewport -->
+                <div class="viewport-footer" id="viewport-footer">
+                    <div class="viewport-actions" id="viewport-actions">
+                        <!-- Dynamic page actions injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Script references -->
+    <script src="preview_app.js"></script>
+</body>
+</html>

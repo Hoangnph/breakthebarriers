@@ -1,0 +1,19 @@
+{
+  "0": "Zero-Shot, One-Shot, & Few-Shot",
+  "1": "Prompting: These are prompting",
+  "2": "techniques where a model is given zero,",
+  "3": "one, or a few examples of a task to",
+  "4": "guide its response. Providing more",
+  "5": "examples generally helps the model",
+  "6": "better understand the user's intent and",
+  "7": "improves its accuracy for the specific",
+  "8": "task.",
+  "9": "Multimodality: Multimodality is an AI's",
+  "10": "ability to understand and process",
+  "11": "information across multiple data types",
+  "12": "like text, images, and audio. This allows",
+  "13": "for more versatile and human-like",
+  "14": "interactions, such as describing an",
+  "15": "image or answering a spoken question.",
+  "16": "3"
+}

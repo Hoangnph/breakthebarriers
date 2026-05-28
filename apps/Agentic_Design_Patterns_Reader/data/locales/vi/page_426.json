@@ -1,0 +1,20 @@
+{
+  "0": "Mô Hình Khuếch Tán (Diffusion Models): Mô hình khuếch tán là",
+  "1": "các mô hình tạo sinh xuất sắc trong việc tạo ra",
+  "2": "các hình ảnh chất lượng cao. Chúng hoạt động bằng cách",
+  "3": "thêm nhiễu ngẫu nhiên vào dữ liệu và sau đó",
+  "4": "đào tạo mô hình để đảo ngược tỉ mỉ",
+  "5": "quá trình đó, cho phép chúng tạo ra",
+  "6": "dữ liệu mới từ điểm bắt đầu ngẫu nhiên.",
+  "7": "Mamba: Mamba là một kiến trúc AI gần đây",
+  "8": "sử dụng Mô Hình Không Gian Trạng Thái Có Chọn Lọc (SSM)",
+  "9": "để xử lý các chuỗi với hiệu quả cao,",
+  "10": "đặc biệt cho các ngữ cảnh rất dài.",
+  "11": "Cơ chế chọn lọc của nó cho phép tập trung",
+  "12": "vào thông tin liên quan trong khi lọc ra",
+  "13": "nhiễu, làm cho nó trở thành một giải pháp thay thế tiềm năng",
+  "14": "cho Transformer.",
+  "15": "Vòng Đời Phát Triển LLM",
+  "16": "",
+  "17": "6"
+}

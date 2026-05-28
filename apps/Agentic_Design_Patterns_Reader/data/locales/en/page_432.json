@@ -1,0 +1,21 @@
+{
+  "0": "Alignment & Safety Techniques:",
+  "1": "Alignment is the process of ensuring an",
+  "2": "AI model's behavior aligns with human",
+  "3": "values and expectations, making it",
+  "4": "helpful and harmless. The most",
+  "5": "prominent technique is Reinforcement",
+  "6": "Learning from Human Feedback",
+  "7": "(RLHF), where a \"reward model\" trained",
+  "8": "on human preferences guides the AI's",
+  "9": "learning process, often using an",
+  "10": "algorithm like Proximal Policy",
+  "11": "Optimization (PPO) for stability. Simpler",
+  "12": "alternatives have emerged, such as",
+  "13": "Direct Preference Optimization (DPO),",
+  "14": "which bypasses the need for a separate",
+  "15": "reward model, and Kahneman-Tversky",
+  "16": "Optimization (KTO), which simplifies",
+  "17": "data collection further. To ensure safe",
+  "18": "12"
+}

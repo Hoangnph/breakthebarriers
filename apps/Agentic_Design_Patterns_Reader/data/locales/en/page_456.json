@@ -1,0 +1,21 @@
+{
+  "0": "Pre-training Techniques: Pre-training is",
+  "1": "the initial phase where a model learns",
+  "2": "general knowledge from vast amounts",
+  "3": "of data. The top techniques for this",
+  "4": "involve different objectives for the model",
+  "5": "to learn from. The most common is",
+  "6": "Causal Language Modeling (CLM),",
+  "7": "where the model predicts the next word",
+  "8": "in a sentence. Another is Masked",
+  "9": "Language Modeling (MLM), where the",
+  "10": "model fills in intentionally hidden words",
+  "11": "in a text. Other important methods",
+  "12": "include Denoising Objectives, where the",
+  "13": "model learns to restore a corrupted",
+  "14": "input to its original state, Contrastive",
+  "15": "Learning, where it learns to distinguish",
+  "16": "between similar and dissimilar pieces of",
+  "17": "data, and Next Sentence Prediction",
+  "18": "8"
+}

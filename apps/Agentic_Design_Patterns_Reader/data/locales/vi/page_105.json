@@ -1,0 +1,15 @@
+{
+  "0": "các tài liệu do người dùng cung cấp, kết hợp thông tin từ nguồn riêng tư với",
+  "1": "nghiên cứu dựa trên web. Đầu ra cuối cùng không chỉ là một danh sách phát hiện được nối lại, mà là một",
+  "2": "báo cáo nhiều trang, có cấu trúc. Trong giai đoạn tổng hợp, mô hình thực hiện",
+  "3": "đánh giá phản biện đối với thông tin đã thu thập, xác định các chủ đề lớn và tổ chức",
+  "4": "nội dung thành một mạch trình bày mạch lạc với các phần logic. Báo cáo được thiết kế để",
+  "5": "có tính tương tác, thường bao gồm các tính năng như tổng quan bằng âm thanh, biểu đồ và liên kết đến",
+  "6": "các nguồn gốc được trích dẫn, cho phép người dùng xác minh và khám phá sâu hơn. Ngoài",
+  "7": "các kết quả đã tổng hợp, mô hình còn trả về rõ ràng danh sách đầy đủ các nguồn mà nó",
+  "8": "đã tìm kiếm và tham khảo (xem Hình 2). Các nguồn này được trình bày dưới dạng trích dẫn, cung cấp",
+  "9": "tính minh bạch đầy đủ và quyền truy cập trực tiếp vào thông tin gốc. Toàn bộ",
+  "10": "quy trình này biến một truy vấn đơn giản thành một khối tri thức toàn diện đã được",
+  "11": "tổng hợp.",
+  "12": "6"
+}

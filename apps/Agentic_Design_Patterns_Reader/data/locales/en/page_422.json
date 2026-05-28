@@ -1,0 +1,19 @@
+{
+  "0": "Context Window: The context window is",
+  "1": "the maximum number of tokens an AI",
+  "2": "model can process at once, including",
+  "3": "both the input and its generated output.",
+  "4": "This fixed size is a critical limitation, as",
+  "5": "information outside the window is",
+  "6": "ignored, while larger windows enable",
+  "7": "more complex conversations and",
+  "8": "document analysis.",
+  "9": "In-Context Learning: In-context learning",
+  "10": "is an AI's ability to learn a new task from",
+  "11": "examples provided directly in the",
+  "12": "prompt, without requiring any retraining.",
+  "13": "This powerful feature allows a single,",
+  "14": "general-purpose model to be adapted to",
+  "15": "countless specific tasks on the fly.",
+  "16": "2"
+}

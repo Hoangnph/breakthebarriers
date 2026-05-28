@@ -1,0 +1,14 @@
+{
+  "0": "3",
+  "1": "Hình 1: Prompt CoT cùng với phản hồi chi tiết, từng bước được tạo ra bởi agent.",
+  "2": "Hãy xem một ví dụ. Nó bắt đầu với một tập hợp các hướng dẫn cho AI biết cách suy nghĩ,",
+  "3": "xác định persona của nó và một quy trình năm bước rõ ràng để tuân theo. Đây là prompt khởi đầu tư duy có cấu trúc.",
+  "4": "Tiếp theo, ví dụ cho thấy quy trình CoT đang hoạt động. Phần được gán nhãn",
+  "5": "\"Quá Trình Suy Nghĩ của Agent\" là độc thoại nội tâm nơi model thực thi các bước được hướng dẫn.",
+  "6": "Đây là \"chuỗi tư duy\" theo nghĩa đen. Cuối cùng, \"Câu Trả Lời Cuối Cùng của Agent\"",
+  "7": "là đầu ra được đánh bóng, toàn diện được tạo ra do quy trình lập luận cẩn thận, từng bước.",
+  "8": "Bạn là một Agent Truy Xuất Thông Tin. Mục tiêu của bạn là trả lời câu hỏi",
+  "9": "của người dùng một cách toàn diện và chính xác bằng cách suy nghĩ từng bước.",
+  "10": "Đây là quy trình bạn phải tuân theo:",
+  "11": "3"
+}

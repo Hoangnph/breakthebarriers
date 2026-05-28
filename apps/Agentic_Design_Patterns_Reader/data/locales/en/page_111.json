@@ -1,0 +1,18 @@
+{
+  "0": "Why: The Planning pattern offers a standardized solution by having an agentic system",
+  "1": "first create a coherent plan to address a goal. It involves decomposing a high-level",
+  "2": "objective into a sequence of smaller, actionable steps or sub-goals. This allows the",
+  "3": "system to manage complex workflows, orchestrate various tools, and handle",
+  "4": "dependencies in a logical order. LLMs are particularly well-suited for this, as they can",
+  "5": "generate plausible and effective plans based on their vast training data. This structured",
+  "6": "approach transforms a simple reactive agent into a strategic executor that can",
+  "7": "proactively work towards a complex objective and even adapt its plan if necessary.",
+  "8": "Rule of thumb: Use this pattern when a user's request is too complex to be handled by",
+  "9": "a single action or tool. It is ideal for automating multi-step processes, such as",
+  "10": "generating a detailed research report, onboarding a new employee, or executing a",
+  "11": "competitive analysis. Apply the Planning pattern whenever a task requires a sequence",
+  "12": "of interdependent operations to reach a final, synthesized outcome.",
+  "13": "Visual summary",
+  "14": "Fig.4; Planning design pattern",
+  "15": "12"
+}

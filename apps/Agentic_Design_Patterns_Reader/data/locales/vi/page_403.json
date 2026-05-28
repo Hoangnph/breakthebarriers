@@ -1,0 +1,19 @@
+{
+  "0": "Sự xuất hiện của các agent dòng lệnh AI mạnh mẽ này đánh dấu sự thay đổi cơ bản trong",
+  "1": "phát triển phần mềm, biến đổi terminal thành một môi trường năng động và cộng tác.",
+  "2": "Như chúng ta đã thấy, không có công cụ \"tốt nhất\" duy nhất; thay vào đó, một hệ sinh thái sôi động",
+  "3": "đang hình thành nơi mỗi agent cung cấp một điểm mạnh chuyên biệt. Lựa chọn lý tưởng",
+  "4": "phụ thuộc hoàn toàn vào nhu cầu của nhà phát triển: Claude cho các nhiệm vụ kiến trúc phức tạp,",
+  "5": "Gemini để giải quyết vấn đề đa năng và đa phương thức, Aider cho chỉnh sửa code trực tiếp và tập trung vào git,",
+  "6": "và GitHub Copilot để tích hợp liền mạch vào luồng công việc GitHub.",
+  "7": "Khi các công cụ này tiếp tục phát triển, thành thạo trong việc tận dụng chúng sẽ trở thành một kỹ năng thiết yếu,",
+  "8": "thay đổi cơ bản cách các nhà phát triển xây dựng, gỡ lỗi và quản lý phần mềm.",
+  "9": "Tài Liệu Tham Khảo",
+  "10": "1. Anthropic. Claude. https://docs.anthropic.com/en/docs/claude-code/cli-reference",
+  "11": "2. Google Gemini Cli https://github.com/google-gemini/gemini-cli",
+  "12": "3. Aider. https://aider.chat/",
+  "13": "4. GitHub Copilot CLI https://docs.github.com/en/copilot/github-copilot-enterprise/copilot-cli",
+  "14": "5. Terminal Bench: https://www.tbench.ai/",
+  "15": "",
+  "16": "5"
+}

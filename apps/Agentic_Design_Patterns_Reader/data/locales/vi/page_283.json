@@ -1,0 +1,21 @@
+{
+  "0": "22",
+  "1": "Hình 7: Mẫu thiết kế Lập Luận",
+  "2": "Những Điểm Chính Rút Ra",
+  "3": "",
+  "4": " Bằng cách làm cho lập luận của chúng trở nên rõ ràng, các agent có thể xây dựng các kế hoạch minh bạch,",
+  "5": "nhiều bước, đây là khả năng nền tảng cho hành động tự chủ và tin tưởng của người dùng.",
+  "6": "",
+  "7": " Framework ReAct cung cấp cho các agent vòng lặp hoạt động cốt lõi của họ,",
+  "8": "cho phép chúng vượt ra ngoài lập luận thuần túy và tương tác với các công cụ bên ngoài",
+  "9": "để hành động và thích ứng linh hoạt trong một môi trường.",
+  "10": "",
+  "11": " Luật Scaling Inference ngụ ý rằng hiệu suất của agent không chỉ về kích thước",
+  "12": "model cơ bản của nó, mà còn về \"thời gian suy nghĩ\" được phân bổ, cho phép các hành động",
+  "13": "tự chủ có chủ ý hơn và chất lượng cao hơn.",
+  "14": "",
+  "15": " Chain-of-Thought (CoT) phục vụ như độc thoại nội tâm của agent, cung cấp một",
+  "16": "cách có cấu trúc để xây dựng một kế hoạch bằng cách phân tách một mục tiêu phức tạp thành một chuỗi",
+  "17": "các hành động có thể quản lý.",
+  "18": "22"
+}

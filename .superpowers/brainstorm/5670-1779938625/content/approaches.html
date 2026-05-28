@@ -1,0 +1,107 @@
+<h2>3 Hướng Tiếp Cận</h2>
+<p class="subtitle">Chọn kiến trúc phù hợp nhất với mục tiêu của bạn</p>
+
+<div class="options">
+
+  <!-- Approach A -->
+  <div class="option" data-choice="A" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>asyncio Pools + PostgreSQL Queue</h3>
+      <p style="color:#94a3b8; margin-bottom:10px;">Nâng cấp kiến trúc hiện tại, không thêm infrastructure</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">
+        <div>
+          <div style="color:#64748b; font-size:10px; text-transform:uppercase; margin-bottom:4px;">Thêm vào</div>
+          <div>• Bảng <code>jobs</code> trong PostgreSQL</div>
+          <div>• asyncio.Semaphore theo volume tier</div>
+          <div>• SSE endpoint cho progress</div>
+          <div>• Volume Detector service</div>
+        </div>
+        <div>
+          <div style="color:#64748b; font-size:10px; text-transform:uppercase; margin-bottom:4px;">Giữ lại</div>
+          <div>• FastAPI + uvicorn</div>
+          <div>• BackgroundTasks pattern</div>
+          <div>• PostgreSQL duy nhất</div>
+          <div>• Không cần Redis/broker</div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:10px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Không ops mới</li><li>Deploy đơn giản</li><li>Đủ cho ~20 users đồng thời</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Bound to 1 process</li><li>Không horizontal scale</li><li>Queue logic tự viết</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approach B -->
+  <div class="option" data-choice="B" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Celery + Redis — Full Production Queue</h3>
+      <p style="color:#94a3b8; margin-bottom:10px;">Job queue phân tán thực sự, enterprise-grade</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">
+        <div>
+          <div style="color:#64748b; font-size:10px; text-transform:uppercase; margin-bottom:4px;">Thêm vào</div>
+          <div>• Redis (broker + cache)</div>
+          <div>• Celery workers theo tier</div>
+          <div>• Flower dashboard (monitoring)</div>
+          <div>• WebSocket progress</div>
+        </div>
+        <div>
+          <div style="color:#64748b; font-size:10px; text-transform:uppercase; margin-bottom:4px;">Capabilities</div>
+          <div>• Horizontal scaling worker</div>
+          <div>• Priority queues per tier</div>
+          <div>• Built-in retry + dead-letter</div>
+          <div>• Resume từ checkpoint</div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:10px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Scale không giới hạn</li><li>Battle-tested production</li><li>Monitoring đầy đủ</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Thêm Redis infra</li><li>Phức tạp hơn deploy</li><li>Over-engineering nếu &lt;50 users</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approach C — Recommended -->
+  <div class="option" data-choice="C" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>⭐ Hybrid Adaptive — Khuyến nghị</h3>
+      <p style="color:#94a3b8; margin-bottom:10px;">asyncio cho S/M, Celery+Redis chỉ khi cần cho L/XL</p>
+
+      <div style="display:flex; gap:6px; align-items:stretch; font-size:12px; margin-bottom:10px;">
+        <div style="flex:1; background:rgba(99,102,241,0.12); border-radius:8px; padding:10px;">
+          <div style="color:#a5b4fc; font-weight:600; margin-bottom:6px;">S / M docs</div>
+          <div>→ asyncio pool</div>
+          <div>→ SSE progress</div>
+          <div>→ Response nhanh</div>
+          <div style="color:#64748b; margin-top:4px;">Không cần Redis</div>
+        </div>
+        <div style="display:flex; align-items:center; color:#475569; font-size:18px;">⟷</div>
+        <div style="flex:1; background:rgba(251,146,60,0.12); border-radius:8px; padding:10px;">
+          <div style="color:#fb923c; font-weight:600; margin-bottom:6px;">L / XL docs</div>
+          <div>→ Celery queue</div>
+          <div>→ Priority lanes</div>
+          <div>→ Resume + checkpoint</div>
+          <div style="color:#64748b; margin-top:4px;">Redis chỉ khi cần</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(99,102,241,0.08); border-radius:8px; padding:10px; font-size:12px; margin-bottom:10px;">
+        <div style="color:#a5b4fc; font-weight:600; margin-bottom:6px;">Volume Detector (module mới)</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <span>📏 Đếm trang PDF</span>
+          <span>📊 Ước tính tokens</span>
+          <span>💰 Estimate cost</span>
+          <span>🎯 Chọn quality tier</span>
+          <span>🔀 Route tới đúng pipeline</span>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Không over-engineer S/M</li><li>Scale khi cần L/XL</li><li>Cost-efficient</li><li>Progressive rollout</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>2 code paths cần maintain</li><li>Redis vẫn cần khi có L/XL</li><li>Volume Detector phải chính xác</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

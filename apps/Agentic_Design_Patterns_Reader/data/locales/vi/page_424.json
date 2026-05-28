@@ -1,0 +1,18 @@
+{
+  "0": "Căn Cứ (Grounding): Căn cứ là quá trình",
+  "1": "kết nối đầu ra của mô hình với",
+  "2": "các nguồn thông tin thế giới thực có thể xác minh",
+  "3": "để đảm bảo độ chính xác thực tế và giảm",
+  "4": "các ảo giác. Điều này thường đạt được",
+  "5": "với các kỹ thuật như RAG để làm cho các hệ thống AI đáng tin cậy hơn.",
+  "6": "Các Kiến Trúc Mô Hình AI Cốt Lõi",
+  "7": "Transformers: Transformer là",
+  "8": "kiến trúc mạng nơ-ron nền tảng",
+  "9": "cho hầu hết các LLM hiện đại.",
+  "10": "Đổi mới chính của nó là cơ chế tự chú ý",
+  "11": "(self-attention), xử lý hiệu quả",
+  "12": "các chuỗi văn bản dài và nắm bắt",
+  "13": "các mối quan hệ phức tạp giữa các từ.",
+  "14": "",
+  "15": "4"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Kết Luận",
+  "1": "Tóm lại, AgentSpace cung cấp một framework chức năng để phát triển và triển khai các agent AI",
+  "2": "trong cơ sở hạ tầng kỹ thuật số hiện có của tổ chức. Kiến trúc của hệ thống liên kết",
+  "3": "các quy trình backend phức tạp, như lập luận tự chủ và ánh xạ đồ thị kiến thức doanh nghiệp,",
+  "4": "với giao diện người dùng đồ họa để xây dựng agent. Thông qua giao diện này, người dùng có thể",
+  "5": "cấu hình các agent bằng cách tích hợp các dịch vụ dữ liệu khác nhau và định nghĩa",
+  "6": "các tham số hoạt động của chúng thông qua prompt, tạo ra các hệ thống tự động hóa tùy chỉnh, nhận thức ngữ cảnh.",
+  "7": "Cách tiếp cận này trừu tượng hóa độ phức tạp kỹ thuật cơ bản, cho phép xây dựng",
+  "8": "các hệ thống đa tác tử chuyên biệt mà không đòi hỏi chuyên môn lập trình sâu.",
+  "9": "Mục tiêu chính là nhúng các khả năng phân tích và vận hành tự động trực tiếp",
+  "10": "vào các luồng công việc, từ đó tăng hiệu quả quy trình và nâng cao phân tích dựa trên dữ liệu.",
+  "11": "Để hướng dẫn thực hành, các mô-đun học tập thực hành có sẵn, như lab",
+  "12": "\"Xây Dựng Agent Gen AI với Agentspace\" trên Google Cloud Skills Boost, cung cấp",
+  "13": "một môi trường có cấu trúc để tiếp thu kỹ năng.",
+  "14": "Tài Liệu Tham Khảo",
+  "15": "1. Tạo agent không cần code với Agent Designer,",
+  "16": "https://cloud.google.com/agentspace/agentspace-enterprise/docs/agent-designer",
+  "17": "2. Google Cloud Skills Boost, https://www.cloudskillsboost.google/",
+  "18": "6"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "At Glance",
+  "1": "What: An agent's initial output is often suboptimal, suffering from inaccuracies, incompleteness,",
+  "2": "or a failure to meet complex requirements. Basic agentic workflows lack a built-in process for",
+  "3": "the agent to recognize and fix its own errors. This is solved by having the agent evaluate its own",
+  "4": "work or, more robustly, by introducing a separate logical agent to act as a critic, preventing the",
+  "5": "initial response from being the final one regardless of quality.",
+  "6": "Why: The Reflection pattern offers a solution by introducing a mechanism for self-correction and",
+  "7": "refinement. It establishes a feedback loop where a \"producer\" agent generates an output, and",
+  "8": "then a \"critic\" agent (or the producer itself) evaluates it against predefined criteria. This critique",
+  "9": "is then used to generate an improved version. This iterative process of generation, evaluation,",
+  "10": "and refinement progressively enhances the quality of the final result, leading to more accurate,",
+  "11": "coherent, and reliable outcomes.",
+  "12": "Rule of thumb: Use the Reflection pattern when the quality, accuracy, and detail of the final",
+  "13": "output are more important than speed and cost. It is particularly effective for tasks like",
+  "14": "generating polished long-form content, writing and debugging code, and creating detailed plans.",
+  "15": "Employ a separate critic agent when tasks require high objectivity or specialized evaluation that",
+  "16": "a generalist producer agent might miss.",
+  "17": "Visual summary",
+  "18": "10"
+}

@@ -1,0 +1,20 @@
+{
+  "0": "11",
+  "1": "Hình 3: Lập Luận và Hành Động",
+  "2": "ReAct hoạt động theo cách xen kẽ: agent thực thi một hành động, quan sát",
+  "3": "kết quả, và kết hợp quan sát này vào lập luận tiếp theo. Vòng lặp lặp đi lặp lại",
+  "4": "\"Suy Nghĩ, Hành Động, Quan Sát, Suy Nghĩ...\" này cho phép agent thích ứng linh hoạt",
+  "5": "kế hoạch của nó, sửa lỗi, và đạt được các mục tiêu đòi hỏi nhiều tương tác với",
+  "6": "môi trường. Điều này cung cấp cách tiếp cận giải quyết vấn đề mạnh mẽ và linh hoạt hơn",
+  "7": "so với CoT tuyến tính, vì agent phản hồi phản hồi thời gian thực. Bằng cách kết hợp",
+  "8": "sự hiểu biết và tạo ra của mô hình ngôn ngữ với khả năng sử dụng công cụ, ReAct",
+  "9": "cho phép các agent thực hiện các nhiệm vụ phức tạp đòi hỏi cả lập luận lẫn thực thi thực tế.",
+  "10": "Cách tiếp cận này rất quan trọng đối với các agent vì nó cho phép chúng không chỉ lập luận mà còn",
+  "11": "thực tế thực thi các bước và tương tác với các môi trường động.",
+  "12": "CoD (Chain of Debates) là một framework AI chính thức được đề xuất bởi Microsoft nơi",
+  "13": "nhiều mô hình đa dạng cộng tác và tranh luận để giải quyết vấn đề, vượt ra ngoài",
+  "14": "\"chuỗi suy nghĩ\" của một AI duy nhất. Hệ thống này hoạt động như một cuộc họp hội đồng AI, nơi",
+  "15": "các mô hình khác nhau trình bày ý tưởng ban đầu, phê bình lập luận của nhau, và trao đổi",
+  "16": "các phản lập luận. Mục tiêu chính là nâng cao độ chính xác, giảm thiên kiến và cải thiện",
+  "17": "11"
+}

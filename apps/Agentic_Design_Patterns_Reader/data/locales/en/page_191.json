@@ -1,0 +1,17 @@
+{
+  "0": "Fig.1: Goal Setting and Monitor example",
+  "1": "With this assignment in hand, the AI programmer gets to work and produces its first",
+  "2": "draft of the code. However, instead of immediately submitting this initial version, it",
+  "3": "pauses to perform a crucial step: a rigorous self-review. It meticulously compares its",
+  "4": "own creation against every item on the quality checklist you provided, acting as its",
+  "5": "own quality assurance inspector. After this inspection, it renders a simple, unbiased",
+  "6": "verdict on its own progress: \"True\" if the work meets all standards, or \"False\" if it falls",
+  "7": "short.",
+  "8": "If the verdict is \"False,\" the AI doesn't give up. It enters a thoughtful revision phase,",
+  "9": "using the insights from its self-critique to pinpoint the weaknesses and intelligently",
+  "10": "rewrite the code. This cycle of drafting, self-reviewing, and refining continues, with",
+  "11": "each iteration aiming to get closer to the goals. This process repeats until the AI finally",
+  "12": "achieves a \"True\" status by satisfying every requirement, or until it reaches a",
+  "13": "predefined limit of attempts, much like a developer working against a deadline. Once",
+  "14": "9"
+}

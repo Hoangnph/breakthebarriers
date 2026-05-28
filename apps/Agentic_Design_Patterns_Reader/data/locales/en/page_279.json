@@ -1,0 +1,22 @@
+{
+  "0": "18",
+  "1": "Hands-On Code Example",
+  "2": "The DeepSearch code, open-sourced by Google, is available through the",
+  "3": "gemini-fullstack-langgraph-quickstart repository (Fig. 6). This repository provides a",
+  "4": "template for developers to construct full-stack AI agents using Gemini 2.5 and the",
+  "5": "LangGraph",
+  "6": "orchestration",
+  "7": "framework.",
+  "8": "This",
+  "9": "open-source",
+  "10": "stack",
+  "11": "facilitates",
+  "12": "experimentation with agent-based architectures and can be integrated with local",
+  "13": "LLLMs such as Gemma. It utilizes Docker and modular project scaffolding for rapid",
+  "14": "prototyping. It should be noted that this release serves as a well-structured",
+  "15": "demonstration and is not intended as a production-ready backend.",
+  "16": "Fig. 6: (Courtesy of authors) Example of DeepSearch with multiple Reflection steps",
+  "17": "This project provides a full-stack application featuring a React frontend and a",
+  "18": "LangGraph backend, designed for advanced research and conversational AI. A",
+  "19": "18"
+}

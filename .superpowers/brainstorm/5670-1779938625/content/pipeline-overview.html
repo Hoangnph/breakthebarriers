@@ -1,0 +1,62 @@
+<h2>Pipeline Brainstorming — Câu hỏi 1/4</h2>
+<p class="subtitle">Nhìn vào pipeline hiện tại, bạn muốn cải tiến ở đâu nhất?</p>
+
+<div class="section" style="margin-bottom: 28px;">
+  <div style="display:flex; align-items:stretch; gap:0; font-size:13px; font-weight:500; border-radius:10px; overflow:hidden; border: 1px solid rgba(255,255,255,0.12);">
+    <div style="flex:1; padding:16px 14px; background:rgba(99,102,241,0.18); text-align:center; border-right:1px solid rgba(255,255,255,0.1);">
+      <div style="font-size:20px; margin-bottom:6px;">📄</div>
+      <div style="color:#a5b4fc;">UPLOAD</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">PDF → DB</div>
+    </div>
+    <div style="padding:16px 4px; display:flex; align-items:center; color:#475569;">→</div>
+    <div style="flex:1; padding:16px 14px; background:rgba(99,102,241,0.18); text-align:center; border-right:1px solid rgba(255,255,255,0.1);">
+      <div style="font-size:20px; margin-bottom:6px;">🔍</div>
+      <div style="color:#a5b4fc;">EXTRACT</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">pdftohtml + sanitize + spans</div>
+    </div>
+    <div style="padding:16px 4px; display:flex; align-items:center; color:#475569;">→</div>
+    <div style="flex:1; padding:16px 14px; background:rgba(251,146,60,0.18); text-align:center; border-right:1px solid rgba(255,255,255,0.1);">
+      <div style="font-size:20px; margin-bottom:6px;">🤖</div>
+      <div style="color:#fb923c;">TRANSLATE</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Gemini 3-phase × N blocks</div>
+    </div>
+    <div style="padding:16px 4px; display:flex; align-items:center; color:#475569;">→</div>
+    <div style="flex:1; padding:16px 14px; background:rgba(99,102,241,0.18); text-align:center;">
+      <div style="font-size:20px; margin-bottom:6px;">⚙️</div>
+      <div style="color:#a5b4fc;">COMPILE</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Inject HTML + QA gate</div>
+    </div>
+  </div>
+</div>
+
+<p class="label">Chọn 1 hoặc nhiều lĩnh vực bạn muốn tập trung cải tiến</p>
+<div class="options" data-multiselect>
+  <div class="option" data-choice="speed" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>⚡ Tốc độ & Hiệu năng</h3>
+      <p>Translation hiện nay gọi Gemini tuần tự từng block — chậm với tài liệu nhiều trang. Muốn parallel, batching, caching.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="quality" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>🎯 Chất lượng dịch thuật</h3>
+      <p>3-phase Gemini pipeline tốt nhưng chưa có feedback loop, chưa học từ chỉnh sửa thủ công, chưa có glossary tự động.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ux" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>📊 UX & Progress Tracking</h3>
+      <p>Không có real-time progress khi dịch, không có "dịch tất cả trang" một lần, không có dashboard trạng thái tổng quan.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="reliability" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>🛡️ Độ tin cậy & Kiến trúc</h3>
+      <p>main.py quá lớn (34KB), background tasks dễ fail im lặng, không có retry queue, không có rate limiting.</p>
+    </div>
+  </div>
+</div>

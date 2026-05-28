@@ -1,0 +1,13 @@
+{
+  "0": "Hình 2: Ví dụ thực thi hợp đồng giữa các agent",
+  "1": "Trụ cột thứ ba là Thực Thi Lặp Lại Tập Trung Chất Lượng. Không giống như các agent được thiết kế cho",
+  "2": "phản hồi độ trễ thấp, một nhà thầu ưu tiên tính đúng đắn và chất lượng. Nó hoạt động trên",
+  "3": "nguyên tắc tự xác nhận và sửa chữa. Đối với một hợp đồng tạo code, ví dụ,",
+  "4": "agent sẽ không chỉ viết code; nó sẽ tạo ra nhiều",
+  "5": "cách tiếp cận thuật toán, biên dịch và chạy chúng theo một bộ unit test được xác định",
+  "6": "trong hợp đồng, chấm điểm mỗi giải pháp theo các chỉ số như hiệu suất, bảo mật và",
+  "7": "khả năng đọc, và chỉ gửi phiên bản vượt qua tất cả các tiêu chí xác nhận. Vòng lặp nội bộ này",
+  "8": "của việc tạo ra, xem xét và cải thiện công việc của chính mình cho đến khi các thông số kỹ thuật của hợp đồng",
+  "9": "được đáp ứng là rất quan trọng để xây dựng tin tưởng trong các đầu ra của nó.",
+  "10": "14"
+}

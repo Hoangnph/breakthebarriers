@@ -1,0 +1,21 @@
+{
+  "0": "khả năng xảy ra các lỗi như bỏ sót các chỉ thị, mất ngữ cảnh, và tạo ra",
+  "1": "thông tin sai lệch. Một prompt nguyên khối (monolithic) gặp khó khăn trong việc quản lý hiệu quả nhiều ràng buộc và",
+  "2": "các bước suy luận tuần tự. Điều này dẫn đến các đầu ra không đáng tin cậy và không chính xác,",
+  "3": "vì LLM không giải quyết được tất cả các khía cạnh của yêu cầu đa diện.",
+  "4": "Tại sao: Prompt chaining cung cấp một giải pháp tiêu chuẩn hóa bằng cách chia nhỏ một vấn đề",
+  "5": "phức tạp thành một chuỗi các tác vụ con nhỏ hơn, được kết nối với nhau. Mỗi bước trong chuỗi",
+  "6": "sử dụng một prompt tập trung để thực hiện một thao tác cụ thể, cải thiện đáng kể độ tin cậy",
+  "7": "và khả năng kiểm soát. Đầu ra từ một prompt được truyền dưới dạng đầu vào cho prompt tiếp theo, tạo ra một",
+  "8": "luồng công việc logic xây dựng dần dần hướng tới giải pháp cuối cùng. Chiến lược",
+  "9": "chia để trị, mang tính mô-đun này làm cho quá trình trở nên dễ quản lý hơn, dễ gỡ lỗi (debug) hơn,",
+  "10": "và cho phép tích hợp các công cụ bên ngoài hoặc các định dạng dữ liệu có cấu trúc giữa các bước.",
+  "11": "Mẫu thiết kế này là nền tảng cho việc phát triển các hệ thống Agentic nhiều bước, tinh vi",
+  "12": "có thể lập kế hoạch, suy luận, và thực thi các luồng công việc phức tạp.",
+  "13": "Quy tắc ngón tay cái: Sử dụng mẫu này khi một tác vụ quá phức tạp đối với một prompt duy nhất,",
+  "14": "liên quan đến nhiều giai đoạn xử lý riêng biệt, yêu cầu tương tác với các công cụ bên ngoài",
+  "15": "giữa các bước, hoặc khi xây dựng các hệ thống Agentic cần thực hiện",
+  "16": "suy luận nhiều bước và duy trì trạng thái.",
+  "17": "Tóm tắt trực quan",
+  "18": "11"
+}

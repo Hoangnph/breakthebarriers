@@ -1,0 +1,21 @@
+{
+  "0": "Nếu không có chiến lược quản lý động, các hệ thống không thể thích ứng với độ phức tạp nhiệm vụ",
+  "1": "khác nhau hoặc hoạt động trong các ràng buộc ngân sách và hiệu suất.",
+  "2": "Tại sao: Giải pháp tiêu chuẩn là xây dựng một hệ thống agentic thông minh",
+  "3": "theo dõi và phân bổ tài nguyên dựa trên nhiệm vụ hiện tại. Mẫu này thường",
+  "4": "sử dụng một \"Router Agent\" để đầu tiên phân loại độ phức tạp của yêu cầu đến. Yêu cầu",
+  "5": "sau đó được chuyển tiếp đến LLM hoặc công cụ phù hợp nhất--một model nhanh, rẻ",
+  "6": "cho các truy vấn đơn giản, và một model mạnh hơn cho lập luận phức tạp. Một \"Critique",
+  "7": "Agent\" có thể tinh chỉnh thêm quy trình bằng cách đánh giá chất lượng của phản hồi,",
+  "8": "cung cấp phản hồi để cải thiện logic định tuyến theo thời gian. Cách tiếp cận đa tác tử động này",
+  "9": "đảm bảo hệ thống hoạt động hiệu quả, cân bằng chất lượng phản hồi với",
+  "10": "hiệu quả chi phí.",
+  "11": "Quy tắc ngón tay cái: Sử dụng mẫu này khi hoạt động với ngân sách tài chính nghiêm ngặt cho các lệnh gọi API",
+  "12": "hoặc sức mạnh tính toán, xây dựng các ứng dụng nhạy cảm về độ trễ nơi thời gian phản hồi nhanh",
+  "13": "là quan trọng, triển khai agent trên phần cứng bị ràng buộc tài nguyên như",
+  "14": "các thiết bị edge với thời lượng pin hạn chế, lập trình cân bằng sự đánh đổi",
+  "15": "giữa chất lượng phản hồi và chi phí vận hành, và quản lý các luồng công việc phức tạp, nhiều bước",
+  "16": "nơi các nhiệm vụ khác nhau có yêu cầu tài nguyên khác nhau.",
+  "17": "Tóm Tắt Trực Quan",
+  "18": "14"
+}

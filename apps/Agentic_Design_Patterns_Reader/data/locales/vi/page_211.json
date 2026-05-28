@@ -1,0 +1,22 @@
+{
+  "0": "dữ liệu chất lượng cao do con người gán nhãn hoặc tinh chỉnh output generative AI để đáp ứng các",
+  "1": "tiêu chuẩn chất lượng cụ thể.",
+  "2": "Tóm tắt trực quan:",
+  "3": "Hình 1: Design pattern Human in the loop",
+  "4": "Các điểm chính",
+  "5": "Các điểm chính bao gồm:",
+  "6": "",
+  "7": "Human-in-the-Loop (HITL) tích hợp trí tuệ và phán đoán của con người vào AI",
+  "8": "workflow.",
+  "9": "",
+  "10": "Nó rất quan trọng cho an toàn, đạo đức, và hiệu quả trong các kịch bản phức tạp hoặc high-stakes",
+  "11": ".",
+  "12": "",
+  "13": "Các khía cạnh chính gồm human oversight, intervention, feedback for learning, và",
+  "14": "decision augmentation.",
+  "15": "",
+  "16": "Escalation policy là thiết yếu để agent biết khi nào cần hand off cho con người.",
+  "17": "",
+  "18": "HITL cho phép triển khai AI có trách nhiệm và cải thiện liên tục.",
+  "19": "8"
+}

@@ -1,0 +1,22 @@
+{
+  "0": "định dạng (format). LangChain Expression Language (LCEL) được sử dụng để liên kết (chain) các prompt này",
+  "1": "và mô hình ngôn ngữ lại với nhau một cách thanh lịch. Chuỗi đầu tiên, extraction_chain, trích xuất các thông số kỹ thuật.",
+  "2": "Sau đó, full_chain lấy đầu ra của việc trích xuất và sử dụng nó làm đầu vào cho",
+  "3": "prompt chuyển đổi. Một văn bản đầu vào mẫu mô tả một máy tính xách tay được cung cấp. full_chain được gọi với",
+  "4": "văn bản này, xử lý nó qua cả hai bước. Kết quả cuối cùng, một chuỗi JSON chứa các thông số kỹ thuật",
+  "5": "đã được trích xuất và định dạng, sau đó được in ra.",
+  "6": "Kỹ Thuật Ngữ Cảnh (Context Engineering) và Kỹ Thuật Prompt (Prompt Engineering)",
+  "7": "Kỹ thuật Ngữ cảnh (xem Hình 1) là nguyên tắc có hệ thống về việc thiết kế, xây dựng,",
+  "8": "và phân phối một môi trường thông tin hoàn chỉnh cho một mô hình AI trước khi",
+  "9": "tạo token. Phương pháp luận này khẳng định rằng chất lượng đầu ra của một mô hình ít",
+  "10": "phụ thuộc hơn vào chính kiến trúc của mô hình và phụ thuộc nhiều hơn vào sự phong phú của ngữ cảnh",
+  "11": "được cung cấp.",
+  "12": "Hình 1: Kỹ thuật Ngữ cảnh là nguyên tắc xây dựng một môi trường thông tin",
+  "13": "phong phú, toàn diện cho một AI, vì chất lượng của ngữ cảnh này là một yếu tố chính yếu trong việc",
+  "14": "cho phép hiệu suất Agentic tiên tiến.",
+  "15": "Nó đại diện cho một sự tiến hóa đáng kể từ kỹ thuật prompt truyền thống, vốn chủ yếu tập trung",
+  "16": "vào việc tối ưu hóa cách diễn đạt truy vấn tức thời của người dùng. Kỹ thuật Ngữ cảnh",
+  "17": "mở rộng phạm vi này để bao gồm nhiều lớp thông tin, chẳng hạn như prompt",
+  "18": "hệ thống, vốn là một tập hợp các chỉ thị nền tảng xác định các thông số hoạt động",
+  "19": "9"
+}

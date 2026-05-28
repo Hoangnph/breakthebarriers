@@ -1,0 +1,15 @@
+{
+  "0": "user-provided documents, combining information from private sources with its",
+  "1": "web-based research. The final output is not merely a concatenated list of findings but a",
+  "2": "structured, multi-page report. During the synthesis phase, the model performs a",
+  "3": "critical evaluation of the collected information, identifying major themes and organizing",
+  "4": "the content into a coherent narrative with logical sections. The report is designed to be",
+  "5": "interactive, often including features like an audio overview, charts, and links to the",
+  "6": "original cited sources, allowing for verification and further exploration by the user. In",
+  "7": "addition to the synthesized results, the model explicitly returns the full list of sources it",
+  "8": "searched and consulted (see Fig.2). These are presented as citations, providing",
+  "9": "complete transparency and direct access to the primary information. This entire",
+  "10": "process transforms a simple query into a comprehensive, synthesized body of",
+  "11": "knowledge.",
+  "12": "6"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Tổng quan nhanh",
+  "1": "Vấn đề: Đầu ra ban đầu của một agent thường chưa tối ưu, có thể thiếu chính xác, chưa đầy đủ,",
+  "2": "hoặc không đáp ứng được các yêu cầu phức tạp. Các workflow agentic cơ bản thiếu một quy trình tích hợp để",
+  "3": "agent nhận ra và sửa lỗi của chính mình. Vấn đề này được giải quyết bằng cách cho agent đánh giá công việc của chính nó",
+  "4": "hoặc, vững chắc hơn, bằng cách đưa vào một agent logic riêng đóng vai trò critic, ngăn",
+  "5": "phản hồi ban đầu trở thành câu trả lời cuối cùng bất kể chất lượng ra sao.",
+  "6": "Lý do: Mẫu Reflection đưa ra giải pháp bằng cách bổ sung cơ chế tự sửa lỗi và",
+  "7": "tinh chỉnh. Nó thiết lập một vòng phản hồi, trong đó một agent \"producer\" tạo ra đầu ra, rồi",
+  "8": "một agent \"critic\" (hoặc chính producer) đánh giá đầu ra đó theo các tiêu chí định trước. Phần phê bình này",
+  "9": "sau đó được dùng để tạo ra một phiên bản cải thiện. Quy trình lặp gồm tạo, đánh giá",
+  "10": "và tinh chỉnh này dần nâng cao chất lượng của kết quả cuối cùng, dẫn đến các đầu ra chính xác,",
+  "11": "mạch lạc và đáng tin cậy hơn.",
+  "12": "Quy tắc kinh nghiệm: Dùng mẫu Reflection khi chất lượng, độ chính xác và mức độ chi tiết của",
+  "13": "đầu ra cuối cùng quan trọng hơn tốc độ và chi phí. Nó đặc biệt hiệu quả cho các tác vụ như",
+  "14": "tạo nội dung dài đã được trau chuốt, viết và gỡ lỗi code, cũng như tạo các kế hoạch chi tiết.",
+  "15": "Hãy dùng một critic agent riêng khi tác vụ đòi hỏi tính khách quan cao hoặc đánh giá chuyên biệt mà",
+  "16": "một producer agent tổng quát có thể bỏ sót.",
+  "17": "Tóm tắt trực quan",
+  "18": "10"
+}

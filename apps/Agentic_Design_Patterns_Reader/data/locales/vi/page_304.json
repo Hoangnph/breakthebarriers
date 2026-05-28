@@ -1,0 +1,20 @@
+{
+  "0": "Tóm Tắt Trực Quan",
+  "1": "Hình 1: Mẫu thiết kế Guardrail",
+  "2": "Những Điểm Chính Rút Ra",
+  "3": "",
+  "4": " Guardrail là cần thiết để xây dựng các Agent có trách nhiệm, đạo đức và an toàn bằng cách",
+  "5": "ngăn chặn các phản hồi có hại, thiên vị, hoặc ngoài chủ đề.",
+  "6": "",
+  "7": " Chúng có thể được triển khai ở các giai đoạn khác nhau, bao gồm xác nhận đầu vào, lọc đầu ra,",
+  "8": "prompting hành vi, hạn chế sử dụng công cụ, và kiểm duyệt bên ngoài.",
+  "9": "",
+  "10": " Sự kết hợp của các kỹ thuật guardrail khác nhau cung cấp sự bảo vệ mạnh mẽ nhất.",
+  "11": "",
+  "12": " Guardrail đòi hỏi theo dõi, đánh giá và tinh chỉnh liên tục để thích ứng với",
+  "13": "các rủi ro và tương tác người dùng đang phát triển.",
+  "14": "",
+  "15": " Guardrail hiệu quả là quan trọng để duy trì tin tưởng của người dùng và bảo vệ",
+  "16": "danh tiếng của các Agent và nhà phát triển của họ.",
+  "17": "19"
+}

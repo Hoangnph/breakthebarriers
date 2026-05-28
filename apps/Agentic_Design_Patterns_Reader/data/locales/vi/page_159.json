@@ -1,0 +1,23 @@
+{
+  "0": "Hình 2: Hiệu năng qua các vòng lặp. Các cải tiến chính được chú thích cùng với",
+  "1": "tool hoặc sửa đổi agent tương ứng. (theo Maxime Robeyns, Martin",
+  "2": "Szummer, Laurence Aitchison)",
+  "3": "Kiến trúc của SICA bao gồm một toolkit nền tảng cho các thao tác file cơ bản,",
+  "4": "thực thi lệnh, và tính toán số học. Nó có các cơ chế để nộp kết quả",
+  "5": "và gọi các sub-agent chuyên biệt (coding, problem-solving,",
+  "6": "và reasoning). Các sub-agent này phân rã tác vụ phức tạp và quản lý",
+  "7": "độ dài context của LLM, đặc biệt trong các chu kỳ cải thiện kéo dài.",
+  "8": "Một overseer bất đồng bộ, cũng là một LLM khác, giám sát hành vi của SICA, nhận diện",
+  "9": "các vấn đề tiềm ẩn như vòng lặp hoặc đình trệ. Nó giao tiếp với SICA và có thể",
+  "10": "can thiệp để dừng thực thi nếu cần. Overseer nhận một báo cáo chi tiết về",
+  "11": "các hành động của SICA, bao gồm callgraph và log message cũng như tool action, để",
+  "12": "xác định pattern và điểm kém hiệu quả.",
+  "13": "LLM của SICA tổ chức thông tin trong context window của nó, tức short-term memory, theo",
+  "14": "một cách có cấu trúc rất quan trọng cho vận hành. Cấu trúc này bao gồm System Prompt",
+  "15": "định nghĩa mục tiêu agent, tài liệu tool và sub-agent, cùng các chỉ dẫn hệ thống. Một",
+  "16": "Core Prompt chứa đề bài hoặc chỉ dẫn, nội dung các file đang mở, và",
+  "17": "sơ đồ thư mục. Assistant Messages ghi lại reasoning từng bước của agent, bản ghi gọi tool",
+  "18": "và sub-agent cùng kết quả, và trao đổi với overseer. Cách",
+  "19": "tổ chức này giúp luồng thông tin hiệu quả hơn, cải thiện vận hành của LLM và",
+  "20": "6"
+}

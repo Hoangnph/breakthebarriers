@@ -1,0 +1,15 @@
+{
+  "0": "Hình 1: Ví dụ về cách sử dụng Google Gem.",
+  "1": "Sử Dụng LLMs để Tinh Chỉnh Prompt (Cách Tiếp Cận Meta)",
+  "2": "Chúng ta đã khám phá nhiều kỹ thuật để tạo ra các prompt hiệu quả, nhấn mạnh",
+  "3": "sự rõ ràng, cấu trúc và cung cấp ngữ cảnh hoặc ví dụ. Tuy nhiên, quy trình này có thể",
+  "4": "lặp đi lặp lại và đôi khi thách thức. Điều gì xảy ra nếu chúng ta có thể tận dụng sức mạnh của",
+  "5": "các mô hình ngôn ngữ lớn, như Gemini, để giúp chúng ta cải thiện các prompt của mình? Đây là",
+  "6": "bản chất của việc sử dụng LLM để tinh chỉnh prompt -- một ứng dụng \"meta\" nơi AI hỗ trợ",
+  "7": "tối ưu hóa các hướng dẫn được đưa cho AI.",
+  "8": "Khả năng này đặc biệt \"thú vị\" vì nó đại diện cho một dạng tự cải thiện AI",
+  "9": "hoặc ít nhất là cải thiện con người được hỗ trợ bởi AI trong việc tương tác với AI.",
+  "10": "Thay vì chỉ dựa vào trực giác và thử-và-lỗi của con người, chúng ta có thể tận dụng",
+  "11": "sự hiểu biết của LLM về ngôn ngữ, mẫu, và thậm chí các bẫy prompting phổ biến để",
+  "12": "23"
+}

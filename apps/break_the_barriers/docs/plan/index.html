@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Implementation Plan & SA - Smart Documentations</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Tài liệu kế hoạch triển khai chi tiết từng bước và kiến trúc hệ thống (SA) của dự án break_the_barriers. Giao diện tương tác trực quan cao cấp tối ưu hóa cho di động.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Glowing Background Spheres -->
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-route logo-icon"></i>
+            <span>Interactive Plan & SA</span>
+        </div>
+        <div class="nav-controls">
+            <a href="../../index.html" class="back-btn"><i class="fas fa-home"></i> Bàn làm việc chính</a>
+            <a href="../workflow/index.html" class="back-btn"><i class="fas fa-project-diagram"></i> Quy trình</a>
+            <a href="../backend/index.html" class="back-btn"><i class="fas fa-server"></i> API & Backend</a>
+        </div>
+        
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburger-btn" aria-label="Menu tài liệu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        
+        <!-- Welcome Hero Section -->
+        <section class="hero-section">
+            <span class="badge">break_the_barriers • Lộ trình Kỹ thuật</span>
+            <h1>Bản đồ kiến trúc & <span>Kế hoạch chi tiết</span></h1>
+            <p>Hồ sơ phân tích cấu trúc hệ thống (SA) trực quan kết hợp kế hoạch hành động 6 giai đoạn di động đầu tiên (Mobile-First). Dễ dàng tùy chỉnh, đánh dấu tiến độ và xuất cấu hình.</p>
+        </section>
+
+        <!-- Stepper Navigation Tabs (Tab Headers) -->
+        <section class="tab-headers-container" aria-label="Phân mục tài liệu">
+            <button class="tab-btn active" data-tab="tab-sa">
+                <i class="fas fa-sitemap"></i> Kiến trúc Hệ thống (SA)
+            </button>
+            <button class="tab-btn" data-tab="tab-pipeline">
+                <i class="fas fa-shield-halved"></i> Quy trình Bẫy lỗi & Quản lý
+            </button>
+            <button class="tab-btn" data-tab="tab-steps">
+                <i class="fas fa-tasks"></i> Kế hoạch Từng bước
+            </button>
+            <button class="tab-btn" data-tab="tab-tech">
+                <i class="fas fa-code"></i> Đặc tả Kỹ thuật (LSE)
+            </button>
+            <button class="tab-btn" data-tab="tab-adjuster">
+                <i class="fas fa-sliders-h"></i> Trình điều phối Tương tác
+            </button>
+        </section>
+
+        <!-- Tab Contents Area -->
+        <section class="tab-contents-container">
+
+            <!-- Tab 1: System Architecture (SA) -->
+            <div class="tab-content active" id="tab-sa">
+                <div class="sa-grid">
+                    <div class="sa-card main-sa">
+                        <h2><i class="fas fa-cubes"></i> 1. Sơ đồ Kiến trúc 5 Cấp độ (Detailed System Architecture Flow)</h2>
+                        <p class="section-intro">Kiến trúc 5 lớp đồng bộ hóa đầu cuối từ chuẩn bị offline, dịch thuật ngữ nghĩa chất lượng cao, kiểm soát bẫy lỗi tin cậy, lưu trữ chia sẻ tối ưu dung lượng đến trình diễn LSE di động.</p>
+                        
+                        <!-- SA Visual Flow Chart (Pure CSS) -->
+                        <div class="sa-visual-flow">
+                            
+                            <!-- Box 1: Offline Compile & Structure -->
+                            <div class="flow-node node-purple">
+                                <div class="node-icon"><i class="fas fa-terminal"></i></div>
+                                <h3>1. Lớp Biên dịch & Tách cấu trúc</h3>
+                                <p>Poppler pdftohtml + BS4 Span Indexer</p>
+                                <span class="flow-tag">Zero-JS Client Overhead</span>
+                            </div>
+
+                            <div class="flow-arrow"><i class="fas fa-chevron-down"></i></div>
+
+                            <!-- Box 2: High-Fidelity Translation (HFE) -->
+                            <div class="flow-node node-pink">
+                                <div class="node-icon"><i class="fas fa-language"></i></div>
+                                <h3>2. Trình dịch Chất lượng cao (HFE)</h3>
+                                <p>Context-Aware Gom Spans + Agentic 3-Steps + Glossary</p>
+                                <span class="flow-tag">Semantics Preservation</span>
+                            </div>
+
+                            <div class="flow-arrow"><i class="fas fa-chevron-down"></i></div>
+
+                            <!-- Box 3: Safeguard Pipeline & Quality Gates -->
+                            <div class="flow-node node-orange">
+                                <div class="node-icon"><i class="fas fa-shield-halved"></i></div>
+                                <h3>3. Bẫy lỗi & Kiểm soát (Safeguard)</h3>
+                                <p>3 Quality Gates + Mismatch & JSON Fallback</p>
+                                <span class="flow-tag">Reliability 100%</span>
+                            </div>
+
+                            <div class="flow-arrow"><i class="fas fa-chevron-down"></i></div>
+
+                            <!-- Box 4: Static Assets via Symlink -->
+                            <div class="flow-node node-blue">
+                                <div class="node-icon"><i class="fas fa-folder-open"></i></div>
+                                <h3>4. Lớp Lưu trữ & Chia sẻ (DRY)</h3>
+                                <p>Symlink data/ -> shared resources</p>
+                                <span class="flow-tag">Asset DRM & DRY</span>
+                            </div>
+
+                            <div class="flow-arrow"><i class="fas fa-chevron-down"></i></div>
+
+                            <!-- Box 5: Client Mobile UI & LSE -->
+                            <div class="flow-node node-emerald">
+                                <div class="node-icon"><i class="fas fa-mobile-alt"></i></div>
+                                <h3>5. Lớp Trình diễn & LSE Client</h3>
+                                <p>Vanilla Touch Engine + Layout Shift Engine + Autoscale</p>
+                                <span class="flow-tag">Mobile-First Native Feeling</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="sa-card side-sa">
+                        <h2><i class="fas fa-shield-alt"></i> 2. Các thành phần cốt lõi của SA</h2>
+                        
+                        <div class="sa-component">
+                            <h4><i class="fas fa-hand-pointer text-blue"></i> Touch Gesture Engine</h4>
+                            <p>Bắt các sự kiện <code>touchstart</code> và <code>touchend</code> trên di động. Tính toán hướng và gia tốc vuốt để lật trang tự nhiên bằng hiệu ứng 3D CSS.</p>
+                        </div>
+
+                        <div class="sa-component">
+                            <h4><i class="fas fa-arrows-alt-v text-purple"></i> Layout Shift Engine (LSE)</h4>
+                            <p>Tự động xử lý dồn dịch dòng chữ tiếng Việt dịch dài hơn tiếng Anh bằng cách thay đổi thuộc tính <code>top</code> động của cây DOM trong iframe, tránh chồng chéo.</p>
+                        </div>
+
+                        <div class="sa-component">
+                            <h4><i class="fas fa-compress-arrows-alt text-emerald"></i> Mobile Autoscale Engine</h4>
+                            <p>Tự động tính toán tỷ lệ chiều ngang di động và áp dụng <code>transform: scale()</code> lên container chứa trang sách để hiển thị vừa khít mọi kích cỡ màn hình.</p>
+                        </div>
+
+                        <div class="sa-component">
+                            <h4><i class="fas fa-shield-halved text-orange"></i> Safeguard Pipeline Engine</h4>
+                            <p>Hệ thống tiền lọc Encoding/DOM Validator tĩnh và 3 trạm kiểm soát chất lượng (Quality Gates). Tự động kích hoạt cơ chế bẫy lỗi (Paragraph Fallback, Syntax JSON Repair, Dynamic Font Shrink) bảo đảm hệ thống hoạt động tin cậy 100%.</p>
+                        </div>
+
+                        <div class="sa-component">
+                            <h4><i class="fas fa-language text-purple" style="color: #a78bfa;"></i> High-Fidelity Translation Engine (HFE)</h4>
+                            <p>Bộ gom spans theo tọa độ cận kề để tái tạo ngữ cảnh cho AI, rà soát dịch đa bước (Thô -> Đánh bóng -> Đối chiếu), kết hợp Glossary-Enforced cưỡng chế từ điển chuyên ngành giữ 100% ngữ nghĩa nguyên bản.</p>
+                        </div>
+
+                        <div class="sa-component">
+                            <h4><i class="fas fa-sync text-pink"></i> Local State Sync</h4>
+                            <p>Đồng bộ tức thì mọi cài đặt (ngôn ngữ, độ thu phóng, chương sách, theme tối/sáng) vào bộ nhớ <code>localStorage</code> để lưu giữ trạng thái đọc của người dùng.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Document Pipeline & Error Trapping -->
+            <div class="tab-content" id="tab-pipeline">
+                <div class="pipeline-grid">
+                    <div class="pipeline-card">
+                        <h2><i class="fas fa-arrows-spin"></i> Quy trình Xử lý & Bẫy lỗi Tài liệu tĩnh (Processing Safeguard Pipeline)</h2>
+                        <p class="section-intro">Để đảm bảo việc thông dịch hàng loạt 482 trang sách diễn ra an toàn, bảo toàn cấu trúc tuyệt đối và hiển thị hoàn hảo trên di động, hệ thống áp dụng quy trình kiểm soát chất lượng 3 lớp và cơ chế tự phục hồi lỗi xử lý:</p>
+                        
+                        <div class="pipeline-steps-v2">
+                            <!-- Step 1 -->
+                            <div class="p-step">
+                                <div class="p-step-num">1</div>
+                                <div class="p-step-content">
+                                    <h3>A. Quy trình Vòng đời & Quản lý Thư mục (Document Management Workflow)</h3>
+                                    <p>Quy trình di chuyển dữ liệu tĩnh qua 6 pha khép kín để chạy offline hiệu quả:</p>
+                                    <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                        <li><strong>Pha Ingestion (Nhập liệu):</strong> Sách PDF kỹ thuật gốc được lưu trữ tại <code>data/raw_pdf/</code>.</li>
+                                        <li><strong>Pha Extraction (Trích xuất):</strong> Sử dụng <code>pdftohtml</code> xuất các trang absolute sang <code>data/extracted_html/</code>.</li>
+                                        <li><strong>Pha Sanitization (Chuẩn hóa):</strong> Chuẩn hóa mã hóa ký tự sang UTF-8 tĩnh và lọc bỏ màu nền xám thô `#A0A0A0` về `#FFFFFF`.</li>
+                                        <li><strong>Pha Localization Mapping (Bản địa hóa):</strong> Beautiful Soup bóc tách text span lưu thành JSON bản địa tiếng Anh (`data/locale/en/`) ánh xạ khóa-giá trị 1-1.</li>
+                                        <li><strong>Pha Batch Translation (Dịch hàng loạt):</strong> Gộp các đoạn text ngăn cách bởi `<hr>` dịch qua Google Translate API, ghi nhận tại `data/locale/vi/`.</li>
+                                        <li><strong>Pha Compilation (Biên dịch tĩnh):</strong> Regex Injector tái dựng trang HTML song ngữ lưu tại `data/pages/`, ghi nhận manifest.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 2 -->
+                            <div class="p-step">
+                                <div class="p-step-num">2</div>
+                                <div class="p-step-content">
+                                    <h3>B. Các Trạm Kiểm soát Chất lượng (Quality Gates)</h3>
+                                    <p>Hệ thống thiết lập 3 chốt kiểm soát tự động để ngăn ngừa tài liệu hỏng:</p>
+                                    <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                        <li><strong>Quality Gate 1 (Sanitizer Check):</strong> Tự động sửa đổi charset tĩnh về UTF-8 và chèn thẻ meta charset để tránh lỗi hiển thị dấu tiếng Việt.</li>
+                                        <li><strong>Quality Gate 2 (DOM Integrity Gate):</strong> So khớp số lượng thẻ <code>&lt;span&gt;</code> giữa trang gốc và trang dịch. Nếu lệch nhau, hệ thống lập tức báo lỗi và khóa chặn quá trình xuất bản.</li>
+                                        <li><strong>Quality Gate 3 (Kiểm soát đè chữ - Overlap Gate):</strong> Quét tọa độ inline `top`/`left` để phát hiện các dòng có xu hướng đè lấn nhau khi dồn chữ Việt.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="p-step">
+                                <div class="p-step-num">3</div>
+                                <div class="p-step-content">
+                                    <h3>C. Quy trình Bẫy lỗi & Phục hồi Động (Error Trapping & Auto-Recovery)</h3>
+                                    <p>Chính sách tự sửa lỗi và phục hồi được tích hợp ở cả tầng biên dịch và client-side:</p>
+                                    <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                        <li><strong>Google Mismatch Fallback:</strong> Nếu API dịch làm mất thẻ `<hr>`, gây lệch chỉ mục, hệ thống tự động bẫy lỗi và fallback sang <strong>Dịch đơn lẻ từng đoạn (Paragraph Fallback)</strong>.</li>
+                                        <li><strong>JSON Syntax Auto-Repair:</strong> Sửa nhanh các lỗi định dạng cú pháp JSON kinh điển bằng Regex. Nếu irreparable, tự động fallback hiển thị chữ tiếng Anh gốc kèm thẻ cảnh báo <code>[?]</code> để tránh treo ứng dụng.</li>
+                                        <li><strong>LSE Canvas Overflow Control:</strong> Nếu chữ tiếng Việt quá dài đẩy chiều cao trang vượt quá canvas $1188\text{px}$, client-side sẽ kích hoạt <strong>Dynamic Font Shrink</strong> co 5% - 10% cỡ chữ hoặc line-clamping để bảo toàn khung trang di động.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 4 -->
+                            <div class="p-step">
+                                <div class="p-step-num">4</div>
+                                <div class="p-step-content">
+                                    <h3>D. Cơ chế Thông dịch Chất lượng cao (High-Fidelity Translation)</h3>
+                                    <p>Đảm bảo việc thông dịch trôi chảy và bảo toàn 100% ý nghĩa văn bản gốc:</p>
+                                    <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                        <li><strong>Context-Aware Reconstruction:</strong> Gom các thẻ span cận kề để tái tạo đoạn văn bản đầy đủ ngữ cảnh cho AI, gắn thẻ chỉ mục mã hóa ẩn để giữ nguyên ánh xạ 1-1.</li>
+                                        <li><strong>Agentic Multi-Stage Translation:</strong> Dịch đa bước (Dịch thô -> Đánh bóng văn phong kỹ thuật -> Đối chiếu song hành phát hiện sai lệch ngữ nghĩa).</li>
+                                        <li><strong>Glossary-Enforced Injections:</strong> Cưỡng chế áp dụng bộ từ điển chuyên ngành cốt lõi, ngăn chặn việc dịch sai hoặc địa phương hóa quá mức làm mất giá trị tài liệu kỹ thuật.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-card side-visual">
+                        <h2><i class="fas fa-triangle-exclamation"></i> Sơ đồ Xử lý Lỗi Phân mảnh AI</h2>
+                        <div class="flow-chart-visual">
+                            <div class="flow-box start">Văn bản trang nguồn (Flat JSON)</div>
+                            <div class="flow-arrow-small"><i class="fas fa-arrow-down"></i></div>
+                            <div class="flow-box-cond">Gộp chuỗi bằng tag &lt;hr&gt; &amp; Dịch API hàng loạt</div>
+                            <div class="flow-arrow-small"><i class="fas fa-arrow-down"></i></div>
+                            <div class="flow-box-cond decision">Khớp số lượng mảnh?</div>
+                            
+                            <div class="decision-branches">
+                                <div class="branch-yes">
+                                    <div class="branch-tag yes">ĐÚNG</div>
+                                    <div class="flow-box success"><i class="fas fa-check-circle"></i> Trích xuất &amp; Lưu trữ file JSON dịch</div>
+                                </div>
+                                <div class="branch-no">
+                                    <div class="branch-tag no">SAI</div>
+                                    <div class="flow-box danger"><i class="fas fa-rotate"></i> Bẫy lỗi: Fallback dịch đơn lẻ từng đoạn</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flow-arrow-small" style="margin-top:0.5rem;"><i class="fas fa-arrow-down"></i></div>
+                            <div class="flow-box-cond" style="border-color:var(--accent-blue); background:rgba(59, 130, 246, 0.05)">Kiểm tra cấu trúc DOM &amp; Xác thực Span (1-1)</div>
+                            <div class="flow-arrow-small"><i class="fas fa-arrow-down"></i></div>
+                            <div class="flow-box-cond decision" style="border-color:var(--accent-orange); background:rgba(245, 158, 11, 0.08)">Vượt chiều cao canvas 1188px?</div>
+                            
+                            <div class="decision-branches">
+                                <div class="branch-yes" style="width: 100%; grid-column: span 2; align-items: center;">
+                                    <div class="branch-tag no" style="border-color:var(--accent-orange); color:var(--accent-orange); background:rgba(245, 158, 11, 0.05)">CÓ (Cảnh báo tràn)</div>
+                                    <div class="flow-box danger" style="border-color:var(--accent-orange); background:rgba(245, 158, 11, 0.05); color:#fed7aa; max-width: 320px;">
+                                        <i class="fas fa-compress-arrows-alt"></i> Dynamic Font Shrink (Giảm 5-10% font size)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Step-by-Step Interactive Plan -->
+            <div class="tab-content" id="tab-steps">
+                <div class="plan-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Kế hoạch Hành động 6 Giai đoạn</h2>
+                    <p>Bấm chọn vào các ô tròn để đánh dấu và theo dõi tiến trình thực tế của dự án. Hệ thống sẽ tự động tính toán tỷ lệ hoàn thành!</p>
+                    
+                    <!-- Progress Bar Component -->
+                    <div class="progress-container">
+                        <div class="progress-bar-label">Tiến trình triển khai tổng thể: <span id="progress-percent">0%</span></div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phases-timeline">
+
+                    <!-- Phase 1 -->
+                    <div class="phase-section" id="phase-1">
+                        <div class="phase-title" style="border-left-color: var(--accent-blue);">
+                            <h3>Giai đoạn 1: Thiết lập DRY Symlink & Môi trường Tĩnh</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Viết script `setup_data.sh`</strong> để kiểm tra cấu trúc thư mục và tự động tạo Symlink từ `apps/break_the_barriers/data` trỏ đến tệp nguồn `Agentic_Design_Patterns_Reader/data`.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="5">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Xác thực khả năng đọc Symlink</strong> thông qua HTTP Server cục bộ trong `server.py` trên môi trường macOS, bảo đảm không bị lỗi quyền truy cập file tĩnh.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Script <code>setup_data.sh</code> thực thi trơn tru, tạo thành công symlink <code>data</code> trỏ đến <code>Agentic_Design_Patterns_Reader/data</code>.</li>
+                                <li>Server cục bộ (chạy ở cổng 8001) phục vụ chính xác các file HTML tĩnh qua liên kết symlink với mã trạng thái 200 OK.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2 -->
+                    <div class="phase-section" id="phase-2">
+                        <div class="phase-title" style="border-left-color: var(--accent-purple);">
+                            <h3>Giai đoạn 2: Phát triển Giao diện Trình đọc Mobile-First</h3>
+                            <span class="phase-dur">Thời lượng: 2 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Tạo tệp `reader.html` & `reader_style.css`</strong> xây dựng cấu trúc Drawer vuốt ngang cho mục lục TOC và Bottom Control Sheet chứa các nút bấm thu phóng, chuyển ngôn ngữ.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="5">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Thiết kế HSL Dark-First và Mobile Safe-Area Margin</strong> đảm bảo giao diện đọc không bị đè bởi tai thỏ hay thanh điều hướng vuốt của iOS/Android.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Tạo lập đầy đủ hai tệp tĩnh <code>reader.html</code> và <code>reader_style.css</code>.</li>
+                                <li>Drawer mục lục TOC trượt mượt mà; Bottom Control Sheet hiển thị trọn vẹn, không bị đè hoặc khuất chữ ở cả màn hình giả lập iPhone (iOS Safe Area) và Android.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="phase-section" id="phase-3">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 3: Phát triển Bộ Xử lý Cử chỉ & Co giãn (Gesture Engine)</h3>
+                            <span class="phase-dur">Thời lượng: 2 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Viết `reader_app.js` với Touch Engine</strong> bắt sự kiện chạm đa điểm trên di động, hỗ trợ cử chỉ vuốt ngang/vuốt dọc để lật trang mượt mà kèm CSS 3D trượt động.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Xây dựng Autoscale Engine</strong> tự động co giãn tỷ lệ trang absolute bằng `transform: scale()` sao cho chiều rộng khít chính xác với màn hình di động khi xoay dọc/xoay ngang.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Touch Swipe lật trang có phản hồi tức thì (<100ms) trên trình mô phỏng di động và hoạt động trơn tru.</li>
+                                <li>Autoscale Engine tự động phát hiện sự thay đổi hướng màn hình (resize/orientationchange) và co giãn chính xác tỷ lệ trang khít với chiều ngang màn hình di động.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 4 -->
+                    <div class="phase-section" id="phase-4">
+                        <div class="phase-title" style="border-left-color: var(--accent-pink);">
+                            <h3>Giai đoạn 4: Thuật toán Cân chỉnh Dồn chữ & Chống Đè chữ (LSE)</h3>
+                            <span class="phase-dur">Thời lượng: 2 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Tích hợp và cải tiến thuật toán Layout Shift Engine</strong> trong `reader_app.js` tự động tính chiều cao tăng thêm của thẻ <code>&lt;span&gt;</code> khi xuống dòng và tịnh tiến toàn bộ các phần tử phía dưới.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="5">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Tối ưu hóa đệm hiệu năng</strong> bằng cách chạy dồn dòng chống đè chữ trễ dần (progressive delays: 50ms, 200ms, 500ms) để triệt tiêu hiện tượng nhấp nháy chữ khi tải trang.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Thuật toán <code>Layout Shift Engine</code> (LSE) hoạt động hiệu quả khi chuyển ngôn ngữ. Các dòng chữ dịch dài không đè đè đè đè chữ bên dưới.</li>
+                                <li>Áp dụng thành công cơ chế progressive delay, triệt tiêu hoàn toàn hiện tượng nhấp nháy chữ (flash of unstyled text) khi tải trang.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 5 [NEW] -->
+                    <div class="phase-section" id="phase-5">
+                        <div class="phase-title" style="border-left-color: var(--accent-orange);">
+                            <h3>Giai đoạn 5: Phát triển Safeguard Pipeline & Trình dịch ngữ nghĩa chất lượng cao (HFE)</h3>
+                            <span class="phase-dur">Thời lượng: 2 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Xây dựng Bộ xử lý bẫy lỗi dịch hàng loạt (Mismatch Recovery)</strong>: Tự động chuyển sang cơ chế dịch đơn lẻ từng đoạn nhỏ nếu Google Translate làm hư hại cấu trúc tag ngăn cách <code>&lt;hr&gt;</code> giữa chừng.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Bộ tiền kiểm định mã hóa tĩnh (UTF-8 Sanitizer)</strong>: Tự động chuẩn hóa charset từ ISO-8859-1 sang UTF-8 và làm sạch màu nền xám pdftohtml trước khi lưu bản dịch.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Xác thực cấu trúc DOM (DOM & Span Validator)</strong>: Viết kịch bản tự động hậu kiểm, đối chiếu số lượng thẻ span giữa trang dịch và trang gốc để loại bỏ hoàn toàn trang dịch thiếu chữ.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Bẫy lỗi cú pháp JSON & original Fallback</strong>: Đảm bảo nếu tệp locale JSON bị lỗi, parser sẽ tự động khôi phục chữ tiếng Anh gốc kèm thẻ cảnh báo <code>[?]</code>.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Tích hợp Tái lập Ngữ cảnh (Context-Aware Reconstruction)</strong>: Gom cụm các span cận kề trên cùng dòng/tọa độ <code>top</code>, gắn mã ẩn <code>[s:idx]</code> trước khi dịch để cung cấp ngữ cảnh đầy đủ nhất cho AI và bảo toàn ánh xạ 1-1.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Thiết kế Tiến trình dịch thuật Tác tử 3 Bước (Agentic Multi-Stage Translation)</strong>: AI dịch thô -> Đánh bóng văn phong kỹ thuật -> Đối chiếu song chéo để tự động phát hiện và chỉnh sửa các sai lệch ngữ nghĩa.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Cưỡng chế Từ điển Glossary (Glossary-Enforced Injections)</strong>: Cấu hình bộ từ điển chuyên ngành cốt lõi và Regex Post-processing để bắt buộc thay thế thuật ngữ kỹ thuật chính xác.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="4">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Xử lý chống tràn Canvas client-side (Dynamic Font Shrink)</strong>: Tích hợp logic đo đạc bounding-box của trang và tự động giảm 5% - 10% cỡ chữ toàn trang nếu text dịch quá dài gây tràn trang di động quá $1188\text{px}$.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Thiết lập thành công bộ gom spans Context-Reconstruction bảo toàn ánh xạ 1-1.</li>
+                                <li>Vượt qua thành công cả 3 Quality Gates mà không phát hiện tệp rỗng, sai charset, lệch DOM hoặc chồng chéo nghiêm trọng.</li>
+                                <li>Bẫy lỗi Mismatch Recovery và Dynamic Font Shrink tự phục hồi mượt mà khi thử nghiệm dữ liệu lỗi giả lập, không làm đứng hay sập màn hình client.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 6 -->
+                    <div class="phase-section" id="phase-6">
+                        <div class="phase-title" style="border-left-color: var(--accent-blue);">
+                            <h3>Giai đoạn 6: Tích hợp Dashboard & Kiểm định Đa Thiết bị</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="5">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Nâng cấp `index.html` của Dashboard</strong>, kích hoạt các nút liên kết trực tiếp tới trình đọc `reader.html`, cấu hình lại micro-interactions radial glow.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="5">
+                                    <span class="checkmark"></span>
+                                    <div class="task-desc">
+                                        <strong>Kiểm định chất lượng hiển thị tĩnh và cử chỉ</strong> trên nhiều thiết bị di động giả lập khác nhau thông qua Chrome DevTools Mobile Emulator.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Dashboard liên kết thông suốt tới <code>reader.html</code>, các visual elements và micro-interactions được kích hoạt đầy đủ.</li>
+                                <li>Kiểm thử đa màn hình (Responsive testing) đạt hiển thị 100% hoàn mỹ từ các dòng điện thoại nhỏ (e.g. iPhone SE) đến máy tính bảng cỡ lớn không bị vỡ giao diện.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 4: Technical Specifications -->
+            <div class="tab-content" id="tab-tech">
+                <div class="tech-grid">
+                    
+                    <div class="tech-card">
+                        <h2><i class="fas fa-folder-tree"></i> Cấu trúc Thư mục Triển khai</h2>
+                        <div class="code-wrapper">
+                            <pre><code>break_the_barriers/
+├── docs/
+│   ├── plan/
+│   │   ├── index.html       &lt;-- Tài liệu kế hoạch này
+│   │   ├── style.css
+│   │   └── app.js
+│   └── workflow/
+│       ├── index.html
+│       ├── style.css
+│       └── app.js
+├── data/                    &lt;-- [NEW Symlink] trỏ tới source data
+│   ├── raw_pdf/             &lt;-- Chứa tài liệu PDF gốc
+│   ├── extracted_html/      &lt;-- HTML định vị pixel thô từ Poppler
+│   ├── locale/
+│   │   ├── en/              &lt;-- Dữ liệu JSON tiếng Anh gốc (dry-mapped)
+│   │   └── vi/              &lt;-- Dữ liệu JSON tiếng Việt đã thông dịch
+│   ├── pages/               &lt;-- Trang HTML tĩnh song ngữ tái cấu trúc
+│   └── manifest.json        &lt;-- Quản lý trạng thái và thống kê trang
+├── index.html               &lt;-- [MODIFY] Bàn làm việc
+├── style.css                &lt;-- [MODIFY] CSS Bàn làm việc
+├── app.js                   &lt;-- [MODIFY] JS Bàn làm việc
+├── reader.html              &lt;-- [NEW] Trình đọc Mobile-First
+├── reader_style.css         &lt;-- [NEW] CSS Trình đọc
+├── reader_app.js            &lt;-- [NEW] JS Trình đọc và LSE Engine
+├── setup_data.sh            &lt;-- [NEW] Script DRY Symlink
+└── server.py                &lt;-- Python server phục vụ static UTF-8</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="tech-card">
+                        <h2><i class="fas fa-calculator"></i> 2. Thuật toán Cân chỉnh Dồn Dòng (LSE Formula)</h2>
+                        <p>Công thức tính tịnh tiến vị trí `top` cho từng khối văn bản khi dịch từ Anh sang Việt:</p>
+                        <div class="code-wrapper">
+                            <pre><code>Biến số đầu vào:
+d_i : div_index (Danh sách div đã sắp xếp theo top tăng dần)
+original_top(d_i) : Tọa độ top ban đầu trích xuất từ PDF gốc
+accumulatedShift_i : Độ dời tích lũy tính đến div thứ i
+
+Công thức:
+new_top(d_i) = original_top(d_i) + accumulatedShift_i
+
+Nếu d_i xảy ra hiện tượng dồn dòng (wrapped):
+unwrapped_height = Chiều cao đo được khi white-space: nowrap
+wrapped_height = Chiều cao đo được khi white-space: normal
+delta_height = wrapped_height - unwrapped_height
+
+Nếu delta_height > 2px:
+  accumulatedShift_(i+1) = accumulatedShift_i + delta_height
+Ngược lại:
+  accumulatedShift_(i+1) = accumulatedShift_i</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: High-Fidelity Translation Engine (HFE) Specs -->
+                    <div class="tech-card">
+                        <h2><i class="fas fa-language"></i> 3. Trình Dịch thuật Chất lượng cao (HFE Engine Specs)</h2>
+                        <p>Đặc tả kỹ thuật của 3 cấu phần ngữ nghĩa HFE đảm bảo độ chính xác tuyệt đối:</p>
+                        
+                        <h4 style="margin-top: 1rem; color: var(--accent-pink); font-size: 0.95rem; font-weight: 700;"><i class="fas fa-object-group"></i> A. Tái lập đoạn văn bản (Context Reconstruction)</h4>
+                        <div class="code-wrapper" style="margin-top: 0.5rem;">
+                            <pre><code>def reconstruct_context_and_index(spans_list, threshold_y=5.0):
+    """
+    Gom cụm các span nằm trên cùng dòng (y-coordinate lệch < threshold_y)
+    để tạo câu đầy đủ ngữ cảnh cho AI và chèn tag ẩn [s:idx].
+    """
+    # Sắp xếp các span theo tọa độ top, sau đó left
+    spans_list.sort(key=lambda x: (x['top'], x['left']))
+    groups = []
+    current_group = []
+    
+    for span in spans_list:
+        if not current_group:
+            current_group.append(span)
+        else:
+            # So sánh độ lệch y của span hiện tại với span đầu tiên trong nhóm
+            if abs(span['top'] - current_group[0]['top']) < threshold_y:
+                current_group.append(span)
+            else:
+                groups.append(current_group)
+                current_group = [span]
+    if current_group:
+        groups.append(current_group)
+        
+    reconstructed_blocks = []
+    for g_idx, group in enumerate(groups):
+        # Sắp xếp lại theo left để đúng thứ tự chữ từ trái qua phải
+        group.sort(key=lambda x: x['left'])
+        text_parts = []
+        for s in group:
+            text_parts.append(f"[s:{s['index']}] {s['text']}")
+        reconstructed_blocks.append(" ".join(text_parts))
+    return reconstructed_blocks</code></pre>
+                        </div>
+
+                        <h4 style="margin-top: 1.25rem; color: var(--accent-emerald); font-size: 0.95rem; font-weight: 700;"><i class="fas fa-user-gear"></i> B. Tiến trình Dịch 3 Bước (Agentic Prompt Workflow)</h4>
+                        <div class="code-wrapper" style="margin-top: 0.5rem;">
+                            <pre><code># Step 1: Draft Phase (Dịch thô sát nghĩa)
+System_Prompt_1 = """
+You are a high-fidelity translator. Translate the technical text enclosed in &lt;input&gt; from English to Vietnamese.
+CRITICAL: Preserve the exactly indexed span placeholders [s:idx] at their corresponding translated positions.
+Do not translate or modify [s:idx]. Keep all markdown format intact.
+"""
+
+# Step 2: Refinement Phase (Đánh bóng văn phong)
+System_Prompt_2 = """
+You are a Senior IT Software Architect and Copywriter. Polish the following draft Vietnamese translation.
+Make it sound natural, flow beautifully, and use accurate industry-standard Vietnamese technical terminology.
+CRITICAL: You must NOT touch, change, or remove the [s:idx] placeholders. They must map 1-1 to the draft text.
+"""
+
+# Step 3: Semantic Alignment Check (Đối chiếu song hành)
+System_Prompt_3 = """
+You are a Semantic Alignment Auditor. Compare the original English text and polished Vietnamese translation.
+Identify if any placeholder [s:idx] is misplaced, or if there is any semantic shift.
+Output the final corrected Vietnamese translation, keeping all [s:idx] perfectly aligned.
+"""</code></pre>
+                        </div>
+
+                        <h4 style="margin-top: 1.25rem; color: var(--accent-blue); font-size: 0.95rem; font-weight: 700;"><i class="fas fa-book"></i> C. Cưỡng chế Bộ từ điển (Glossary Enforcement)</h4>
+                        <div class="code-wrapper" style="margin-top: 0.5rem;">
+                            <pre><code>Glossary Dict:
+  {
+    "Agentic AI": "Tác tử AI",
+    "DRY": "Nguyên lý DRY",
+    "few-shot": "học ít mẫu"
+  }
+Post-processing Regex:
+  pattern = re.compile(r'\b(Agentic AI|DRY|few-shot)\b', re.I)
+  # Cưỡng chế thay thế nếu AI dịch sai lệch trong chuỗi đích.</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Safeguard Specifications -->
+                    <div class="tech-card">
+                        <h2><i class="fas fa-shield-halved"></i> 4. Cơ chế Bẫy lỗi & Quality Gates (Safeguard Specs)</h2>
+                        <p>Thông số kỹ thuật và logic bẫy lỗi ở các trạm kiểm soát chất lượng:</p>
+
+                        <h4 style="margin-top: 1rem; color: var(--accent-orange); font-size: 0.95rem; font-weight: 700;"><i class="fas fa-traffic-light"></i> A. Điều kiện thông qua Trạm (Quality Gate Verification)</h4>
+                        <div class="code-wrapper" style="margin-top: 0.5rem;">
+                            <pre><code>Gate 1: Encoding Check
+  check_utf8(file) -> True/False
+  Lọc bỏ CSS pdftohtml rác: re.sub(r'#a0a0a0', '#ffffff', css)
+
+Gate 2: DOM Integrity Gate
+  len(source_spans) == len(target_spans)
+  Nếu lệch chỉ mục: Kích hoạt API Mismatch Fallback.
+
+Gate 3: Overlap Gate
+  For i in range(len(spans)-1):
+    If spans[i+1].top == spans[i].top:
+      Width_i = spans[i].left + spans[i].width
+      If Width_i &gt; spans[i+1].left:
+        Raise OverlapWarning(span[i], span[i+1])</code></pre>
+                        </div>
+
+                        <h4 style="margin-top: 1.25rem; color: var(--accent-purple); font-size: 0.95rem; font-weight: 700;"><i class="fas fa-arrows-split-up-and-left"></i> B. Thuật toán Phục hồi (Auto-Recovery Algorithms)</h4>
+                        <div class="code-wrapper" style="margin-top: 0.5rem;">
+                            <pre><code>Algorithm 1: Mismatch API Recovery
+  Input: translated_block (API gộp bằng &lt;hr&gt; bị mất thẻ phân tách)
+  Action:
+    1. Phát hiện: length_mismatch == True
+    2. Fallback: Hủy bỏ lô gộp, split thành các đoạn văn riêng lẻ.
+    3. Trả về: Dịch đơn lẻ từng đoạn một (Paragraph Fallback).
+
+Algorithm 2: Client Canvas Limit (Dynamic Font Shrink JS Client-side)
+  Input: container_height = 1188px
+  Mã nguồn JavaScript đo đạc bounding-box thực tế và co dãn chữ chống tràn trang di động:
+  ```javascript
+  function adjustFontSizeToFit(iframe, maxHeight = 1188, step = 0.02, minScale = 0.75) {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const body = doc.body;
+      
+      if (!body.style.fontSize) {
+          body.style.fontSize = "100%";
+      }
+      
+      let currentScale = 1.0;
+      
+      // Đo đạc tọa độ bottom lớn nhất thực tế của toàn bộ các thẻ absolute
+      function getAbsoluteBoundingBottom() {
+          let maxBottom = 0;
+          const elements = body.querySelectorAll('div, span, p');
+          elements.forEach(el => {
+              const rect = el.getBoundingClientRect();
+              const offsetTop = el.offsetTop || 0;
+              const height = el.offsetHeight || rect.height || 0;
+              const bottom = offsetTop + height;
+              if (bottom > maxBottom) {
+                  maxBottom = bottom;
+              }
+          });
+          return maxBottom;
+      }
+      
+      let realBottom = getAbsoluteBoundingBottom();
+      
+      // Co chữ động tuần tự nếu chiều cao vượt ngưỡng cho phép
+      while (realBottom > maxHeight && currentScale > minScale) {
+          currentScale -= step;
+          body.style.fontSize = `${currentScale * 100}%`;
+          
+          // Chạy lại thuật toán LSE để tái tính toán các dịch chuyển top
+          if (typeof window.applyLayoutShiftEngine === 'function') {
+              window.applyLayoutShiftEngine(doc);
+          }
+          
+          realBottom = getAbsoluteBoundingBottom();
+      }
+      
+      return {
+          finalBottom: realBottom,
+          fittedScale: currentScale,
+          overflowRecovered: realBottom <= maxHeight
+      };
+  }
+  ```</code></pre>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 5: Interactive Adjuster -->
+            <div class="tab-content" id="tab-adjuster">
+                <div class="adjuster-container">
+                    <div class="adjuster-header">
+                        <h2><i class="fas fa-sliders-h"></i> Trình điều phối Tương tác (Interactive Adjuster)</h2>
+                        <p>Cho phép bạn tự do điều chỉnh độ ưu tiên và thời lượng dự kiến cho từng giai đoạn triển khai để cá nhân hóa kế hoạch theo nhu cầu thực tế.</p>
+                    </div>
+
+                    <div class="adjuster-body">
+                        <!-- Adjuster 1 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 1 (DRY Symlink):</strong>
+                                <span class="days-val" id="days-val-1">1 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="1" class="days-slider" data-phase="1">
+                        </div>
+                        
+                        <!-- Adjuster 2 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 2 (Mobile UI):</strong>
+                                <span class="days-val" id="days-val-2">2 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="7" value="2" class="days-slider" data-phase="2">
+                        </div>
+
+                        <!-- Adjuster 3 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 3 (Gesture Engine):</strong>
+                                <span class="days-val" id="days-val-3">2 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="7" value="2" class="days-slider" data-phase="3">
+                        </div>
+
+                        <!-- Adjuster 4 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 4 (Layout Shift Engine):</strong>
+                                <span class="days-val" id="days-val-4">2 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="7" value="2" class="days-slider" data-phase="4">
+                        </div>
+
+                        <!-- Adjuster 5 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 5 (Safeguard Pipeline & HFE):</strong>
+                                <span class="days-val" id="days-val-5">2 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="7" value="2" class="days-slider" data-phase="5">
+                        </div>
+
+                        <!-- Adjuster 6 -->
+                        <div class="adjuster-row">
+                            <div class="row-label">
+                                <strong>Giai đoạn 6 (Integration & Test):</strong>
+                                <span class="days-val" id="days-val-6">1 ngày</span>
+                            </div>
+                            <input type="range" min="1" max="5" value="1" class="days-slider" data-phase="6">
+                        </div>
+                    </div>
+
+                    <div class="adjuster-footer">
+                        <div class="total-duration">Tổng thời lượng dự kiến: <span id="total-days">10 ngày</span></div>
+                        <button class="action-btn" id="export-plan-btn"><i class="fas fa-file-export"></i> Xuất cấu hình Kế hoạch (JSON)</button>
+                    </div>
+                    <div class="export-output-box" id="export-box" style="display:none;">
+                        <textarea id="json-output-text" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Smart Documentations System • Kế hoạch thiết lập với triết lý DRY, YAGNI và trải nghiệm Mobile tối cao.</p>
+    </footer>
+
+    <!-- Navigation Drawer (Hamburger Menu) -->
+    <div class="nav-drawer" id="nav-drawer">
+        <div class="drawer-glow"></div>
+        <div class="drawer-header">
+            <div class="logo">
+                <i class="fas fa-brain logo-icon"></i>
+                <span class="logo-text">Docs Explorer</span>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn" aria-label="Đóng Menu">&times;</button>
+        </div>
+        <nav class="drawer-links">
+            <div class="drawer-section-title">Hệ thống Tài liệu</div>
+            
+            <a href="../../index.html" class="drawer-link">
+                <i class="fas fa-home"></i>
+                <div>
+                    <h4>Bàn làm việc chính</h4>
+                    <p>Bảng điều khiển & Trình quản lý AI</p>
+                </div>
+            </a>
+            
+            <a href="#" class="drawer-link active" onclick="return false;">
+                <i class="fas fa-route"></i>
+                <div>
+                    <h4>Kế hoạch & SA gốc</h4>
+                    <p>Bản đồ kiến trúc & Lộ trình 6 bước</p>
+                </div>
+            </a>
+            
+            <a href="../frontend/index.html" class="drawer-link">
+                <i class="fas fa-mobile-alt"></i>
+                <div>
+                    <h4>Kế hoạch Frontend</h4>
+                    <p>Đặc tả Touch, Autoscale & LSE</p>
+                </div>
+            </a>
+            
+            <a href="../workflow/index.html" class="drawer-link">
+                <i class="fas fa-project-diagram"></i>
+                <div>
+                    <h4>Quy trình số hóa</h4>
+                    <p>Chuỗi 5 bước xử lý tuyệt đối</p>
+                </div>
+            </a>
+            
+            <a href="../backend/index.html" class="drawer-link">
+                <i class="fas fa-server"></i>
+                <div>
+                    <h4>API & Backend</h4>
+                    <p>Môi trường ảo & Thử nghiệm trực tiếp</p>
+                </div>
+            </a>
+
+            <div class="drawer-section-title">Mô-đun Tương lai</div>
+            
+            <a href="#" class="drawer-link disabled" onclick="return false;">
+                <i class="fas fa-file-circle-plus"></i>
+                <div>
+                    <h4>Thêm tài liệu mới</h4>
+                    <p>Tự động tích hợp sau khi biên dịch</p>
+                </div>
+            </a>
+        </nav>
+        <div class="drawer-footer">
+            <p>&copy; 2026 Smart Documentations System</p>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- Interactive Script -->
+    <script src="app.js"></script>
+</body>
+</html>

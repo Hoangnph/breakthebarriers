@@ -1,0 +1,23 @@
+{
+  "0": "Tóm tắt trực quan:",
+  "1": "Hình 2: Goal design patterns",
+  "2": "Các điểm chính",
+  "3": "Các điểm chính bao gồm:",
+  "4": "",
+  "5": "Goal Setting and Monitoring trang bị cho agent mục đích và cơ chế để",
+  "6": "theo dõi tiến độ.",
+  "7": "",
+  "8": "Goal nên cụ thể, đo lường được, khả thi, phù hợp, và có giới hạn thời gian",
+  "9": "(SMART).",
+  "10": "",
+  "11": "Định nghĩa rõ metric và tiêu chí thành công là điều thiết yếu để monitoring hiệu quả.",
+  "12": "",
+  "13": "Monitoring bao gồm quan sát hành động của agent, trạng thái môi trường, và output của tool",
+  "14": ".",
+  "15": "",
+  "16": "Feedback loop từ monitoring cho phép agent thích nghi, sửa plan, hoặc escalate",
+  "17": "vấn đề.",
+  "18": "",
+  "19": "Trong ADK của Google, goal thường được truyền đạt thông qua instruction của agent, với",
+  "20": "12"
+}

@@ -1,0 +1,22 @@
+{
+  "0": "Hình 3: Các ví dụ khác nhau chứng minh phổ độ phức tạp của tác tử (agent).",
+  "1": "Cấp độ 3: Sự Trỗi Dậy của Các Hệ Thống Multi-Agent Cộng Tác",
+  "2": "Ở Cấp độ 3, chúng ta thấy một sự thay đổi mô hình đáng kể trong phát triển AI, tránh xa việc",
+  "3": "theo đuổi một siêu-tác-tử (super-agent) toàn năng duy nhất và hướng tới sự trỗi dậy của các hệ thống",
+  "4": "đa tác tử (multi-agent) cộng tác, tinh vi. Về bản chất, cách tiếp cận này nhận ra rằng những thách thức",
+  "5": "phức tạp thường được giải quyết tốt nhất không phải bởi một chuyên gia tổng quát duy nhất, mà bởi một nhóm các chuyên gia",
+  "6": "làm việc phối hợp với nhau. Mô hình này phản chiếu trực tiếp cấu trúc của một tổ chức con người,",
+  "7": "nơi các phòng ban khác nhau được giao những vai trò cụ thể và hợp tác để giải quyết",
+  "8": "các mục tiêu đa diện. Sức mạnh tập thể của một hệ thống như vậy nằm ở sự phân chia",
+  "9": "lao động này và sức mạnh tổng hợp được tạo ra thông qua nỗ lực phối hợp. Để biết thông tin chi tiết, vui lòng tham khảo",
+  "10": "Chương 7.",
+  "11": "Để hiện thực hóa khái niệm này, hãy xem xét quy trình làm việc phức tạp của việc ra mắt một sản phẩm mới.",
+  "12": "Thay vì một agent cố gắng xử lý mọi khía cạnh, một agent \"Quản Lý Dự Án\"",
+  "13": "có thể đóng vai trò là điều phối viên trung tâm. Người quản lý này sẽ điều phối toàn bộ",
+  "14": "quy trình bằng cách giao nhiệm vụ cho các agent chuyên biệt khác: một agent \"Nghiên Cứu Thị Trường\" để",
+  "15": "thu thập dữ liệu người tiêu dùng, một agent \"Thiết Kế Sản Phẩm\" để phát triển các ý tưởng, và một",
+  "16": "agent \"Tiếp Thị\" để tạo ra các tài liệu quảng cáo. Chìa khóa thành công của họ sẽ là sự",
+  "17": "giao tiếp và chia sẻ thông tin liền mạch giữa họ, đảm bảo tất cả những nỗ lực",
+  "18": "cá nhân đều đồng bộ để đạt được mục tiêu chung.",
+  "19": "5"
+}

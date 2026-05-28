@@ -1,0 +1,19 @@
+{
+  "0": "Fig.1: Memory management design pattern",
+  "1": "Key Takeaways",
+  "2": "To quickly recap the main points about memory management:",
+  "3": "",
+  "4": "Memory is super important for agents to keep track of things, learn, and",
+  "5": "personalize interactions.",
+  "6": "",
+  "7": "Conversational AI relies on both short-term memory for immediate context within",
+  "8": "a single chat and long-term memory for persistent knowledge across multiple",
+  "9": "sessions.",
+  "10": "",
+  "11": "Short-term memory (the immediate stuff) is temporary, often limited by the LLM's",
+  "12": "context window or how the framework passes context.",
+  "13": "",
+  "14": "Long-term memory (the stuff that sticks around) saves info across different chats",
+  "15": "using outside storage like vector databases and is accessed by searching.",
+  "16": "20"
+}

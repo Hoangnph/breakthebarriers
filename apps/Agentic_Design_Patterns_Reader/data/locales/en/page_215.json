@@ -1,0 +1,19 @@
+{
+  "0": "recognize that they refer to the same thing and would consider them to be highly",
+  "1": "similar. This is because their embeddings would be very close in the vector space,",
+  "2": "indicating a small semantic distance. This is the \"smart search\" that allows RAG to find",
+  "3": "relevant information even when the user's wording doesn't exactly match the text in",
+  "4": "the knowledge base.",
+  "5": "Fig.1: RAG Core Concepts: Chunking, Embeddings, and Vector Database",
+  "6": "Chunking of Documents: Chunking is the process of breaking down large",
+  "7": "documents into smaller, more manageable pieces, or \"chunks.\" For a RAG system to",
+  "8": "work efficiently, it cannot feed entire large documents into the LLM. Instead, it",
+  "9": "processes these smaller chunks. The way documents are chunked is important for",
+  "10": "preserving the context and meaning of the information. For instance, instead of",
+  "11": "treating a 50-page user manual as a single block of text, a chunking strategy might",
+  "12": "break it down into sections, paragraphs, or even sentences. For instance, a section on",
+  "13": "\"Troubleshooting\" would be a separate chunk from the \"Installation Guide.\" When a",
+  "14": "user asks a question about a specific problem, the RAG system can then retrieve the",
+  "15": "most relevant troubleshooting chunk, rather than the entire manual. This makes the",
+  "16": "3"
+}

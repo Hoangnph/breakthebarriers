@@ -1,0 +1,22 @@
+{
+  "0": "format. The LangChain Expression Language (LCEL) is used to elegantly chain these prompts",
+  "1": "and the language model together. The first chain, extraction_chain, extracts the specifications.",
+  "2": "The full_chain then takes the output of the extraction and uses it as input for the transformation",
+  "3": "prompt. A sample input text describing a laptop is provided. The full_chain is invoked with this",
+  "4": "text, processing it through both steps. The final result, a JSON string containing the extracted",
+  "5": "and formatted specifications, is then printed.",
+  "6": "Context Engineering and Prompt Engineering",
+  "7": "Context Engineering (see Fig.1) is the systematic discipline of designing, constructing,",
+  "8": "and delivering a complete informational environment to an AI model prior to token",
+  "9": "generation. This methodology asserts that the quality of a model's output is less",
+  "10": "dependent on the model's architecture itself and more on the richness of the context",
+  "11": "provided.",
+  "12": "Fig.1: Context Engineering is the discipline of building a rich, comprehensive",
+  "13": "informational environment for an AI, as the quality of this context is a primary factor in",
+  "14": "enabling advanced Agentic performance.",
+  "15": "It represents a significant evolution from traditional prompt engineering, which focuses",
+  "16": "primarily on optimizing the phrasing of a user's immediate query. Context Engineering",
+  "17": "expands this scope to include several layers of information, such as the system",
+  "18": "prompt, which is a foundational set of instructions defining the AI's operational",
+  "19": "9"
+}

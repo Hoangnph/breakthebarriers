@@ -1,0 +1,20 @@
+{
+  "0": "6",
+  "1": "hoàn thiện câu trả lời. Quá trình lặp đi lặp lại này nâng cao khả năng xử lý của model",
+  "2": "các nhiệm vụ khó đòi hỏi lập kế hoạch chiến lược và ra quyết định.",
+  "3": "Hình 2: Ví dụ về Tree of Thoughts",
+  "4": "Tự sửa lỗi, còn được gọi là tự tinh chỉnh, là một khía cạnh quan trọng của quy trình",
+  "5": "lập luận của agent, đặc biệt trong prompting Chain-of-Thought. Nó liên quan đến",
+  "6": "việc đánh giá nội bộ của agent về nội dung được tạo ra và các quy trình suy nghĩ trung gian.",
+  "7": "Việc xem xét phê bình này cho phép agent xác định các mơ hồ, khoảng trống thông tin,",
+  "8": "hoặc sự không chính xác trong sự hiểu biết hoặc giải pháp của nó. Chu kỳ lặp đi lặp lại này của xem xét",
+  "9": "và tinh chỉnh cho phép agent điều chỉnh cách tiếp cận của nó, cải thiện chất lượng phản hồi, và",
+  "10": "đảm bảo độ chính xác và tính toàn diện trước khi cung cấp đầu ra cuối cùng. Sự phê bình nội bộ này",
+  "11": "nâng cao năng lực của agent để tạo ra kết quả đáng tin cậy và chất lượng cao, như",
+  "12": "được minh họa trong các ví dụ trong Chương 4 chuyên biệt.",
+  "13": "Ví dụ này minh họa một quy trình tự sửa lỗi có hệ thống, quan trọng cho",
+  "14": "việc tinh chỉnh nội dung do AI tạo ra. Nó liên quan đến một vòng lặp lặp đi lặp lại của soạn thảo, xem xét",
+  "15": "theo các yêu cầu gốc, và triển khai các cải tiến cụ thể. Minh họa",
+  "16": "bắt đầu bằng cách phác thảo chức năng của AI như một \"Self-Correction Agent\" với",
+  "17": "6"
+}

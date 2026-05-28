@@ -1,0 +1,21 @@
+{
+  "0": "Kỹ Thuật Căn Chỉnh & An Toàn:",
+  "1": "Căn chỉnh là quá trình đảm bảo hành vi",
+  "2": "của mô hình AI phù hợp với giá trị",
+  "3": "và kỳ vọng con người, làm cho nó hữu ích và vô hại.",
+  "4": "Kỹ thuật nổi bật nhất là",
+  "5": "Học Tăng Cường từ Phản Hồi Con Người",
+  "6": "(RLHF), nơi một \"mô hình phần thưởng\"",
+  "7": "được đào tạo dựa trên sở thích của con người",
+  "8": "hướng dẫn quá trình học của AI,",
+  "9": "thường sử dụng thuật toán như",
+  "10": "Tối Ưu Hóa Chính Sách Gần (PPO) để ổn định.",
+  "11": "Các giải pháp thay thế đơn giản hơn đã xuất hiện, như",
+  "12": "Tối Ưu Hóa Sở Thích Trực Tiếp (DPO),",
+  "13": "bỏ qua nhu cầu cho một mô hình phần thưởng riêng biệt,",
+  "14": "và Tối Ưu Hóa Kahneman-Tversky (KTO), đơn giản hóa thu thập dữ liệu hơn nữa.",
+  "15": "Để đảm bảo triển khai an toàn,",
+  "16": "",
+  "17": "",
+  "18": "12"
+}

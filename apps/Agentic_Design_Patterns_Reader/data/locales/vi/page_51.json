@@ -1,0 +1,17 @@
+{
+  "0": "được thiết kế với các hoạt động bất đồng bộ trong tâm trí, cho phép bạn dễ dàng xác định các bước",
+  "1": "có thể chạy song song.",
+  "2": "Hình 1. Ví dụ về song song hóa với các agent con",
+  "3": "Các framework như LangChain, LangGraph, và Google ADK cung cấp các cơ chế cho",
+  "4": "việc thực thi song song. Trong LangChain Expression Language (LCEL), bạn có thể đạt được",
+  "5": "sự thực thi song song bằng cách kết hợp các đối tượng runnable bằng cách sử dụng các toán tử như | (cho tuần tự)",
+  "6": "và bằng cách cấu trúc các chuỗi hoặc đồ thị của bạn để có các nhánh thực thi đồng thời.",
+  "7": "LangGraph, với cấu trúc đồ thị của nó, cho phép bạn xác định nhiều nút có thể được",
+  "8": "thực thi từ một quá trình chuyển đổi trạng thái duy nhất, cho phép các nhánh song song một cách hiệu quả trong",
+  "9": "luồng công việc. Google ADK cung cấp các cơ chế mạnh mẽ, gốc (native) để hỗ trợ và quản lý",
+  "10": "việc thực thi song song của các agent, nâng cao đáng kể hiệu quả và khả năng mở rộng",
+  "11": "của các hệ thống đa tác tử phức tạp. Khả năng vốn có này trong framework ADK",
+  "12": "cho phép các nhà phát triển thiết kế và triển khai các giải pháp mà nhiều agent có thể",
+  "13": "hoạt động đồng thời, thay vì tuần tự.",
+  "14": "2"
+}

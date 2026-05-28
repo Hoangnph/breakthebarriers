@@ -1,0 +1,106 @@
+<h2>Design — Section 1: Kiến trúc tổng thể</h2>
+<p class="subtitle">Hybrid Adaptive Pipeline — xem và cho biết ổn không trước khi đi tiếp</p>
+
+<div class="section">
+  <!-- New flow diagram -->
+  <div style="font-size:12px; line-height:1.8;">
+
+    <!-- Row 1: Upload + Volume Detect -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <div style="background:rgba(99,102,241,0.2); border-radius:8px; padding:10px 16px; min-width:130px; text-align:center;">
+        <div style="color:#a5b4fc; font-weight:600;">📄 Upload</div>
+        <div style="color:#64748b; font-size:11px;">POST /upload</div>
+      </div>
+      <div style="color:#475569;">→</div>
+      <div style="background:rgba(16,185,129,0.2); border-radius:8px; padding:10px 16px; min-width:160px; text-align:center; border:1px solid rgba(16,185,129,0.3);">
+        <div style="color:#34d399; font-weight:600;">🆕 Volume Detector</div>
+        <div style="color:#64748b; font-size:11px;">tier · tokens · cost · quality</div>
+      </div>
+      <div style="color:#475569;">→</div>
+      <div style="background:rgba(30,41,59,0.8); border-radius:8px; padding:10px 16px; min-width:130px; text-align:center;">
+        <div style="color:#e2e8f0; font-weight:600;">VolumeProfile</div>
+        <div style="color:#64748b; font-size:11px;">saved to DB</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Branch -->
+    <div style="display:flex; gap:16px; margin-bottom:12px; margin-left:30px;">
+      <div style="width:2px; background:rgba(99,102,241,0.3); margin-left:60px;"></div>
+      <div style="color:#64748b; font-size:11px; padding-top:4px;">route by tier ↓</div>
+    </div>
+
+    <!-- Row 3: Two paths -->
+    <div style="display:grid; grid-template-columns:1fr 24px 1fr; gap:0; margin-bottom:12px;">
+
+      <!-- Left path: S/M -->
+      <div style="background:rgba(99,102,241,0.08); border-radius:10px; padding:14px; border:1px solid rgba(99,102,241,0.2);">
+        <div style="color:#a5b4fc; font-weight:600; margin-bottom:8px;">S / M  (≤200 trang)</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:11px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(99,102,241,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">asyncio Semaphore</div>
+            <span style="color:#64748b;">pool tuned per tier</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(99,102,241,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">SSE Progress</div>
+            <span style="color:#64748b;">GET /progress stream</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(99,102,241,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">PostgreSQL job table</div>
+            <span style="color:#64748b;">retry + status</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:center; color:#475569; font-size:18px;">⟷</div>
+
+      <!-- Right path: L/XL -->
+      <div style="background:rgba(251,146,60,0.08); border-radius:10px; padding:14px; border:1px solid rgba(251,146,60,0.2);">
+        <div style="color:#fb923c; font-weight:600; margin-bottom:8px;">L / XL  (200+ trang)</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:11px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(251,146,60,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">Celery Workers</div>
+            <span style="color:#64748b;">priority queues</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(251,146,60,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">Redis Broker</div>
+            <span style="color:#64748b;">dead-letter queue</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="background:rgba(251,146,60,0.2); border-radius:4px; padding:4px 8px; white-space:nowrap;">Checkpoint Resume</div>
+            <span style="color:#64748b;">restart từ page dở</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Shared modules -->
+    <div style="background:rgba(30,41,59,0.6); border-radius:10px; padding:12px 16px; border:1px solid rgba(255,255,255,0.06);">
+      <div style="color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;">Shared across cả 2 paths</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:11px;">
+        <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:4px;">🆕 Quality Tier Engine  (fast/balanced/high)</span>
+        <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:4px;">🆕 Cost Estimator</span>
+        <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:4px;">🆕 translate-all endpoint</span>
+        <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:4px;">🆕 google.genai migration</span>
+        <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:4px;">♻️ main.py → routers/</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="label">Section này ổn không?</p>
+<div class="options">
+  <div class="option" data-choice="ok" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Ổn, xem section tiếp theo</h3>
+      <p>Data model + API mới + file structure refactor</p>
+    </div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Cần điều chỉnh</h3>
+      <p>Nói cho tôi biết cần thay đổi gì trong terminal</p>
+    </div>
+  </div>
+</div>

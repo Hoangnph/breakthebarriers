@@ -1,0 +1,19 @@
+{
+  "0": "Recurrent Neural Network (RNN): The",
+  "1": "Recurrent Neural Network is a",
+  "2": "foundational architecture that preceded",
+  "3": "the Transformer. RNNs process",
+  "4": "information sequentially, using loops to",
+  "5": "maintain a \"memory\" of previous inputs,",
+  "6": "which made them suitable for tasks like",
+  "7": "text and speech processing.",
+  "8": "Mixture of Experts (MoE): Mixture of",
+  "9": "Experts is an efficient model architecture",
+  "10": "where a \"router\" network dynamically",
+  "11": "selects a small subset of \"expert\"",
+  "12": "networks to handle any given input. This",
+  "13": "allows models to have a massive",
+  "14": "number of parameters while keeping",
+  "15": "computational costs manageable.",
+  "16": "5"
+}

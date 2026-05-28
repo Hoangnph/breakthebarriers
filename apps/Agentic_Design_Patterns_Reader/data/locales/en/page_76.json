@@ -1,0 +1,18 @@
+{
+  "0": "Fig.2: Reflection design pattern, producer and critique agent",
+  "1": "Key Takeaways",
+  "2": "",
+  "3": "The primary advantage of the Reflection pattern is its ability to iteratively",
+  "4": "self-correct and refine outputs, leading to significantly higher quality, accuracy,",
+  "5": "and adherence to complex instructions.",
+  "6": "",
+  "7": "It involves a feedback loop of execution, evaluation/critique, and refinement.",
+  "8": "Reflection is essential for tasks requiring high-quality, accurate, or nuanced",
+  "9": "outputs.",
+  "10": "",
+  "11": "A powerful implementation is the Producer-Critic model, where a separate",
+  "12": "agent (or prompted role) evaluates the initial output. This separation of",
+  "13": "concerns enhances objectivity and allows for more specialized, structured",
+  "14": "feedback.",
+  "15": "12"
+}

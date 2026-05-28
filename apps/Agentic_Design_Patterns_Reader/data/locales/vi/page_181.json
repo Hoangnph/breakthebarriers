@@ -1,0 +1,21 @@
+{
+  "0": "Tóm tắt trực quan",
+  "1": "Hình 1: Model Context protocol",
+  "2": "Các điểm chính",
+  "3": "Đây là các điểm chính:",
+  "4": "",
+  "5": "Model Context Protocol (MCP) là một chuẩn mở hỗ trợ giao tiếp chuẩn hóa",
+  "6": "giữa LLM và ứng dụng bên ngoài, nguồn dữ liệu, và tool.",
+  "7": "",
+  "8": "Nó sử dụng kiến trúc client-server, định nghĩa các phương thức để expose và",
+  "9": "consume resource, prompt, và tool.",
+  "10": "",
+  "11": "Agent Development Kit (ADK) hỗ trợ cả việc sử dụng MCP server hiện có",
+  "12": "lẫn expose ADK tool thông qua một MCP server.",
+  "13": "",
+  "14": "FastMCP đơn giản hóa việc phát triển và quản lý MCP server,",
+  "15": "đặc biệt khi expose các tool được triển khai bằng Python.",
+  "16": "",
+  "17": "MCP Tools for Genmedia Services cho phép agent tích hợp với các năng lực",
+  "18": "15"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Visual summary",
+  "1": "Fig.1: Model Context protocol",
+  "2": "Key Takeaways",
+  "3": "These are the key takeaways:",
+  "4": "",
+  "5": "The Model Context Protocol (MCP) is an open standard facilitating standardized",
+  "6": "communication between LLMs and external applications, data sources, and tools.",
+  "7": "",
+  "8": "It employs a client-server architecture, defining the methods for exposing and",
+  "9": "consuming resources, prompts, and tools.",
+  "10": "",
+  "11": "The Agent Development Kit (ADK) supports both utilizing existing MCP servers",
+  "12": "and exposing ADK tools via an MCP server.",
+  "13": "",
+  "14": "FastMCP simplifies the development and management of MCP servers,",
+  "15": "particularly for exposing tools implemented in Python.",
+  "16": "",
+  "17": "MCP Tools for Genmedia Services allows agents to integrate with Google Cloud's",
+  "18": "15"
+}

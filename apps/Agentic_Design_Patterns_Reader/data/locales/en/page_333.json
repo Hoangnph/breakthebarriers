@@ -1,0 +1,21 @@
+{
+  "0": "Rule of thumb: Use the Prioritization pattern when an Agentic system must",
+  "1": "autonomously manage multiple, often conflicting, tasks or goals under resource",
+  "2": "constraints to operate effectively in a dynamic environment.",
+  "3": "Visual summary:",
+  "4": "Fig.1: Prioritization Design pattern",
+  "5": "Key Takeaways",
+  "6": "",
+  "7": "Prioritization enables AI agents to function effectively in complex, multi-faceted",
+  "8": "environments.",
+  "9": "",
+  "10": "Agents utilize established criteria such as urgency, importance, and",
+  "11": "dependencies to evaluate and rank tasks.",
+  "12": "",
+  "13": "Dynamic re-prioritization allows agents to adjust their operational focus in",
+  "14": "response to real-time changes.",
+  "15": "",
+  "16": "Prioritization occurs at various levels, encompassing overarching strategic",
+  "17": "objectives and immediate tactical decisions.",
+  "18": "9"
+}

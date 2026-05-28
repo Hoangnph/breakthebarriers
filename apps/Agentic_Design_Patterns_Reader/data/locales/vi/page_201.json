@@ -1,0 +1,19 @@
+{
+  "0": "trở ngại. Sự thiếu tin cậy này khiến việc triển khai chúng trong các ứng dụng quan trọng hoặc phức tạp",
+  "1": "nơi hiệu năng nhất quán là thiết yếu trở nên khó khăn.",
+  "2": "Why: Pattern Exception Handling and Recovery cung cấp một giải pháp chuẩn hóa",
+  "3": "để xây dựng AI agent robust và resilient. Nó trang bị cho chúng năng lực agentic để",
+  "4": "dự đoán, quản lý, và phục hồi từ failure vận hành. Pattern này bao gồm",
+  "5": "phát hiện lỗi chủ động, chẳng hạn monitoring output của tool và response API, và",
+  "6": "các chiến lược xử lý phản ứng như logging để diagnostic, retry failure tạm thời, hoặc",
+  "7": "dùng cơ chế fallback. Với vấn đề nghiêm trọng hơn, nó định nghĩa protocol recovery,",
+  "8": "bao gồm quay về trạng thái ổn định, self-correction bằng cách điều chỉnh plan, hoặc escalate",
+  "9": "vấn đề cho operator con người. Cách tiếp cận có hệ thống này đảm bảo agent có thể",
+  "10": "duy trì tính toàn vẹn vận hành, học từ failure, và hoạt động đáng tin cậy trong",
+  "11": "bối cảnh khó đoán.",
+  "12": "Rule of thumb: Dùng pattern này cho bất kỳ AI agent nào được triển khai trong môi trường thực tế động",
+  "13": "nơi system failure, tool error, network issue, hoặc input khó đoán",
+  "14": "có thể xảy ra và độ tin cậy vận hành là một yêu cầu chính.",
+  "15": "Tóm tắt trực quan",
+  "16": "6"
+}

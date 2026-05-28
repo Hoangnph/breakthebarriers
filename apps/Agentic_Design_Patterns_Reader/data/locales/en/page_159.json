@@ -1,0 +1,23 @@
+{
+  "0": "Fig.2 : Performance across iterations. Key improvements are annotated with their",
+  "1": "corresponding tool or agent modifications. (courtesy of Maxime Robeyns , Martin",
+  "2": "Szummer , Laurence Aitchison)",
+  "3": "SICA's architecture comprises a foundational toolkit for basic file operations,",
+  "4": "command execution, and arithmetic calculations. It includes mechanisms for result",
+  "5": "submission and the invocation of specialized sub-agents (coding, problem-solving,",
+  "6": "and reasoning). These sub-agents decompose complex tasks and manage the LLM's",
+  "7": "context length, especially during extended improvement cycles.",
+  "8": "An asynchronous overseer, another LLM, monitors SICA's behavior, identifying",
+  "9": "potential issues such as loops or stagnation. It communicates with SICA and can",
+  "10": "intervene to halt execution if necessary. The overseer receives a detailed report of",
+  "11": "SICA's actions, including a callgraph and a log of messages and tool actions, to",
+  "12": "identify patterns and inefficiencies.",
+  "13": "SICA's LLM organizes information within its context window, its short-term memory, in",
+  "14": "a structured manner crucial to its operation. This structure includes a System Prompt",
+  "15": "defining agent goals, tool and sub-agent documentation, and system instructions. A",
+  "16": "Core Prompt contains the problem statement or instruction, content of open files, and",
+  "17": "a directory map. Assistant Messages record the agent's step-by-step reasoning, tool",
+  "18": "and sub-agent call records and results, and overseer communications. This",
+  "19": "organization facilitates efficient information flow, enhancing LLM operation and",
+  "20": "6"
+}

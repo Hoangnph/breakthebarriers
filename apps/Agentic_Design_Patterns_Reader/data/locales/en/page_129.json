@@ -1,0 +1,19 @@
+{
+  "0": "result, tackling sophisticated, multi-domain objectives becomes inefficient and can",
+  "1": "lead to incomplete or suboptimal outcomes.",
+  "2": "Why: The Multi-Agent Collaboration pattern offers a standardized solution by creating",
+  "3": "a system of multiple, cooperating agents. A complex problem is broken down into",
+  "4": "smaller, more manageable sub-problems. Each sub-problem is then assigned to a",
+  "5": "specialized agent with the precise tools and capabilities required to solve it. These",
+  "6": "agents work together through defined communication protocols and interaction",
+  "7": "models like sequential handoffs, parallel workstreams, or hierarchical delegation. This",
+  "8": "agentic, distributed approach creates a synergistic effect, allowing the group to",
+  "9": "achieve outcomes that would be impossible for any single agent.",
+  "10": "Rule of thumb: Use this pattern when a task is too complex for a single agent and can",
+  "11": "be decomposed into distinct sub-tasks requiring specialized skills or tools. It is ideal",
+  "12": "for problems that benefit from diverse expertise, parallel processing, or a structured",
+  "13": "workflow with multiple stages, such as complex research and analysis, software",
+  "14": "development, or creative content generation.",
+  "15": "Visual summary",
+  "16": "17"
+}

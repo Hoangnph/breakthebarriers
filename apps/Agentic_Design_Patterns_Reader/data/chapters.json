@@ -1,0 +1,82 @@
+[
+  {
+    "title": "Front Matter",
+    "title_vi": "Phần mở đầu",
+    "pages": [
+      {"page": 1, "title": "Cover", "title_vi": "Trang bìa"},
+      {"page": 2, "title": "Title Page", "title_vi": "Trang tên sách"},
+      {"page": 3, "title": "Dedication", "title_vi": "Lời đề tặng"},
+      {"page": 4, "title": "Acknowledgement", "title_vi": "Lời cảm ơn"},
+      {"page": 7, "title": "Foreword", "title_vi": "Lời tựa"},
+      {"page": 8, "title": "A Thought Leader's Perspective", "title_vi": "Góc nhìn của chuyên gia: Quyền lực và Trách nhiệm"},
+      {"page": 10, "title": "Preface", "title_vi": "Lời nói đầu"},
+      {"page": 12, "title": "Introduction", "title_vi": "Giới thiệu"},
+      {"page": 14, "title": "What makes an AI system an \"agent\"?", "title_vi": "Điều gì tạo nên một hệ thống AI \"Tác nhân\"?"}
+    ]
+  },
+  {
+    "title": "Part One",
+    "title_vi": "Phần Một",
+    "pages": [
+      {"page": 21, "title": "Part One: Core Patterns", "title_vi": "Phần Một: Các mẫu cốt lõi"},
+      {"page": 23, "title": "Chapter 1: Prompt Chaining", "title_vi": "Chương 1: Chuỗi nhắc (Prompt Chaining)"},
+      {"page": 36, "title": "Chapter 2: Routing", "title_vi": "Chương 2: Định tuyến (Routing)"},
+      {"page": 50, "title": "Chapter 3: Parallelization", "title_vi": "Chương 3: Song song hóa (Parallelization)"},
+      {"page": 65, "title": "Chapter 4: Reflection", "title_vi": "Chương 4: Tự phản hồi/Phản tỉnh (Reflection)"},
+      {"page": 79, "title": "Chapter 5: Tool Use", "title_vi": "Chương 5: Sử dụng công cụ (Tool Use)"},
+      {"page": 100, "title": "Chapter 6: Planning", "title_vi": "Chương 6: Lập kế hoạch (Planning)"},
+      {"page": 113, "title": "Chapter 7: Multi-Agent Collaboration", "title_vi": "Chương 7: Cộng tác đa tác nhân (Multi-Agent)"}
+    ]
+  },
+  {
+    "title": "Part Two",
+    "title_vi": "Phần Hai",
+    "pages": [
+      {"page": 130, "title": "Part Two: Memory & Adaptation", "title_vi": "Phần Hai: Bộ nhớ & Thích ứng"},
+      {"page": 132, "title": "Chapter 8: Memory Management", "title_vi": "Chương 8: Quản lý bộ nhớ (Memory)"},
+      {"page": 154, "title": "Chapter 9: Learning and Adaptation", "title_vi": "Chương 9: Học tập và Thích ứng (Learning)"},
+      {"page": 167, "title": "Chapter 10: Model Context Protocol", "title_vi": "Chương 10: Giao thức ngữ cảnh mô hình (MCP)"},
+      {"page": 183, "title": "Chapter 11: Goal Setting and Monitoring", "title_vi": "Chương 11: Thiết lập mục tiêu và Giám sát"}
+    ]
+  },
+  {
+    "title": "Part Three",
+    "title_vi": "Phần Ba",
+    "pages": [
+      {"page": 195, "title": "Part Three: Interaction & Exception Patterns", "title_vi": "Phần Ba: Mẫu tương tác & Ngoại lệ"},
+      {"page": 196, "title": "Chapter 12: Exception Handling and Recovery", "title_vi": "Chương 12: Xử lý ngoại lệ và Phục hồi"},
+      {"page": 204, "title": "Chapter 13: Human-in-the-Loop", "title_vi": "Chương 13: Con người tham gia giám sát (HITL)"},
+      {"page": 213, "title": "Chapter 14: Knowledge Retrieval (RAG)", "title_vi": "Chương 14: Truy xuất tri thức (RAG)"}
+    ]
+  },
+  {
+    "title": "Part Four",
+    "title_vi": "Phần Bốn",
+    "pages": [
+      {"page": 230, "title": "Part Four: Advanced Communication & Guardrails", "title_vi": "Phần Bốn: Giao tiếp nâng cao & Rào chắn"},
+      {"page": 231, "title": "Chapter 15: Inter-Agent Communication", "title_vi": "Chương 15: Giao tiếp giữa các tác nhân (A2A)"},
+      {"page": 246, "title": "Chapter 16: Resource-Aware Optimization", "title_vi": "Chương 16: Tối ưu hóa nhận biết tài nguyên"},
+      {"page": 262, "title": "Chapter 17: Reasoning Techniques", "title_vi": "Chương 17: Kỹ thuật lập luận (Reasoning)"},
+      {"page": 286, "title": "Chapter 18: Guardrails/Safety Patterns", "title_vi": "Chương 18: Rào chắn bảo vệ và Mẫu an toàn"},
+      {"page": 306, "title": "Chapter 19: Evaluation and Monitoring", "title_vi": "Chương 19: Đánh giá và Giám sát"},
+      {"page": 325, "title": "Chapter 20: Prioritization", "title_vi": "Chương 20: Phân bổ thứ tự ưu tiên"},
+      {"page": 335, "title": "Chapter 21: Exploration and Discovery", "title_vi": "Chương 21: Khám phá và Phát hiện"}
+    ]
+  },
+  {
+    "title": "Appendix & Back Matter",
+    "title_vi": "Phụ lục & Phần kết",
+    "pages": [
+      {"page": 348, "title": "Appendix: Introduction to Prompting", "title_vi": "Phụ lục: Giới thiệu về Prompting"},
+      {"page": 349, "title": "Appendix A: Advanced Prompting Techniques", "title_vi": "Phụ lục A: Kỹ thuật viết prompt nâng cao"},
+      {"page": 378, "title": "Appendix B: AI Agentic Interactions (GUI to Real World)", "title_vi": "Phụ lục B: Tương tác tác nhân AI (GUI đến thực tế)"},
+      {"page": 385, "title": "Appendix C: Quick overview of Agentic Frameworks", "title_vi": "Phụ lục C: Tổng quan nhanh về các khung tác nhân"},
+      {"page": 393, "title": "Appendix D: Building an Agent with AgentSpace", "title_vi": "Phụ lục D: Xây dựng tác nhân với AgentSpace"},
+      {"page": 399, "title": "Appendix E: AI Agents on the CLI", "title_vi": "Phụ lục E: Tác nhân AI trên dòng lệnh (CLI)"},
+      {"page": 404, "title": "Appendix G: Coding Agents", "title_vi": "Phụ lục G: Tác nhân lập trình (Coding Agents)"},
+      {"page": 416, "title": "Conclusion", "title_vi": "Kết luận"},
+      {"page": 421, "title": "Glossary", "title_vi": "Thuật ngữ giải nghĩa"},
+      {"page": 437, "title": "Index of Terms", "title_vi": "Chỉ mục từ khóa"}
+    ]
+  }
+]

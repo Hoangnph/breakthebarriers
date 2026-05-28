@@ -1,0 +1,20 @@
+{
+  "0": "Diffusion Models: Diffusion models are",
+  "1": "generative models that excel at creating",
+  "2": "high-quality images. They work by",
+  "3": "adding random noise to data and then",
+  "4": "training a model to meticulously reverse",
+  "5": "the process, allowing them to generate",
+  "6": "novel data from a random starting point.",
+  "7": "Mamba: Mamba is a recent AI",
+  "8": "architecture using a Selective State",
+  "9": "Space Model (SSM) to process",
+  "10": "sequences with high efficiency,",
+  "11": "especially for very long contexts. Its",
+  "12": "selective mechanism allows it to focus",
+  "13": "on relevant information while filtering out",
+  "14": "noise, making it a potential alternative to",
+  "15": "the Transformer.",
+  "16": "The LLM Development Lifecycle",
+  "17": "6"
+}

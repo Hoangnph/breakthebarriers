@@ -1,0 +1,18 @@
+{
+  "0": "bảo trì cao hơn nhiều. Tóm lại, nó vượt trội ở nơi insight sâu, có tính liên kết",
+  "1": "quan trọng hơn tốc độ và sự đơn giản của RAG tiêu chuẩn.",
+  "2": "Agentic RAG: Một bước tiến hóa của pattern này, gọi là Agentic RAG (xem Hình 2),",
+  "3": "đưa vào một lớp reasoning và decision-making để nâng cao đáng kể",
+  "4": "độ tin cậy của việc trích xuất thông tin. Thay vì chỉ retrieval và augmentation, một",
+  "5": "\"agent\" - một thành phần AI chuyên biệt - đóng vai trò gatekeeper và bộ tinh chỉnh quan trọng của",
+  "6": "tri thức. Thay vì thụ động chấp nhận dữ liệu được truy xuất ban đầu, agent này",
+  "7": "chủ động chất vấn chất lượng, mức độ liên quan, và độ đầy đủ của dữ liệu, như được minh họa bởi",
+  "8": "các kịch bản sau.",
+  "9": "Trước hết, agent rất mạnh ở reflection và source validation. Nếu người dùng hỏi, \"What is our",
+  "10": "company's policy on remote work?\" RAG tiêu chuẩn có thể lấy một blog post năm 2020",
+  "11": "cùng với tài liệu policy chính thức năm 2025. Tuy nhiên agent sẽ phân tích",
+  "12": "metadata của tài liệu, nhận ra policy năm 2025 là nguồn hiện hành và",
+  "13": "có thẩm quyền nhất, rồi loại bỏ blog post đã lỗi thời trước khi gửi context đúng",
+  "14": "tới LLM để có câu trả lời chính xác.",
+  "15": "6"
+}

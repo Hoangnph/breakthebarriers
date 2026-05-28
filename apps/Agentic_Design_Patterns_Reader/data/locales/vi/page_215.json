@@ -1,0 +1,19 @@
+{
+  "0": "nhận ra chúng nói về cùng một thứ và xem chúng là rất",
+  "1": "tương tự. Điều này là vì embeddings của chúng sẽ rất gần nhau trong không gian vector,",
+  "2": "cho thấy semantic distance nhỏ. Đây là kiểu \"smart search\" cho phép RAG tìm",
+  "3": "thông tin liên quan ngay cả khi cách diễn đạt của người dùng không khớp chính xác với văn bản trong",
+  "4": "knowledge base.",
+  "5": "Hình 1: Các khái niệm lõi của RAG: Chunking, Embeddings, và Vector Database",
+  "6": "Chunking of Documents: Chunking là quá trình chia nhỏ các tài liệu lớn",
+  "7": "thành các phần nhỏ hơn, dễ quản lý hơn, hay \"chunks.\" Để một hệ thống RAG",
+  "8": "hoạt động hiệu quả, nó không thể đưa toàn bộ tài liệu lớn vào LLM. Thay vào đó, nó",
+  "9": "xử lý các chunk nhỏ hơn này. Cách tài liệu được chunk rất quan trọng để",
+  "10": "giữ ngữ cảnh và ý nghĩa của thông tin. Ví dụ, thay vì",
+  "11": "xem một manual người dùng 50 trang như một khối văn bản duy nhất, chiến lược chunking có thể",
+  "12": "chia nó thành section, paragraph, hoặc thậm chí sentence. Ví dụ, một section về",
+  "13": "\"Troubleshooting\" sẽ là một chunk riêng so với \"Installation Guide.\" Khi",
+  "14": "người dùng hỏi về một vấn đề cụ thể, hệ thống RAG sau đó có thể truy xuất",
+  "15": "chunk troubleshooting liên quan nhất, thay vì toàn bộ manual. Điều này làm cho",
+  "16": "3"
+}

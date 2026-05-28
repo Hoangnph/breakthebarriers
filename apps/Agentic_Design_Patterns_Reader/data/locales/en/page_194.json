@@ -1,0 +1,23 @@
+{
+  "0": "Visual summary:",
+  "1": "Fig.2: Goal design patterns",
+  "2": "Key takeaways",
+  "3": "Key takeaways include:",
+  "4": "",
+  "5": "Goal Setting and Monitoring equips agents with purpose and mechanisms to",
+  "6": "track progress.",
+  "7": "",
+  "8": "Goals should be specific, measurable, achievable, relevant, and time-bound",
+  "9": "(SMART).",
+  "10": "",
+  "11": "Clearly defining metrics and success criteria is essential for effective monitoring.",
+  "12": "",
+  "13": "Monitoring involves observing agent actions, environmental states, and tool",
+  "14": "outputs.",
+  "15": "",
+  "16": "Feedback loops from monitoring allow agents to adapt, revise plans, or escalate",
+  "17": "issues.",
+  "18": "",
+  "19": "In Google's ADK, goals are often conveyed through agent instructions, with",
+  "20": "12"
+}

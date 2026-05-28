@@ -1,0 +1,22 @@
+{
+  "0": "Hình 2: Mẫu thiết kế Tool use",
+  "1": "Các điểm chính",
+  "2": "",
+  "3": "Tool Use (Function Calling) cho phép agent tương tác với các hệ thống bên ngoài và",
+  "4": "truy cập thông tin động.",
+  "5": "",
+  "6": "Nó bao gồm việc định nghĩa tool với mô tả và tham số rõ ràng để LLM",
+  "7": "có thể hiểu.",
+  "8": "",
+  "9": "LLM quyết định khi nào dùng tool và tạo các function call có cấu trúc.",
+  "10": "",
+  "11": "Các framework agentic thực thi các lời gọi tool thực tế và trả kết quả về cho",
+  "12": "LLM.",
+  "13": "",
+  "14": "Tool Use là thiết yếu để xây dựng các agent có thể thực hiện hành động trong thế giới thực",
+  "15": "và cung cấp thông tin cập nhật.",
+  "16": "",
+  "17": "LangChain đơn giản hóa việc định nghĩa tool bằng decorator @tool và cung cấp",
+  "18": "create_tool_calling_agent cùng AgentExecutor để xây dựng các agent dùng tool.",
+  "19": "20"
+}

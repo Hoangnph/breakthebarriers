@@ -1,0 +1,21 @@
+{
+  "0": "The landscape of agentic frameworks offers a diverse spectrum of tools, from low-level",
+  "1": "libraries for defining agent logic to high-level platforms for orchestrating multi-agent",
+  "2": "collaboration. At the foundational level, LangChain enables simple, linear workflows,",
+  "3": "while LangGraph introduces stateful, cyclical graphs for more complex reasoning.",
+  "4": "Higher-level frameworks like CrewAI and Google's ADK shift the focus to orchestrating",
+  "5": "teams of agents with predefined roles, while others like LlamaIndex specialize in",
+  "6": "data-intensive applications. This variety presents developers with a core trade-off",
+  "7": "between the granular control of graph-based systems and the streamlined development",
+  "8": "of more opinionated platforms. Consequently, selecting the right framework hinges on",
+  "9": "whether the application requires a simple sequence, a dynamic reasoning loop, or a",
+  "10": "managed team of specialists. Ultimately, this evolving ecosystem empowers developers",
+  "11": "to build increasingly sophisticated AI systems by choosing the precise level of",
+  "12": "abstraction their project demands.",
+  "13": "References",
+  "14": "1. LangChain, https://www.langchain.com/",
+  "15": "2. LangGraph, https://www.langchain.com/langgraph",
+  "16": "3. Google's ADK, https://google.github.io/adk-docs/",
+  "17": "4. Crew.AI, https://docs.crewai.com/en/introduction",
+  "18": "8"
+}

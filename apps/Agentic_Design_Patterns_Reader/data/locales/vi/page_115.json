@@ -1,0 +1,21 @@
+{
+  "0": "Hình 1: Ví dụ về hệ thống đa agent",
+  "1": "Các framework như Crew AI và Google ADK được thiết kế để hỗ trợ",
+  "2": "mô thức này bằng cách cung cấp các cấu trúc để đặc tả agent, task và",
+  "3": "các quy trình tương tác của chúng. Cách tiếp cận này đặc biệt hiệu quả cho các thách thức",
+  "4": "đòi hỏi nhiều loại kiến thức chuyên biệt, bao gồm nhiều giai đoạn rời rạc,",
+  "5": "hoặc tận dụng lợi thế của xử lý đồng thời và việc kiểm chứng chéo",
+  "6": "thông tin giữa các agent.",
+  "7": "Ứng dụng thực tế & Trường hợp sử dụng",
+  "8": "Multi-Agent Collaboration là một mẫu mạnh có thể áp dụng trên nhiều lĩnh vực:",
+  "9": "",
+  "10": "Nghiên cứu và phân tích phức tạp: Một nhóm agent có thể cộng tác trên một",
+  "11": "dự án nghiên cứu. Một agent có thể chuyên tìm kiếm cơ sở dữ liệu học thuật,",
+  "12": "agent khác tóm tắt phát hiện, agent thứ ba xác định xu hướng, và agent thứ tư",
+  "13": "tổng hợp thông tin thành báo cáo. Điều này phản ánh cách một nhóm nghiên cứu con người",
+  "14": "có thể vận hành.",
+  "15": "",
+  "16": "Phát triển phần mềm: Hãy hình dung các agent cộng tác để xây dựng phần mềm. Một",
+  "17": "agent có thể là requirements analyst, agent khác là code generator, agent thứ ba là tester,",
+  "18": "3"
+}

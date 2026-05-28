@@ -1,0 +1,22 @@
+{
+  "0": "Conclusion",
+  "1": "In conclusion, AgentSpace provides a functional framework for developing and",
+  "2": "deploying AI agents within an organization's existing digital infrastructure. The system's",
+  "3": "architecture links complex backend processes, such as autonomous reasoning and",
+  "4": "enterprise knowledge graph mapping, to a graphical user interface for agent",
+  "5": "construction. Through this interface, users can configure agents by integrating various",
+  "6": "data services and defining their operational parameters via prompts, resulting in",
+  "7": "customized, context-aware automated systems.",
+  "8": "This approach abstracts the underlying technical complexity, enabling the construction",
+  "9": "of specialized multi-agent systems without requiring deep programming expertise. The",
+  "10": "primary objective is to embed automated analytical and operational capabilities directly",
+  "11": "into workflows, thereby increasing process efficiency and enhancing data-driven",
+  "12": "analysis. For practical instruction, hands-on learning modules are available, such as the",
+  "13": "\"Build a Gen AI Agent with Agentspace\" lab on Google Cloud Skills Boost, which",
+  "14": "provides a structured environment for skill acquisition.",
+  "15": "References",
+  "16": "1. Create a no-code agent with Agent Designer,",
+  "17": "https://cloud.google.com/agentspace/agentspace-enterprise/docs/agent-designer",
+  "18": "2. Google Cloud Skills Boost, https://www.cloudskillsboost.google/",
+  "19": "6"
+}

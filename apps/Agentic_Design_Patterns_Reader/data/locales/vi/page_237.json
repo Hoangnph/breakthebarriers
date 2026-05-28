@@ -1,0 +1,17 @@
+{
+  "0": "Agent Card Declaration: Yêu cầu authentication được khai báo rõ trong",
+  "1": "Agent Card, một artifact cấu hình mô tả danh tính, capability, và",
+  "2": "security policy của agent. Điều này tập trung hóa và đơn giản hóa quản lý authentication.",
+  "3": "Credential Handling: Agent thường authenticate bằng credential an toàn như token OAuth",
+  "4": "2.0 hoặc API key, được truyền qua HTTP header. Phương pháp này ngăn credential",
+  "5": "bị expose trong URL hoặc message body, tăng cường bảo mật tổng thể.",
+  "6": "A2A vs. MCP",
+  "7": "A2A là một protocol bổ sung cho Model Context Protocol (MCP) của Anthropic (xem",
+  "8": "Hình 1). Trong khi MCP tập trung vào cấu trúc context cho agent và tương tác của chúng với",
+  "9": "dữ liệu và tool bên ngoài, A2A hỗ trợ điều phối và communication giữa",
+  "10": "các agent, cho phép task delegation và collaboration.",
+  "11": "Hình 1: So sánh A2A và MCP Protocols",
+  "12": "Mục tiêu của A2A là nâng cao hiệu quả, giảm chi phí tích hợp, và thúc đẩy",
+  "13": "đổi mới cùng interoperability trong phát triển các hệ thống AI multi-agent phức tạp",
+  "14": "7"
+}

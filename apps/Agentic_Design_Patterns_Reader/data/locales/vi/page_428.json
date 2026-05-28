@@ -1,0 +1,21 @@
+{
+  "0": "Các Kỹ Thuật Tiền Đào Tạo: Tiền đào tạo là",
+  "1": "giai đoạn ban đầu nơi mô hình học kiến thức tổng quát",
+  "2": "từ lượng lớn dữ liệu. Các kỹ thuật hàng đầu",
+  "3": "liên quan đến các mục tiêu khác nhau để mô hình học.",
+  "4": "Phổ biến nhất là Mô Hình Hóa Ngôn Ngữ Nhân Quả (CLM),",
+  "5": "nơi mô hình dự đoán từ tiếp theo trong câu.",
+  "6": "Một loại khác là Mô Hình Hóa Ngôn Ngữ Che Khuất (MLM),",
+  "7": "nơi mô hình điền vào các từ cố ý bị ẩn",
+  "8": "trong văn bản. Các phương pháp quan trọng khác",
+  "9": "bao gồm Mục Tiêu Khử Nhiễu, nơi mô hình học",
+  "10": "khôi phục đầu vào bị hỏng về trạng thái ban đầu của nó,",
+  "11": "Học Tương Phản (Contrastive Learning), nơi nó học phân biệt",
+  "12": "giữa các mảnh dữ liệu tương tự và không tương tự,",
+  "13": "và Dự Đoán Câu Tiếp Theo (NSP)...",
+  "14": "",
+  "15": "",
+  "16": "",
+  "17": "",
+  "18": "8"
+}

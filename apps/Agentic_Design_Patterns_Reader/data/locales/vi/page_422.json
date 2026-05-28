@@ -1,0 +1,19 @@
+{
+  "0": "Cửa Sổ Ngữ Cảnh: Cửa sổ ngữ cảnh là",
+  "1": "số lượng tối đa token mà mô hình AI",
+  "2": "có thể xử lý cùng một lúc, bao gồm",
+  "3": "cả đầu vào và đầu ra được tạo ra.",
+  "4": "Kích thước cố định này là một hạn chế quan trọng, vì",
+  "5": "thông tin ngoài cửa sổ bị bỏ qua,",
+  "6": "trong khi các cửa sổ lớn hơn cho phép",
+  "7": "các cuộc trò chuyện và phân tích tài liệu phức tạp hơn.",
+  "8": "Học Trong Ngữ Cảnh: Học trong ngữ cảnh",
+  "9": "là khả năng của AI học một nhiệm vụ mới từ",
+  "10": "các ví dụ được cung cấp trực tiếp trong prompt,",
+  "11": "mà không cần bất kỳ đào tạo lại nào.",
+  "12": "Tính năng mạnh mẽ này cho phép một mô hình đơn,",
+  "13": "đa năng được điều chỉnh để thực hiện",
+  "14": "vô số nhiệm vụ cụ thể ngay lập tức.",
+  "15": "",
+  "16": "2"
+}

@@ -1,0 +1,15 @@
+{
+  "0": "Chương 19: Đánh Giá và Giám Sát",
+  "1": "Chương này xem xét các phương pháp cho phép các agent thông minh đánh giá có hệ thống",
+  "2": "hiệu suất của chúng, theo dõi tiến trình hướng tới các mục tiêu, và phát hiện các bất thường hoạt động.",
+  "3": "Trong khi Chương 11 phác thảo việc đặt mục tiêu và giám sát, và Chương 17",
+  "4": "đề cập đến các cơ chế Lập Luận, chương này tập trung vào việc đo lường liên tục, thường",
+  "5": "bên ngoài, về hiệu quả, hiệu suất, và tuân thủ yêu cầu của agent.",
+  "6": "Điều này bao gồm xác định các chỉ số, thiết lập các vòng phản hồi, và",
+  "7": "triển khai các hệ thống báo cáo để đảm bảo hiệu suất agent phù hợp với",
+  "8": "kỳ vọng trong các môi trường hoạt động (xem Hình 1)",
+  "9": "Hình 1. Các thực hành tốt nhất cho đánh giá và giám sát",
+  "10": "Các Ứng Dụng Thực Tế & Use Case",
+  "11": "Các Ứng Dụng và Use Case Phổ Biến Nhất:",
+  "12": "1"
+}

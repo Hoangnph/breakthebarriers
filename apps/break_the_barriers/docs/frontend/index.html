@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặc tả Kiến trúc SA Full-Stack & Frontend - Smart Documentations</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Tài liệu Đặc tả Kiến trúc Hệ thống (SA) Full-Stack chi tiết và Kế hoạch Phát triển Frontend di động tối cao (Mobile-First UI/UX) của dự án break_the_barriers.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style (Kế thừa phong cách glassmorphic cao cấp của dự án) -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Tùy chỉnh màu sắc riêng cho Lớp Frontend: Màu Emerald phối Cyan */
+        :root {
+            --accent-emerald: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.15);
+        }
+        
+        .badge-frontend {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .hero-section h1 span {
+            background: linear-gradient(135deg, var(--accent-emerald) 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Cải tiến Sơ đồ Gantt CSS */
+        .gantt-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        
+        .gantt-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .gantt-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        
+        .gantt-bar-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            height: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gantt-bar {
+            height: 100%;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--accent-emerald), #06b6d4);
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        /* SVG Sequence Diagram Styles */
+        .svg-container {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .sa-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .sa-box h4 {
+            color: var(--accent-emerald);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Responsive Layouts */
+        @media (max-width: 768px) {
+            .gantt-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            .gantt-bar-container {
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Glowing Background Spheres -->
+    <div class="glow-sphere sphere-1" style="background: rgba(16, 185, 129, 0.12);"></div>
+    <div class="glow-sphere sphere-2" style="background: rgba(6, 182, 212, 0.12);"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-mobile-alt logo-icon" style="color: var(--accent-emerald);"></i>
+            <span>Architecture & Mobile Plan</span>
+        </div>
+        <div class="nav-controls">
+            <a href="../../index.html" class="back-btn"><i class="fas fa-home"></i> Bàn làm việc</a>
+            <a href="../plan/index.html" class="back-btn"><i class="fas fa-route"></i> Kế hoạch gốc</a>
+            <a href="../workflow/index.html" class="back-btn"><i class="fas fa-project-diagram"></i> Quy trình</a>
+            <a href="../backend/index.html" class="back-btn"><i class="fas fa-server"></i> API Backend</a>
+        </div>
+        
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburger-btn" aria-label="Menu tài liệu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        
+        <!-- Welcome Hero Section -->
+        <section class="hero-section">
+            <span class="badge-frontend">break_the_barriers • Đặc tả SA Full-Stack & di động tối cao</span>
+            <h1>Đặc tả Kiến trúc <span>Full-Stack & Kế hoạch Frontend</span></h1>
+            <p>Bản phân tích kiến trúc hệ thống 5 lớp di động tích hợp toàn diện, luồng xử lý bất đồng bộ E2E, thuật toán LSE tịnh tiến pixel, co giãn Autoscale, cử chỉ vuốt lật trang 3D và TM Hot Re-compile.</p>
+        </section>
+
+        <!-- Stepper Navigation Tabs (Tab Headers) -->
+        <section class="tab-headers-container" aria-label="Phân mục tài liệu">
+            <button class="tab-btn active" data-tab="tab-sa-fullstack">
+                <i class="fas fa-sitemap"></i> 1. Kiến trúc SA Full-Stack
+            </button>
+            <button class="tab-btn" data-tab="tab-fe-algorithms" data-tab-fe="tab-fe-algorithms">
+                <i class="fas fa-calculator"></i> 2. Đặc tả 3 Giải thuật Lõi
+            </button>
+            <button class="tab-btn" data-tab="tab-fe-steps">
+                <i class="fas fa-tasks"></i> 3. Kế hoạch Hành động 6 Giai đoạn
+            </button>
+            <button class="tab-btn" data-tab="tab-fe-api">
+                <i class="fas fa-network-wired"></i> 4. Đặc tả Hợp đồng API
+            </button>
+            <button class="tab-btn" data-tab="tab-fe-verify">
+                <i class="fas fa-shield-halved"></i> 5. Xác thực &amp; Thiết kế
+            </button>
+        </section>
+
+        <!-- Tab Contents Area -->
+        <section class="tab-contents-container">
+
+            <!-- Tab 1: Full-Stack Architecture -->
+            <div class="tab-content active" id="tab-sa-fullstack">
+                <div class="sa-grid">
+                    
+                    <div class="sa-card main-sa" style="grid-column: span 2;">
+                        <h2><i class="fas fa-network-wired" style="color: var(--accent-emerald);"></i> 1. Sơ đồ tuần tự tương tác Full-Stack E2E (End-to-End Sequence Diagram)</h2>
+                        <p class="section-intro">Kiến trúc Decoupled Client-Server bất đồng bộ (Background Tasks) kết nối cơ sở dữ liệu PostgreSQL. Dưới đây mô tả chi tiết chuỗi truyền tải và chuyển trạng thái của một tài liệu từ upload đến hiển thị di động:</p>
+                        
+                        <!-- Premium Visual Sequence Chart with SVG graphics -->
+                        <div class="svg-container" style="background: rgba(15, 23, 42, 0.6); padding: 25px;">
+                            <svg viewBox="0 0 1060 1350" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Inter', sans-serif;">
+                                <!-- Definitions -->
+                                <defs>
+                                    <!-- Gradients -->
+                                    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#8b5cf6" />
+                                        <stop offset="100%" stop-color="#7c3aed" />
+                                    </linearGradient>
+                                    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#3b82f6" />
+                                        <stop offset="100%" stop-color="#2563eb" />
+                                    </linearGradient>
+                                    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#10b981" />
+                                        <stop offset="100%" stop-color="#059669" />
+                                    </linearGradient>
+                                    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#06b6d4" />
+                                        <stop offset="100%" stop-color="#0891b2" />
+                                    </linearGradient>
+                                    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#f59e0b" />
+                                        <stop offset="100%" stop-color="#d97706" />
+                                    </linearGradient>
+                                    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#f43f5e" />
+                                        <stop offset="100%" stop-color="#e11d48" />
+                                    </linearGradient>
+                                    
+                                    <!-- Arrowhead Markers -->
+                                    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(255,255,255,0.4)" />
+                                    </marker>
+                                    <marker id="arrow-active" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+                                    </marker>
+                                    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#3b82f6" />
+                                    </marker>
+                                    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#a78bfa" />
+                                    </marker>
+                                    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
+                                    </marker>
+                                    <marker id="arrow-rose" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185" />
+                                    </marker>
+                                </defs>
+                                
+                                <!-- Actor Columns Lifelines -->
+                                <line x1="80" y1="70" x2="80" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="240" y1="70" x2="240" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="400" y1="70" x2="400" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="560" y1="70" x2="560" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="720" y1="70" x2="720" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="860" y1="70" x2="860" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                <line x1="980" y1="70" x2="980" y2="1310" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4" />
+                                
+                                <!-- Top Headers (Actors) -->
+                                <rect x="10" y="20" width="140" height="40" rx="8" fill="url(#purpleGrad)" />
+                                <text x="80" y="44" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">User / Mobile Touch</text>
+                                
+                                <rect x="160" y="20" width="160" height="40" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" />
+                                <text x="240" y="44" fill="#e2e8f0" font-size="10" font-weight="700" text-anchor="middle">Mobile Frontend Client</text>
+                                
+                                <rect x="330" y="20" width="140" height="40" rx="8" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" />
+                                <text x="400" y="44" fill="#e2e8f0" font-size="10" font-weight="700" text-anchor="middle">FastAPI API (8005)</text>
+                                
+                                <rect x="490" y="20" width="140" height="40" rx="8" fill="url(#emeraldGrad)" />
+                                <text x="560" y="44" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">Background Worker</text>
+                                
+                                <rect x="650" y="20" width="140" height="40" rx="8" fill="url(#cyanGrad)" />
+                                <text x="720" y="44" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">Poppler pdftohtml</text>
+                                
+                                <rect x="800" y="20" width="120" height="40" rx="8" fill="url(#amberGrad)" />
+                                <text x="860" y="44" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">Gemini 1.5 API</text>
+                                
+                                <rect x="930" y="20" width="100" height="40" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" />
+                                <text x="980" y="44" fill="#cbd5e1" font-size="10" font-weight="700" text-anchor="middle">PostgreSQL DB</text>
+
+                                <!-- SECTION I: UPLOAD & EXTRACTION -->
+                                <!-- 1. Drop PDF -->
+                                <line x1="80" y1="100" x2="240" y2="100" stroke="#a78bfa" stroke-width="2" marker-end="url(#arrow-purple)" />
+                                <text x="160" y="92" fill="#c084fc" font-size="10" font-weight="600" text-anchor="middle">1. Touch Drag &amp; Drop PDF</text>
+                                
+                                <!-- 2. POST /api/docs/upload -->
+                                <line x1="240" y1="130" x2="400" y2="130" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="122" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle">2. POST /api/docs/upload</text>
+                                
+                                <!-- 3. Insert Raw DBDocument -->
+                                <line x1="400" y1="160" x2="980" y2="160" stroke="#cbd5e1" stroke-dasharray="2" stroke-width="1.2" marker-end="url(#arrow)" />
+                                <text x="690" y="152" fill="#cbd5e1" font-size="9" text-anchor="middle">3. Insert DBDocument record (Trạng thái: raw)</text>
+                                
+                                <!-- 4. Return metadata -->
+                                <line x1="400" y1="190" x2="240" y2="190" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="182" fill="#60a5fa" font-size="9" text-anchor="middle">4. Return doc_id &amp; Trạng thái: raw</text>
+
+                                <!-- 5. POST /extract -->
+                                <line x1="240" y1="220" x2="400" y2="220" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="212" fill="#60a5fa" font-size="9" font-weight="600" text-anchor="middle">5. POST /api/docs/{doc_id}/extract?async_mode=true</text>
+                                
+                                <!-- 6. Trigger Task Nền -->
+                                <line x1="400" y1="250" x2="560" y2="250" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-active)" />
+                                <text x="480" y="242" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">6. Khởi động Task Trích xuất nền (async)</text>
+                                
+                                <!-- 7. Return 202 -->
+                                <line x1="400" y1="280" x2="240" y2="280" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="272" fill="#60a5fa" font-size="9" text-anchor="middle">7. HTTP 202 Accepted (Trạng thái: extracting)</text>
+
+                                <!-- Background Task Block 1 (Extraction) -->
+                                <rect x="490" y="305" width="540" height="150" rx="8" fill="rgba(16,185,129,0.04)" stroke="rgba(16,185,129,0.2)" />
+                                <text x="760" y="323" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle">ASYNCHRONOUS BACKGROUND EXTRACTION (status: extracting)</text>
+                                
+                                <!-- 8.1. Run pdftohtml -->
+                                <line x1="560" y1="350" x2="720" y2="350" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)" />
+                                <text x="640" y="342" fill="#22d3ee" font-size="9" text-anchor="middle">8. subprocess.run pdftohtml CLI</text>
+                                
+                                <line x1="720" y1="375" x2="560" y2="375" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="2" marker-end="url(#arrow)" />
+                                <text x="640" y="368" fill="#22d3ee" font-size="9" text-anchor="middle">9. Xuất tệp HTML absolute &amp; Assets ảnh thật</text>
+                                
+                                <!-- 8.2 parsing & DB -->
+                                <path d="M 560,395 L 610,395 L 610,415 L 565,415" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-active)" />
+                                <text x="620" y="410" fill="#34d399" font-size="8.5" font-weight="600">10. BeautifulSoup4 Parser (Dọn rác, bóc tọa độ spans)</text>
+                                
+                                <line x1="560" y1="435" x2="980" y2="435" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-active)" />
+                                <text x="770" y="427" fill="#34d399" font-size="9" text-anchor="middle">11. Ghi các bản ghi DBPage &amp; DBTranslation (Trạng thái: extracted)</text>
+
+                                <!-- Polling loop -->
+                                <path d="M 240,480 L 340,480 L 340,540 L 245,540" fill="none" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow-amber)" />
+                                <text x="350" y="505" fill="#fbbd23" font-size="9" font-weight="700">12. AJAX Polling mỗi 3 giây</text>
+                                <text x="350" y="520" fill="#94a3b8" font-size="8">GET /api/docs -> Query DB -> Cập nhật progress bar trên UI</text>
+
+                                <!-- SECTION II: AGENTIC TRANSLATION -->
+                                <!-- 13. POST /translate -->
+                                <line x1="240" y1="570" x2="400" y2="570" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="562" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle">13. POST /api/docs/{doc_id}/translate?async_mode=true</text>
+                                
+                                <!-- 14. Start Worker -->
+                                <line x1="400" y1="600" x2="560" y2="600" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-active)" />
+                                <text x="480" y="592" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">14. Khởi động Tác tử Dịch thuật 3 bước (Gemini)</text>
+                                
+                                <!-- 15. Return 202 -->
+                                <line x1="400" y1="630" x2="240" y2="630" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="622" fill="#60a5fa" font-size="9" text-anchor="middle">15. HTTP 202 Accepted (Trạng thái: translating)</text>
+
+                                <!-- Background Task Block 2 (Translation) -->
+                                <rect x="490" y="655" width="540" height="150" rx="8" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.2)" />
+                                <text x="760" y="673" fill="#fbbf24" font-size="10" font-weight="700" text-anchor="middle">ASYNCHRONOUS THREE-STAGE AGENTIC TRANSLATION (status: translating)</text>
+                                
+                                <path d="M 560,695 L 610,695 L 610,715 L 565,715" fill="none" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow-amber)" />
+                                <text x="620" y="710" fill="#fbbf24" font-size="8.5" font-weight="600">16. Gom nhóm Spans (Threshold Y < 5px) &amp; Đánh index [s:idx]</text>
+                                
+                                <line x1="560" y1="735" x2="860" y2="735" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow-amber)" />
+                                <text x="710" y="727" fill="#fcd34d" font-size="9" text-anchor="middle">17. Gửi Prompt 3 giai đoạn (Draft &rarr; Refine &rarr; Verify)</text>
+                                
+                                <line x1="860" y1="760" x2="560" y2="760" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="2" marker-end="url(#arrow-amber)" />
+                                <text x="710" y="752" fill="#fcd34d" font-size="9" text-anchor="middle">18. Bản dịch tiếng Việt bảo lưu index tag</text>
+                                
+                                <line x1="560" y1="785" x2="980" y2="785" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow-amber)" />
+                                <text x="770" y="777" fill="#fcd34d" font-size="9" text-anchor="middle">19. Cập nhật trường translated_text trong bảng translations (Trạng thái: translated)</text>
+
+                                <!-- SECTION III: COMPILATION & LSE -->
+                                <!-- 20. POST /compile -->
+                                <line x1="240" y1="820" x2="400" y2="820" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="812" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle">20. POST /api/docs/{doc_id}/compile?async_mode=true</text>
+                                
+                                <!-- 21. Trigger Compiler -->
+                                <line x1="400" y1="850" x2="560" y2="850" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-active)" />
+                                <text x="480" y="842" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">21. Khởi động Trình biên dịch LSE (async)</text>
+                                
+                                <!-- 22. Return 202 -->
+                                <line x1="400" y1="880" x2="240" y2="880" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#arrow-blue)" />
+                                <text x="320" y="872" fill="#60a5fa" font-size="9" text-anchor="middle">22. HTTP 202 Accepted (Trạng thái: compiling)</text>
+
+                                <!-- Background Task Block 3 (Compiler) -->
+                                <rect x="490" y="905" width="540" height="120" rx="8" fill="rgba(6,182,212,0.04)" stroke="rgba(6,182,212,0.2)" />
+                                <text x="760" y="923" fill="#22d3ee" font-size="10" font-weight="700" text-anchor="middle">ASYNCHRONOUS LSE COMPILATION (status: compiling)</text>
+                                
+                                <path d="M 560,945 L 610,945 L 610,965 L 565,965" fill="none" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)" />
+                                <text x="620" y="960" fill="#22d3ee" font-size="8.5" font-weight="600">23. Tiêm bản dịch &amp; script Dynamic Font Shrink vào HTML</text>
+                                
+                                <path d="M 560,975 L 610,975 L 610,995 L 565,995" fill="none" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)" />
+                                <text x="620" y="990" fill="#22d3ee" font-size="8.5" font-weight="600">24. Chạy Quality Gate 2 (Độc lập DOM &amp; Số lượng span)</text>
+                                
+                                <line x1="560" y1="1015" x2="980" y2="1015" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)" />
+                                <text x="770" y="1007" fill="#22d3ee" font-size="9" text-anchor="middle">25. Cập nhật DBPage.translated_html (Trạng thái: compiled)</text>
+
+                                <!-- SECTION IV: READING & HOT RE-COMPILE -->
+                                <!-- 26. Open Reader -->
+                                <line x1="80" y1="1050" x2="240" y2="1050" stroke="#a78bfa" stroke-width="2" marker-end="url(#arrow-purple)" />
+                                <text x="160" y="1042" fill="#c084fc" font-size="10" font-weight="600" text-anchor="middle">26. Mở sách (TOC Drawer di động)</text>
+                                
+                                <!-- 27. Client side engines -->
+                                <path d="M 240,1065 L 340,1065 L 340,1095 L 245,1095" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-active)" />
+                                <text x="350" y="1085" fill="#34d399" font-size="9" font-weight="600">27. Kích hoạt Autoscale Engine &amp; Layout Shift Engine (LSE)</text>
+                                
+                                <!-- 28. Touch gesture flip page -->
+                                <line x1="80" y1="1120" x2="240" y2="1120" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrow-purple)" />
+                                <text x="160" y="1112" fill="#c084fc" font-size="9" text-anchor="middle">28. Cử chỉ vuốt lật trang (Touch Gesture Engine)</text>
+
+                                <!-- 29. EDIT translation (TM Hot Re-compile loop) -->
+                                <line x1="80" y1="1150" x2="240" y2="1150" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-rose)" />
+                                <text x="160" y="1142" fill="#fb7185" font-size="10" font-weight="700" text-anchor="middle">29. Sửa một đoạn dịch sai từ TM Editor Modal</text>
+                                
+                                <!-- 30. PUT API -->
+                                <line x1="240" y1="1180" x2="400" y2="1180" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-rose)" />
+                                <text x="320" y="1172" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle">30. PUT /api/docs/{doc_id}/translations/{span_id}</text>
+                                
+                                <!-- 31. DB update -->
+                                <line x1="400" y1="1210" x2="980" y2="1210" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow-rose)" />
+                                <text x="690" y="1202" fill="#fb7185" font-size="9" text-anchor="middle">31. Cập nhật chuỗi dịch thuật (PostgreSQL DB)</text>
+                                
+                                <!-- 32. Sync Hot Re-compile -->
+                                <line x1="400" y1="1240" x2="560" y2="1240" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow-rose)" />
+                                <text x="480" y="1232" fill="#fb7185" font-size="9.5" font-weight="600" text-anchor="middle">32. Đồng bộ Hot Re-compile trang chứa span</text>
+                                
+                                <!-- 33. Compiler writes new HTML to DB -->
+                                <line x1="560" y1="1265" x2="980" y2="1265" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="2" marker-end="url(#arrow-rose)" />
+                                <text x="770" y="1257" fill="#fb7185" font-size="9" text-anchor="middle">33. Cập nhật lại HTML biên dịch (PostgreSQL DB)</text>
+                                
+                                <!-- 34. API HTTP 200 OK -->
+                                <line x1="400" y1="1290" x2="240" y2="1290" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#arrow-rose)" />
+                                <text x="320" y="1282" fill="#fb7185" font-size="9" text-anchor="middle">34. Trả về HTTP 200 OK</text>
+                                
+                                <!-- 35. Refresh iframe -->
+                                <path d="M 240,1300 L 290,1300 L 290,1315 L 245,1315" fill="none" stroke="#f43f5e" stroke-width="1.5" marker-end="url(#arrow-rose)" />
+                                <text x="300" y="1312" fill="#fb7185" font-size="9" font-weight="700">35. Làm mới Iframe, hiển thị bản dịch mới ngay!</text>
+                            </svg>
+                        </div>
+                        
+                        <!-- Mermaid Text Codeblock -->
+                        <details class="sa-box" style="margin-top: 15px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.2); border-radius: 8px;">
+                            <summary style="font-size: 0.9rem; font-weight: 600; color: var(--accent-emerald); cursor: pointer; padding: 10px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-code"></i> Xem mã nguồn Mermaid Sequence Diagram (Đặc tả SA Full-Stack)
+                            </summary>
+                            <div style="padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+                                <pre><code class="language-mermaid">sequenceDiagram
+    autonumber
+    actor User as Biên tập viên / Độc giả di động
+    participant FE as Mobile-First Frontend (Dashboard/Reader)
+    participant API as FastAPI Gateway (Port 8005)
+    participant Worker as Background Tasks (FastAPI Engine)
+    participant Poppler as Poppler pdftohtml (CLI)
+    participant Gemini as Google Gemini 1.5 Flash (API)
+    participant DB as PostgreSQL Database
+
+    %% Upload & Extraction Process
+    User->&gt;FE: Kéo thả PDF lên Dashboard (Mobile Touch)
+    FE->&gt;API: POST /api/docs/upload (Multipart File)
+    API->&gt;DB: Ghi DBDocument record (Trạng thái: raw)
+    API--&gt;&gt;FE: Trả về Metadata tài liệu (doc_id)
+    
+    FE->&gt;API: POST /api/docs/{doc_id}/extract?async_mode=true
+    API->&gt;Worker: Khởi động Task Trích xuất nền (async)
+    API--&gt;&gt;FE: Trả về HTTP 202 Accepted (Trạng thái: extracting)
+    
+    rect rgb(30, 41, 59)
+        Note over Worker, DB: Tiến trình bất đồng bộ (Background Tasks)
+        Worker->&gt;Poppler: subprocess.run pdftohtml CLI
+        Poppler--&gt;&gt;Worker: Xuất tệp HTML absolute &amp; Assets ảnh
+        Worker->&gt;Worker: BeautifulSoup4 Parser (Dọn rác, bóc tọa độ spans)
+        Worker->&gt;DB: Ghi các bản ghi DBPage &amp; DBTranslation (Trạng thái: extracted)
+    end
+    
+    %% Polling Loop from Frontend
+    loop Polling mỗi 3 giây
+        FE->&gt;API: GET /api/docs
+        API->&gt;DB: Query tài liệu hiện tại
+        DB--&gt;&gt;API: Trả về danh sách trạng thái
+        API--&gt;&gt;FE: Cập nhật progress bar trên giao diện
+    end
+
+    %% Agentic Translation
+    FE->&gt;API: POST /api/docs/{doc_id}/translate?async_mode=true
+    API->&gt;Worker: Khởi động Tác tử Dịch thuật 3 bước (Gemini)
+    API--&gt;&gt;FE: Trả về HTTP 202 Accepted (Trạng thái: translating)
+    
+    rect rgb(30, 41, 59)
+        Worker->&gt;Worker: Gom nhóm Spans (Threshold Y &lt; 5px) &amp; Đánh index [s:idx]
+        Worker->&gt;Gemini: Gửi Prompt 3 giai đoạn (Draft -&gt; Refine -&gt; Verify)
+        Gemini--&gt;&gt;Worker: Bản dịch tiếng Việt bảo lưu index tag
+        Worker->&gt;DB: Cập nhật trường translated_text trong bảng translations (Trạng thái: translated)
+    end
+
+    %% Compilation &amp; LSE
+    FE->&gt;API: POST /api/docs/{doc_id}/compile?async_mode=true
+    API->&gt;Worker: Khởi động Trình biên dịch LSE (async)
+    API--&gt;&gt;FE: Trả về HTTP 202 Accepted (Trạng thái: compiling)
+
+    rect rgb(30, 41, 59)
+        Worker->&gt;Worker: Tiêm bản dịch &amp; script Dynamic Font Shrink vào file HTML
+        Worker->&gt;Worker: Chạy Quality Gate 2 (Độc lập DOM &amp; Số lượng span)
+        Worker->&gt;DB: Cập nhật DBPage.translated_html (Trạng thái: compiled)
+    end
+
+    %% Reading &amp; TM Editing
+    User->&gt;FE: Mở sách (Từ TOC Drawer di động)
+    FE->&gt;FE: Kích hoạt Autoscale Engine (Scale iframe khít chiều ngang)
+    FE->&gt;FE: Chạy LSE Engine (Tịnh tiến tọa độ top chống đè chữ)
+    User->&gt;FE: Thực hiện vuốt lật trang (Touch Gesture Engine)
+    
+    User->&gt;FE: Sửa một đoạn dịch sai từ TM Editor Modal
+    FE->&gt;API: PUT /api/docs/{doc_id}/translations/{span_id}
+    API->&gt;DB: Cập nhật chuỗi dịch thuật
+    API->&gt;Worker: Đồng bộ Hot Re-compile trang chứa span
+    Worker->&gt;DB: Cập nhật lại HTML biên dịch
+    API--&gt;&gt;FE: Trả về HTTP 200 OK
+    FE->&gt;FE: Làm mới Iframe, hiển thị bản dịch mới ngay lập tức!
+</code></pre>
+                            </div>
+                        </details>
+                    </div>
+
+                    <div class="sa-card side-sa" style="grid-column: span 2;">
+                        <h2><i class="fas fa-mobile-alt" style="color: var(--accent-emerald);"></i> 2. Các Quy tắc Mobile-First di động tối cao (Apple &amp; Android Standard)</h2>
+                        <p class="section-intro">Frontend được xây dựng từ thiết bị di động trước để kiểm soát độ chật hẹp, tránh giật lag phần cứng rồi sau đó mở rộng cho màn hình lớn Desktop.</p>
+                        
+                        <div class="sa-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div class="sa-box">
+                                <h4><i class="fas fa-crop-simple"></i> Vùng an toàn (Notch &amp; Safe Area padding)</h4>
+                                <p>Cưỡng chế CSS sử dụng biến môi trường <code>safe-area-inset</code>. Tiêu đề chính, Hamburger menu và thanh điều phối Reader không bao giờ bị cắt khuất bởi Notch (tai thỏ) của iPhone hay Home Indicator (thanh vuốt trang chủ):</p>
+                                <code style="display: block; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 6px;">padding-top: env(safe-area-inset-top);<br>padding-bottom: env(safe-area-inset-bottom);</code>
+                            </div>
+                            
+                            <div class="sa-box">
+                                <h4><i class="fas fa-hand-back-fist"></i> Kích thước vùng chạm (W3C Touch Target)</h4>
+                                <p>Tất cả các phần tử điều khiển (Chuyển trang, Phóng to/Thu nhỏ, Toggle ngôn ngữ, Hamburger menu) có kích thước chạm tối thiểu **$44\text{px} \times 44\text{px}$** và đệm an toàn **8px** xung quanh để ngón tay dễ thao tác mà không bấm nhầm.</p>
+                            </div>
+                            
+                            <div class="sa-box">
+                                <h4><i class="fas fa-gauge-high"></i> Trọng lượng nhẹ &amp; Phản hồi < 100ms</h4>
+                                <p>Loại bỏ hoàn toàn các frameworks nặng như React/NextJS hay thư viện cuộn. Sử dụng cơ chế Iframe Sandboxing cô lập CSS tài liệu gốc, JS DOM thao tác trực tiếp đạt độ trễ vẽ (render latency) gần như bằng **0ms**.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Algorithms -->
+            <div class="tab-content" id="tab-fe-algorithms">
+                <div class="sa-grid">
+                    
+                    <!-- LSE Algorithm Card -->
+                    <div class="sa-card main-sa">
+                        <h2><i class="fas fa-arrows-alt-v" style="color: var(--accent-emerald);"></i> 1. Thuật toán tịnh tiến chống đè chữ LSE (Layout Shift Engine)</h2>
+                        <p class="section-intro">Giải quyết rào cản tiếng Việt dài ra gây đè dòng. Chạy động ngay khi nạp trang trong iframe để tính toán chiều rộng và chiều cao bao (Bounding boxes) của từng thẻ span:</p>
+                        
+                        <div class="code-wrapper" style="margin-top: 15px;">
+                            <pre><code class="language-javascript">/**
+ * GIẢI THUẬT LAYOUT SHIFT ENGINE (CLIENT-SIDE RUNTIME)
+ * Tự động tính chiều cao tăng thêm của các thẻ span khi xuống dòng và tịnh tiến các phần tử phía dưới.
+ */
+function runLayoutShiftEngine(iframeDoc) {
+    // Lấy tất cả spans định vị pixel tuyệt đối của Poppler
+    const spans = Array.from(iframeDoc.querySelectorAll('span[data-span-id]'));
+    
+    // 1. Sắp xếp spans theo tọa độ top trước, left sau để tạo dòng đọc tuyến tính
+    spans.sort((a, b) => {
+        const topA = parseFloat(a.style.top);
+        const topB = parseFloat(b.style.top);
+        if (Math.abs(topA - topB) < 5) {
+            return parseFloat(a.style.left) - parseFloat(b.style.left);
+        }
+        return topA - topB;
+    });
+
+    let accumulatedShift = 0;
+    
+    spans.forEach((span) => {
+        // Lưu trữ tọa độ gốc để tránh bị cộng lũy kế sai lệch khi resize màn hình
+        const originalTop = parseFloat(span.getAttribute('data-original-top') || span.style.top);
+        if (!span.getAttribute('data-original-top')) {
+            span.setAttribute('data-original-top', originalTop);
+        }
+        
+        // Cân chỉnh vị trí dựa trên độ dời tích lũy từ các dòng trước
+        const currentTop = originalTop + accumulatedShift;
+        span.style.top = `${currentTop}px`;
+        
+        // Đo đạc chiều cao thực tế (wrapped) và chiều cao gốc không xuống dòng (clone unwrapped)
+        const measureClone = span.cloneNode(true);
+        measureClone.style.whiteSpace = 'nowrap';
+        measureClone.style.visibility = 'hidden';
+        measureClone.style.position = 'absolute';
+        span.parentNode.appendChild(measureClone);
+        
+        const unwrappedHeight = measureClone.getBoundingClientRect().height;
+        const wrappedHeight = span.getBoundingClientRect().height;
+        span.parentNode.removeChild(measureClone);
+        
+        const deltaHeight = wrappedHeight - unwrappedHeight;
+        
+        // Nếu phát hiện dồn dòng (> 3px lệch), cộng lũy kế cho các spans tiếp theo
+        if (deltaHeight > 3) {
+            accumulatedShift += deltaHeight;
+        }
+    });
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Autoscale and Gestures Card -->
+                    <div class="sa-card side-sa">
+                        <h2><i class="fas fa-hand-pointer" style="color: var(--accent-emerald);"></i> 2. Thuật toán Autoscale &amp; Touch Gesture</h2>
+                        
+                        <div class="sa-component">
+                            <h4><i class="fas fa-expand-arrows-alt text-emerald"></i> Autoscale Viewport Math</h4>
+                            <p>Đảm bảo nội dung trang định vị pixel tuyệt đối (thường rộng 900px-1188px) luôn khớp chính xác với màn hình di động mà không gây cuộn ngang:</p>
+                            <div class="code-wrapper" style="margin-top: 8px;">
+                                <pre><code class="language-javascript">const viewportWidth = window.innerWidth;
+const pageCanonicalWidth = 900; // Chiều rộng chuẩn của Poppler HTML
+const scaleFactor = viewportWidth / pageCanonicalWidth;
+
+// Áp dụng ma trận tỉ lệ lên trang trong iframe
+iframe.style.transform = `scale(${scaleFactor})`;
+iframe.style.transformOrigin = "top left";
+iframe.style.width = `${pageCanonicalWidth}px`;
+iframe.style.height = `${window.innerHeight / scaleFactor}px`;</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="sa-component" style="margin-top: 15px;">
+                            <h4><i class="fas fa-fingerprint text-blue"></i> Swipe 3D Gesture Matrix</h4>
+                            <p>Bắt cử chỉ vuốt ngang trên di động, cập nhật lớp biến đổi CSS để lật trang như đọc sách thật:</p>
+                            <div class="code-wrapper" style="margin-top: 8px;">
+                                <pre><code class="language-javascript">let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipeGesture();
+});
+
+function handleSwipeGesture() {
+    const threshold = 80; // pixel tối thiểu
+    if (touchStartX - touchEndX > threshold) {
+        // Vuốt sang trái -> Trang kế tiếp
+        nextPageWithFlipAnimation();
+    } else if (touchEndX - touchStartX > threshold) {
+        // Vuốt sang phải -> Trang trước đó
+        prevPageWithFlipAnimation();
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Interactive Steps -->
+            <div class="tab-content" id="tab-fe-steps">
+                <div class="plan-header">
+                    <h2><i class="fas fa-clipboard-list" style="color: var(--accent-emerald);"></i> Kế hoạch Hành động 6 Giai đoạn Frontend</h2>
+                    <p>Bấm chọn vào các ô tròn để đánh dấu và tự động cập nhật tiến độ xây dựng giao diện!</p>
+                    
+                    <!-- Progress Bar Component -->
+                    <div class="progress-container">
+                        <div class="progress-bar-label">Tiến trình Frontend tổng thể: <span id="progress-percent">0%</span></div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%; background: linear-gradient(90deg, var(--accent-emerald), #06b6d4);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="phases-timeline">
+
+                    <!-- Phase 1 -->
+                    <div class="phase-section" id="phase-1">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 1: Thiết lập Dashboard &amp; Tích hợp API Upload / Polling</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Viết Bảng quản lý Dashboard</strong> trong `index.html`: Cải tiến khu vực Upload PDF, bổ sung Drag &amp; Drop mượt mà, xác thực định dạng file client-side.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Tích hợp API AJAX Polling</strong> trong `app.js`: Tự động gọi `GET /api/docs` mỗi 3 giây nếu phát hiện có tài liệu đang trong trạng thái xử lý (`extracting`, `translating`, `compiling`), cập nhật progress bar tức thì trên UI.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Dashboard hiển thị danh sách tài liệu kéo từ database Postgres thực tế.</li>
+                                <li>Giao diện upload hoạt động, tự động kích hoạt polling tiến trình nền thời gian thực.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2 -->
+                    <div class="phase-section" id="phase-2">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 2: Xây dựng Khung Trình đọc (Reader Shell) &amp; TOC Drawer</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Tạo `reader.html` &amp; `reader_style.css`</strong>: Thiết lập layout tối giản tràn màn hình, menu trượt Sidebar chứa mục lục TOC trang, Bottom Sheet điều khiển các tùy chọn giao diện.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Thiết lập 3 Chế độ xem song hành</strong>: Chế độ chỉ Tiếng Anh (en), Chỉ Tiếng Việt (vi) và Song ngữ song song (Bilingual Overlay) giúp tối ưu hóa khả năng đối chiếu.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Drawer mục lục hoạt động tốt, Bottom Sheet có cấu trúc trượt cao cấp.</li>
+                                <li>Nội dung trang trích xuất được nạp chính xác vào iframe sandboxed qua tham số URL `?doc_id=...&amp;page=...`.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="phase-section" id="phase-3">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 3: Phát triển Touch Gesture Engine &amp; Hoạt cảnh 3D</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Xây dựng Gesture Engine</strong> trong `reader_app.js` ghi nhận và xử lý cử chỉ vuốt chạm đa điểm di động, chống nhiễu cuộn dọc.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Tiêm CSS 3D Flip Card transition</strong>: Tạo hoạt cảnh lật trang lướt dọc/ngang với hiệu ứng xoay góc 3D mượt mà dưới 150ms.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Cử chỉ vuốt lật trang hoạt động tự nhiên trên di động giả lập.</li>
+                                <li>Không bị xung đột cuộn khi vuốt chéo.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 4 -->
+                    <div class="phase-section" id="phase-4">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 4: Thuật toán Autoscale Engine &amp; Responsive Iframe</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Triển khai Autoscale Engine</strong>: Đo kích thước viewport thực tế và tính toán tỉ lệ scale tự động để trang khớp 100% với màn hình di động theo chiều ngang.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Khi xoay ngang/dọc điện thoại, iframe tự động scale tương thích, không sinh thanh cuộn ngang khó chịu.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 5 -->
+                    <div class="phase-section" id="phase-5">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 5: Triển khai thuật toán Layout Shift Engine (LSE) &amp; Font Shrink</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="20" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Nhúng LSE Algorithm vào Reader Client</strong>: Tự động phát hiện dồn dòng văn bản tiếng Việt dài và dịch chuyển tọa độ top các khối phía sau để tránh chồng chữ lên nhau.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Tích hợp Dynamic Font Shrink</strong>: Nếu phát hiện một câu dịch quá dài gây tràn container, tự động co dãn kích cỡ chữ xuống tối thiểu 75%.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Các trang tài liệu tiếng Việt hiển thị hoàn hảo, không có bất kỳ dòng chữ nào bị chồng đè, che lấp lẫn nhau.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phase 6 -->
+                    <div class="phase-section" id="phase-6">
+                        <div class="phase-title" style="border-left-color: var(--accent-emerald);">
+                            <h3>Giai đoạn 6: Tích hợp Bộ điều khiển Translation Memory &amp; Hot Re-compile</h3>
+                            <span class="phase-dur">Thời lượng: 1 ngày</span>
+                        </div>
+                        <div class="phase-tasks">
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="15" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>[NEW] Phát triển giao diện Translation Memory Editor</strong>: Xây dựng modal/table quản trị bộ nhớ dịch. Tích hợp thanh tìm kiếm toàn văn và gọi API `PUT /api/docs/{doc_id}/translations/{span_id}` để chỉnh sửa trực tiếp.
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="task-item">
+                                <label class="task-checkbox-container">
+                                    <input type="checkbox" class="task-check" data-weight="10" checked>
+                                    <span class="checkmark" style="border-color: var(--accent-emerald);"></span>
+                                    <div class="task-desc">
+                                        <strong>Xác thực Hot Re-compile trên Reader</strong>: Sau khi người dùng lưu bản dịch hiệu chỉnh từ TM Editor, yêu cầu backend tự động biên dịch lại trang tĩnh và cập nhật trực quan iframe hiển thị ngay lập tức.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="phase-dod">
+                            <strong><i class="fas fa-clipboard-check"></i> Tiêu chí hoàn thành (DoD):</strong>
+                            <ul>
+                                <li>Biên tập viên dễ dàng tra cứu, sửa đổi bản dịch của bất kỳ thẻ span nào.</li>
+                                <li>Hiệu quả biên dịch cập nhật lên iframe tức thời mà không cần reload trang.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 3: API Specifications -->
+            <div class="tab-content" id="tab-fe-api">
+                <div class="sa-grid">
+                    
+                    <div class="sa-card main-sa" style="grid-column: span 2;">
+                        <h2><i class="fas fa-exchange-alt" style="color: var(--accent-emerald);"></i> Quy trình Phối hợp API Frontend • Backend</h2>
+                        <p class="section-intro">Frontend tĩnh giao tiếp trực tiếp qua phương thức AJAX Fetch với máy chủ FastAPI đang chạy tại cổng 8005. Tất cả định dạng truyền dữ liệu đều tuân thủ chuẩn JSON.</p>
+                        
+                        <!-- API Flow Diagram Table -->
+                        <div class="table-responsive" style="margin-top: 15px;">
+                            <table class="flow-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                                        <th style="padding: 10px; color: var(--accent-emerald);">Chức năng</th>
+                                        <th style="padding: 10px; color: var(--accent-emerald);">Phương thức</th>
+                                        <th style="padding: 10px; color: var(--accent-emerald);">API Endpoint</th>
+                                        <th style="padding: 10px; color: var(--accent-emerald);">Payload / Response</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Lấy danh sách tệp</td>
+                                        <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.2);">GET</span></td>
+                                        <td><code>/api/docs</code></td>
+                                        <td>Danh sách Metadata của tất cả tài liệu dạng JSON Array</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Tải lên sách PDF mới</td>
+                                        <td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">POST</span></td>
+                                        <td><code>/api/docs/upload</code></td>
+                                        <td>Form-Data (file) &rarr; Trả về Metadata tài liệu</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Bóc tách tọa độ PDF</td>
+                                        <td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">POST</span></td>
+                                        <td><code>/api/docs/{doc_id}/extract?async_mode=true</code></td>
+                                        <td>Trigger Background Task &rarr; HTTP 202 Accepted</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Thông dịch Agentic AI</td>
+                                        <td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">POST</span></td>
+                                        <td><code>/api/docs/{doc_id}/translate?async_mode=true</code></td>
+                                        <td>Trigger Background Task &rarr; HTTP 202 Accepted</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Biên dịch trang tĩnh LSE</td>
+                                        <td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">POST</span></td>
+                                        <td><code>/api/docs/{doc_id}/compile?async_mode=true</code></td>
+                                        <td>Trigger Background Task &rarr; HTTP 202 Accepted</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Tìm kiếm Bộ nhớ dịch</td>
+                                        <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.2);">GET</span></td>
+                                        <td><code>/api/docs/{doc_id}/translations/search?q={query}</code></td>
+                                        <td>Tìm kiếm toàn văn ilike &rarr; Danh sách Spans đối chiếu</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Biên tập bản dịch gốc</td>
+                                        <td><span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">PUT</span></td>
+                                        <td><code>/api/docs/{doc_id}/translations/{span_id}</code></td>
+                                        <td>JSON Payload {translated_text} &rarr; Auto re-compile</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 12px 10px;">Xóa vĩnh viễn sách &amp; file</td>
+                                        <td><span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">DELETE</span></td>
+                                        <td><code>/api/docs/{doc_id}</code></td>
+                                        <td>Dọn sạch PostgreSQL database &amp; Cascaded files trên đĩa</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Verification & Open Questions -->
+            <div class="tab-content" id="tab-fe-verify">
+                <div class="sa-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div class="sa-card main-sa">
+                        <h2><i class="fas fa-clipboard-check" style="color: var(--accent-emerald);"></i> 1. Quy trình Kiểm định &amp; Xác thực (Verification Plan)</h2>
+                        <p class="section-intro">Để đảm bảo tệp tĩnh và các logic cốt lõi của Frontend hoạt động bền bỉ, không lỗi DOM hay đổ vỡ giao diện trên di động, hệ thống sử dụng quy trình kiểm tra 2 lớp:</p>
+                        
+                        <div class="sa-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div class="sa-box">
+                                <h4 style="color: var(--accent-emerald); font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="fas fa-robot"></i> A. Kiểm thử Tự động hóa (Automated E2E Tests)</h4>
+                                <p style="font-size: 0.85rem; color: #94a3b8;">Cấu trúc lại bộ kiểm tra <code>run_e2e_automation_tests.py</code> để tự động quét các tệp tin Frontend mới:</p>
+                                <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: #94a3b8; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                                    <li>Xác thực cấu trúc cú pháp DOM HTML (DOM Integrity).</li>
+                                    <li>Kiểm định tính toàn vẹn của liên kết tĩnh (Broken Link Checker).</li>
+                                    <li>Đảm bảo các tệp tĩnh CSS/JS nội bộ (CDN-Free) tải thành công 100%.</li>
+                                </ul>
+                                <code style="display: block; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 10px; color: var(--accent-emerald); border-left: 3px solid var(--accent-emerald);">python run_e2e_automation_tests.py</code>
+                            </div>
+                            
+                            <div class="sa-box">
+                                <h4 style="color: #3b82f6; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="fas fa-mobile-screen"></i> B. Kiểm thử Thủ công (Manual &amp; Responsive Tests)</h4>
+                                <p style="font-size: 0.85rem; color: #94a3b8;">Khởi chạy máy chủ dịch vụ tĩnh để mô phỏng và kiểm tra thực tế trên di động:</p>
+                                <ul style="margin-left: 1.25rem; font-size: 0.8rem; color: #94a3b8; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                                    <li>Giả lập Chrome DevTools Device Mode chạy các dòng máy iPhone 14 Pro, Samsung Galaxy S20.</li>
+                                    <li>Kiểm tra Touch Swipe lật trang mượt mà &lt; 150ms.</li>
+                                    <li>Xoay ngang màn hình di động xác nhận Autoscale co dãn iframe tự động.</li>
+                                    <li>Toggle chế độ song ngữ, rà soát LSE chống chồng chữ.</li>
+                                </ul>
+                                <code style="display: block; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 10px; color: #3b82f6; border-left: 3px solid #3b82f6;">python server.py</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sa-card side-sa" style="margin-top: 15px;">
+                        <h2><i class="fas fa-question-circle" style="color: var(--accent-emerald);"></i> 2. Các Quyết định Thiết kế &amp; Đồng thuận kỹ thuật</h2>
+                        
+                        <div class="sa-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div class="sa-box">
+                                <h4 style="color: #f59e0b; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="fas fa-bolt"></i> 1. Kích hoạt Dịch thuật Tự động (Auto-Translate)</h4>
+                                <p style="font-size: 0.85rem; color: #94a3b8;">Hệ thống tự động kích hoạt API <code>/translate</code> bất đồng bộ ngay sau khi quá trình <code>/extract</code> tệp PDF hoàn tất thành công. Việc chạy ngầm non-blocking này tối ưu hóa tối đa thao tác của người sử dụng.</p>
+                            </div>
+                            <div class="sa-box">
+                                <h4 style="color: var(--accent-emerald); font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="fas fa-ruler-combined"></i> 2. Chiều rộng tiêu chuẩn (900px Standard Width)</h4>
+                                <p style="font-size: 0.85rem; color: #94a3b8;">Cưỡng chế cố định kích thước <code>900px</code> làm chiều rộng tiêu chuẩn của trang HTML xuất ra từ Poppler CLI. Đây là kích thước chuẩn hóa tối ưu giúp Autoscale Engine tính toán tỷ lệ thu phóng chính xác tuyệt đối, triệt tiêu hoàn toàn compound scale factor error.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Smart Documentations System • Đặc tả SA Full-Stack &amp; Lớp Frontend di động tối cao.</p>
+    </footer>
+
+    <!-- Navigation Drawer (Hamburger Menu) -->
+    <div class="nav-drawer" id="nav-drawer">
+        <div class="drawer-glow" style="background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%);"></div>
+        <div class="drawer-header">
+            <div class="logo">
+                <i class="fas fa-brain logo-icon" style="color: var(--accent-emerald);"></i>
+                <span class="logo-text">Docs Explorer</span>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn" aria-label="Đóng Menu">&times;</button>
+        </div>
+        <nav class="drawer-links">
+            <div class="drawer-section-title">Hệ thống Tài liệu</div>
+            
+            <a href="../../index.html" class="drawer-link">
+                <i class="fas fa-home"></i>
+                <div>
+                    <h4>Bàn làm việc chính</h4>
+                    <p>Bảng điều khiển &amp; Trình quản lý AI</p>
+                </div>
+            </a>
+            
+            <a href="../plan/index.html" class="drawer-link">
+                <i class="fas fa-route"></i>
+                <div>
+                    <h4>Kế hoạch &amp; SA gốc</h4>
+                    <p>Bản đồ kiến trúc &amp; Lộ trình 6 bước</p>
+                </div>
+            </a>
+
+            <a href="#" class="drawer-link active" onclick="return false;">
+                <i class="fas fa-mobile-alt" style="color: var(--accent-emerald);"></i>
+                <div>
+                    <h4>Kế hoạch Frontend</h4>
+                    <p>Đặc tả Touch, Autoscale &amp; LSE</p>
+                </div>
+            </a>
+            
+            <a href="../workflow/index.html" class="drawer-link">
+                <i class="fas fa-project-diagram"></i>
+                <div>
+                    <h4>Quy trình số hóa</h4>
+                    <p>Chuỗi 5 bước xử lý tuyệt đối</p>
+                </div>
+            </a>
+            
+            <a href="../backend/index.html" class="drawer-link">
+                <i class="fas fa-server"></i>
+                <div>
+                    <h4>API &amp; Backend</h4>
+                    <p>Môi trường ảo &amp; Thử nghiệm trực tiếp</p>
+                </div>
+            </a>
+        </nav>
+        <div class="drawer-footer">
+            <p>&copy; 2026 Smart Documentations System</p>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- Core Interactive Logic for Frontend Plan Tabs & Progress -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. STEPPER TABS SWITCHING LOGIC
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetTab = btn.getAttribute('data-tab');
+
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    btn.classList.add('active');
+                    const targetContent = document.getElementById(targetTab);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    }
+                });
+            });
+
+            // 2. INTERACTIVE CHECKLIST & PROGRESS BAR
+            const checkboxes = document.querySelectorAll('.task-check');
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercent = document.getElementById('progress-percent');
+
+            function updateProgress() {
+                let totalWeight = 0;
+                let completedWeight = 0;
+
+                checkboxes.forEach(cb => {
+                    const weight = parseFloat(cb.getAttribute('data-weight')) || 10;
+                    totalWeight += weight;
+                    if (cb.checked) {
+                        completedWeight += weight;
+                    }
+                });
+
+                const percentage = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0;
+                
+                progressPercent.textContent = `${percentage}%`;
+                progressFill.style.width = `${percentage}%`;
+
+                // Lưu trạng thái vào LocalStorage
+                const checkedStates = Array.from(checkboxes).map(cb => cb.checked);
+                localStorage.setItem('frontend_plan_checked_states', JSON.stringify(checkedStates));
+            }
+
+            function loadSavedProgress() {
+                const savedStates = localStorage.getItem('frontend_plan_checked_states');
+                if (savedStates) {
+                    try {
+                        const checkedStates = JSON.parse(savedStates);
+                        checkboxes.forEach((cb, idx) => {
+                            if (idx < checkedStates.length) {
+                                cb.checked = checkedStates[idx];
+                            }
+                        });
+                    } catch (err) {
+                        console.error("Error loading checklist states:", err);
+                    }
+                }
+                updateProgress();
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateProgress);
+            });
+
+            loadSavedProgress();
+
+            // 3. RESPONSIVE HAMBURGER MENU DRAWER INTERACTION
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const navDrawer = document.getElementById('nav-drawer');
+            const drawerOverlay = document.getElementById('drawer-overlay');
+            const drawerCloseBtn = document.getElementById('drawer-close-btn');
+            const drawerLinks = document.querySelectorAll('.drawer-link:not(.disabled)');
+
+            const toggleDrawer = (forceState) => {
+                const shouldActive = typeof forceState === 'boolean' ? forceState : !navDrawer.classList.contains('active');
+                
+                if (shouldActive) {
+                    hamburgerBtn.classList.add('active');
+                    navDrawer.classList.add('active');
+                    drawerOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    hamburgerBtn.classList.remove('active');
+                    navDrawer.classList.remove('active');
+                    drawerOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            };
+
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleDrawer();
+                });
+            }
+
+            if (drawerCloseBtn) {
+                drawerCloseBtn.addEventListener('click', () => toggleDrawer(false));
+            }
+
+            if (drawerOverlay) {
+                drawerOverlay.addEventListener('click', () => toggleDrawer(false));
+            }
+
+            drawerLinks.forEach(link => {
+                link.addEventListener('click', () => toggleDrawer(false));
+            });
+        });
+    </script>
+</body>
+</html>

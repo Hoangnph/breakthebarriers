@@ -1,0 +1,20 @@
+{
+  "0": "Visual summary",
+  "1": "Fig.2: A2A inter-agent communication pattern",
+  "2": "Key Takeaways",
+  "3": "Key Takeaways:",
+  "4": "",
+  "5": "The Google A2A protocol is an open, HTTP-based standard that facilitates",
+  "6": "communication and collaboration between AI agents built with different",
+  "7": "frameworks.",
+  "8": "",
+  "9": "An AgentCard serves as a digital identifier for an agent, allowing for automatic",
+  "10": "discovery and understanding of its capabilities by other agents.",
+  "11": "",
+  "12": "A2A offers both synchronous request-response interactions (using",
+  "13": "`tasks/send`) and streaming updates (using `tasks/sendSubscribe`) to",
+  "14": "accommodate varying communication needs.",
+  "15": "",
+  "16": "The protocol supports multi-turn conversations, including an `input-required`",
+  "17": "13"
+}

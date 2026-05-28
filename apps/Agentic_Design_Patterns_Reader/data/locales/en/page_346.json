@@ -1,0 +1,16 @@
+{
+  "0": "critically reviewing them, and evolving the most promising concepts. This structured,",
+  "1": "collaborative methodology allows the system to intelligently navigate vast information",
+  "2": "landscapes, design and execute experiments, and generate genuinely new",
+  "3": "knowledge. By automating the labor-intensive aspects of exploration, these systems",
+  "4": "augment human intellect and significantly accelerate the pace of discovery.",
+  "5": "Rule of thumb: Use the Exploration and Discovery pattern when operating in",
+  "6": "open-ended, complex, or rapidly evolving domains where the solution space is not",
+  "7": "fully defined. It is ideal for tasks requiring the generation of novel hypotheses,",
+  "8": "strategies, or insights, such as in scientific research, market analysis, and creative",
+  "9": "content generation. This pattern is essential when the objective is to uncover",
+  "10": "\"unknown unknowns\" rather than merely optimizing a known process.",
+  "11": "Visual summary",
+  "12": "Fig.2: Exploration and Discovery design pattern",
+  "13": "12"
+}

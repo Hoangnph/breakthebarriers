@@ -1,0 +1,20 @@
+{
+  "0": "Quy tắc ngón tay cái: Sử dụng mẫu Ưu Tiên Hóa khi một hệ thống Agentic phải",
+  "1": "tự chủ quản lý nhiều nhiệm vụ hoặc mục tiêu thường xung đột, dưới các hạn chế tài nguyên",
+  "2": "để hoạt động hiệu quả trong một môi trường động.",
+  "3": "Tóm Tắt Trực Quan:",
+  "4": "Hình 1: Mẫu Thiết Kế Ưu Tiên Hóa",
+  "5": "Những Điểm Chính Rút Ra",
+  "6": "",
+  "7": " Ưu tiên hóa cho phép các agent AI hoạt động hiệu quả trong các môi trường phức tạp, đa chiều.",
+  "8": "",
+  "9": " Các agent sử dụng các tiêu chí đã thiết lập như sự khẩn cấp, tầm quan trọng và",
+  "10": "sự phụ thuộc để đánh giá và xếp hạng các nhiệm vụ.",
+  "11": "",
+  "12": " Tái ưu tiên hóa động cho phép các agent điều chỉnh trọng tâm hoạt động của mình",
+  "13": "đáp ứng với các thay đổi thời gian thực.",
+  "14": "",
+  "15": " Ưu tiên hóa xảy ra ở các cấp độ khác nhau, bao gồm các mục tiêu chiến lược bao quát",
+  "16": "và các quyết định chiến thuật tức thì.",
+  "17": "9"
+}

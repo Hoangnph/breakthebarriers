@@ -1,0 +1,73 @@
+<h2>Adaptive Pipeline — Câu hỏi 3/4</h2>
+<p class="subtitle">Module Volume Detector sẽ quyết định chiến lược xử lý. Cái gì nên thay đổi theo volume?</p>
+
+<div class="section" style="margin-bottom:24px;">
+  <div style="display:grid; grid-template-columns: 110px 1fr 1fr 1fr 1fr; gap:8px; font-size:12px;">
+    <!-- Header -->
+    <div style="padding:8px; color:#64748b; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.05em;">Volume</div>
+    <div style="padding:8px; background:rgba(99,102,241,0.1); border-radius:6px; text-align:center; color:#a5b4fc; font-weight:600;">S &lt;50tr</div>
+    <div style="padding:8px; background:rgba(99,102,241,0.1); border-radius:6px; text-align:center; color:#a5b4fc; font-weight:600;">M 50–200tr</div>
+    <div style="padding:8px; background:rgba(251,146,60,0.1); border-radius:6px; text-align:center; color:#fb923c; font-weight:600;">L 200–500tr</div>
+    <div style="padding:8px; background:rgba(239,68,68,0.1); border-radius:6px; text-align:center; color:#f87171; font-weight:600;">XL 500tr+</div>
+
+    <!-- Row 1 -->
+    <div style="padding:8px 4px; color:#94a3b8; display:flex; align-items:center;">Translation</div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Sync<br><span style="color:#64748b;">sequential</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Async<br><span style="color:#64748b;">5 workers</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Async<br><span style="color:#64748b;">10 workers</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Queue<br><span style="color:#64748b;">batch jobs</span></div>
+
+    <!-- Row 2 -->
+    <div style="padding:8px 4px; color:#94a3b8; display:flex; align-items:center;">Progress UI</div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Simple<br><span style="color:#64748b;">spinner</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Progress<br><span style="color:#64748b;">bar %</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">SSE<br><span style="color:#64748b;">page-by-page</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Dashboard<br><span style="color:#64748b;">job queue</span></div>
+
+    <!-- Row 3 -->
+    <div style="padding:8px 4px; color:#94a3b8; display:flex; align-items:center;">Gemini calls</div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">3-phase<br><span style="color:#64748b;">per block</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">3-phase<br><span style="color:#64748b;">+ caching</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">1-phase<br><span style="color:#64748b;">batched</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">1-phase<br><span style="color:#64748b;">bulk batch</span></div>
+
+    <!-- Row 4 -->
+    <div style="padding:8px 4px; color:#94a3b8; display:flex; align-items:center;">Retry</div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Simple<br><span style="color:#64748b;">3 retries</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Backoff<br><span style="color:#64748b;">exponential</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Backoff<br><span style="color:#64748b;">+ checkpoint</span></div>
+    <div style="padding:8px; background:rgba(30,41,59,0.6); border-radius:6px; text-align:center;">Queue<br><span style="color:#64748b;">dead-letter</span></div>
+  </div>
+</div>
+
+<p class="label">Bảng trên là đề xuất ban đầu của tôi — bạn muốn thay đổi hay thêm dimension nào?</p>
+<div class="options" data-multiselect>
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Ổn, đi tiếp với matrix này</h3>
+      <p>Tôi sẽ dùng bảng này làm nền tảng thiết kế adaptive pipeline</p>
+    </div>
+  </div>
+  <div class="option" data-choice="cost" onclick="toggleSelect(this)">
+    <div class="letter">+</div>
+    <div class="content">
+      <h3>Thêm dimension: Chi phí API (Cost)</h3>
+      <p>Với doc lớn, cần ước tính cost trước khi dịch — tránh tốn token không cần thiết</p>
+    </div>
+  </div>
+  <div class="option" data-choice="quality-tier" onclick="toggleSelect(this)">
+    <div class="letter">+</div>
+    <div class="content">
+      <h3>Thêm dimension: Quality tier</h3>
+      <p>Doc nhỏ/quan trọng → 3-phase full quality. Doc lớn → 1-phase nhanh. Người dùng chọn trade-off</p>
+    </div>
+  </div>
+  <div class="option" data-choice="resume" onclick="toggleSelect(this)">
+    <div class="letter">+</div>
+    <div class="content">
+      <h3>Thêm: Resume capability</h3>
+      <p>Doc lớn bị gián đoạn (mất điện, lỗi mạng) phải có thể tiếp tục từ trang đang dở</p>
+    </div>
+  </div>
+</div>

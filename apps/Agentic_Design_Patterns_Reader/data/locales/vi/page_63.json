@@ -1,0 +1,22 @@
+{
+  "0": "Hình 2: Mẫu thiết kế Parallelization",
+  "1": "Các điểm chính",
+  "2": "Dưới đây là các điểm chính:",
+  "3": "",
+  "4": "Parallelization là một mẫu dùng để thực thi các tác vụ độc lập một cách đồng thời nhằm",
+  "5": "cải thiện hiệu quả.",
+  "6": "",
+  "7": "Nó đặc biệt hữu ích khi các tác vụ phải chờ tài nguyên bên ngoài,",
+  "8": "chẳng hạn như các lời gọi API.",
+  "9": "",
+  "10": "Việc áp dụng kiến trúc đồng thời hoặc song song đưa vào một mức",
+  "11": "phức tạp và chi phí đáng kể, ảnh hưởng đến các giai đoạn phát triển then chốt như thiết kế,",
+  "12": "gỡ lỗi và ghi log hệ thống.",
+  "13": "",
+  "14": "Các framework như LangChain và Google ADK cung cấp hỗ trợ tích hợp sẵn để",
+  "15": "định nghĩa và quản lý thực thi song song.",
+  "16": "",
+  "17": "Trong LangChain Expression Language (LCEL), RunnableParallel là một cấu trúc then chốt",
+  "18": "để chạy nhiều runnable cạnh nhau.",
+  "19": "14"
+}

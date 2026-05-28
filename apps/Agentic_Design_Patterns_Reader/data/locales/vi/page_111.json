@@ -1,0 +1,18 @@
+{
+  "0": "Lý do: Mẫu Planning đưa ra một giải pháp chuẩn hóa bằng cách để hệ thống agentic",
+  "1": "trước tiên tạo một kế hoạch mạch lạc nhằm xử lý mục tiêu. Nó bao gồm việc phân rã một",
+  "2": "mục tiêu cấp cao thành một chuỗi các bước nhỏ hơn, có thể hành động hoặc các mục tiêu con. Điều này cho phép",
+  "3": "hệ thống quản lý các workflow phức tạp, điều phối nhiều tool khác nhau và xử lý",
+  "4": "dependency theo một thứ tự logic. LLM đặc biệt phù hợp với việc này, vì chúng có thể",
+  "5": "tạo các kế hoạch hợp lý và hiệu quả dựa trên dữ liệu huấn luyện khổng lồ. Cách tiếp cận có cấu trúc này",
+  "6": "biến một agent phản ứng đơn giản thành một bộ thực thi chiến lược có thể",
+  "7": "chủ động hướng tới mục tiêu phức tạp và thậm chí điều chỉnh kế hoạch khi cần.",
+  "8": "Quy tắc kinh nghiệm: Dùng mẫu này khi yêu cầu của người dùng quá phức tạp để được xử lý bằng",
+  "9": "một hành động hoặc tool duy nhất. Nó lý tưởng để tự động hóa các quy trình nhiều bước, chẳng hạn như",
+  "10": "tạo báo cáo nghiên cứu chi tiết, onboarding nhân viên mới, hoặc thực hiện",
+  "11": "phân tích cạnh tranh. Áp dụng mẫu Planning bất cứ khi nào một tác vụ cần một chuỗi",
+  "12": "các thao tác phụ thuộc lẫn nhau để đạt đầu ra cuối cùng đã được tổng hợp.",
+  "13": "Tóm tắt trực quan",
+  "14": "Hình 4; Mẫu thiết kế Planning",
+  "15": "12"
+}

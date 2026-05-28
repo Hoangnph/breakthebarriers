@@ -1,0 +1,22 @@
+{
+  "0": "Hình 2: Mẫu Thiết Kế Tối Ưu Hóa Nhận Thức Tài Nguyên",
+  "1": "Những Điểm Chính Rút Ra",
+  "2": "",
+  "3": " Tối Ưu Hóa Nhận Thức Tài Nguyên là Thiết Yếu: Các agent thông minh có thể quản lý",
+  "4": "các tài nguyên tính toán, thời gian và tài chính một cách động. Các quyết định",
+  "5": "về việc sử dụng model và đường dẫn thực thi được thực hiện dựa trên các ràng buộc và mục tiêu",
+  "6": "thời gian thực.",
+  "7": "",
+  "8": " Kiến Trúc Đa Tác Tử cho Khả Năng Mở Rộng: ADK của Google cung cấp một framework đa tác tử,",
+  "9": "cho phép thiết kế mô-đun. Các agent khác nhau (trả lời, định tuyến,",
+  "10": "phê bình) xử lý các nhiệm vụ cụ thể.",
+  "11": "",
+  "12": " Định Tuyến Động, Điều Khiển Bởi LLM: Một Router Agent hướng các truy vấn đến các mô hình",
+  "13": "ngôn ngữ (Gemini Flash cho đơn giản, Gemini Pro cho phức tạp) dựa trên độ phức tạp truy vấn",
+  "14": "và ngân sách. Điều này tối ưu hóa chi phí và hiệu suất.",
+  "15": "",
+  "16": " Chức Năng Critique Agent: Một Critique Agent chuyên biệt cung cấp phản hồi cho",
+  "17": "việc tự sửa lỗi, theo dõi hiệu suất, và tinh chỉnh logic định tuyến, nâng cao",
+  "18": "hiệu quả hệ thống.",
+  "19": "15"
+}

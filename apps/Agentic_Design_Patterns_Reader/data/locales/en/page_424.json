@@ -1,0 +1,18 @@
+{
+  "0": "Grounding: Grounding is the process of",
+  "1": "connecting a model's outputs to",
+  "2": "verifiable, real-world information sources",
+  "3": "to ensure factual accuracy and reduce",
+  "4": "hallucinations. This is often achieved",
+  "5": "with techniques like RAG to make AI",
+  "6": "systems more trustworthy.",
+  "7": "Core AI Model Architectures",
+  "8": "Transformers: The Transformer is the",
+  "9": "foundational neural network architecture",
+  "10": "for most modern LLMs. Its key",
+  "11": "innovation is the self-attention",
+  "12": "mechanism, which efficiently processes",
+  "13": "long sequences of text and captures",
+  "14": "complex relationships between words.",
+  "15": "4"
+}

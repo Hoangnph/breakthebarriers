@@ -1,0 +1,22 @@
+{
+  "0": "Hình 1: Trang web OpenRouter (https://openrouter.ai/)",
+  "1": "Vượt Ra Ngoài Chuyển Đổi Model Động: Một Phổ Rộng Hơn Của",
+  "2": "Các Tối Ưu Hóa Tài Nguyên Agent",
+  "3": "Tối ưu hóa nhận thức tài nguyên là tối quan trọng trong việc phát triển các hệ thống agent thông minh",
+  "4": "hoạt động hiệu quả trong các ràng buộc thực tế. Hãy xem xét một số",
+  "5": "kỹ thuật bổ sung:",
+  "6": "Chuyển Đổi Model Động là một kỹ thuật quan trọng liên quan đến việc lựa chọn chiến lược các",
+  "7": "mô hình ngôn ngữ lớn dựa trên sự phức tạp của nhiệm vụ và các tài nguyên",
+  "8": "tính toán có sẵn. Khi đối mặt với các truy vấn đơn giản, một LLM nhẹ,",
+  "9": "tiết kiệm chi phí có thể được triển khai, trong khi các vấn đề phức tạp, đa chiều",
+  "10": "đòi hỏi việc sử dụng các model tinh vi hơn và tốn nhiều tài nguyên hơn.",
+  "11": "Sử Dụng & Lựa Chọn Công Cụ Thích Ứng đảm bảo các agent có thể lựa chọn thông minh từ một bộ",
+  "12": "công cụ, chọn công cụ phù hợp và hiệu quả nhất cho mỗi tác vụ con cụ thể,",
+  "13": "với sự cân nhắc cẩn thận đến các yếu tố như chi phí sử dụng API, độ trễ, và thời gian thực thi.",
+  "14": "Lựa chọn công cụ động này nâng cao hiệu quả hệ thống tổng thể bằng cách tối ưu hóa",
+  "15": "việc sử dụng các API và dịch vụ bên ngoài.",
+  "16": "Cắt Giảm & Tóm Tắt Ngữ Cảnh đóng vai trò quan trọng trong việc quản lý lượng",
+  "17": "thông tin được xử lý bởi các agent, chiến lược giảm thiểu số lượng token prompt và",
+  "18": "giảm chi phí suy luận bằng cách tóm tắt thông minh và chỉ giữ lại có chọn lọc",
+  "19": "12"
+}

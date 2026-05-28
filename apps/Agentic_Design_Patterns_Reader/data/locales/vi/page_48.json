@@ -1,0 +1,21 @@
+{
+  "0": "Hình 1: Mẫu Router, sử dụng một LLM làm một Router",
+  "1": "Những Điểm Chính Rút Ra",
+  "2": "",
+  "3": " Định tuyến (Routing) cho phép các agent đưa ra các quyết định động về bước tiếp theo trong một",
+  "4": "luồng công việc dựa trên các điều kiện.",
+  "5": "",
+  "6": " Nó cho phép các agent xử lý các đầu vào đa dạng và điều chỉnh hành vi của chúng, vượt xa khỏi",
+  "7": "việc thực thi tuyến tính.",
+  "8": "",
+  "9": " Logic định tuyến có thể được triển khai bằng cách sử dụng các LLM, các hệ thống dựa trên quy tắc, hoặc độ tương đồng của",
+  "10": "embedding.",
+  "11": "",
+  "12": " Các framework như LangGraph và Google ADK cung cấp các cách thức có cấu trúc để định nghĩa",
+  "13": "và quản lý định tuyến trong các luồng công việc của agent, mặc dù có các cách tiếp cận",
+  "14": "kiến trúc khác nhau.",
+  "15": "Kết luận",
+  "16": "Mẫu Định Tuyến là một bước quan trọng trong việc xây dựng các hệ thống agentic",
+  "17": "thực sự năng động và phản hồi nhanh. Bằng cách triển khai định tuyến, chúng ta vượt ra ngoài các luồng thực thi tuyến tính, đơn giản và",
+  "18": "13"
+}

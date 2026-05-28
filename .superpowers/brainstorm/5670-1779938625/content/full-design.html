@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Full Design — Adaptive Pipeline</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; line-height: 1.6; padding: 32px; }
+  h1 { font-size: 22px; color: #f8fafc; margin-bottom: 4px; }
+  h2 { font-size: 15px; color: #a5b4fc; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(165,180,252,0.2); }
+  h3 { font-size: 13px; color: #e2e8f0; margin-bottom: 6px; }
+  .subtitle { color: #64748b; margin-bottom: 28px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .card { background: rgba(30,41,59,0.7); border-radius: 10px; padding: 14px; border: 1px solid rgba(255,255,255,0.07); }
+  .card-indigo { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.25); }
+  .card-orange { background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.25); }
+  .card-green { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); }
+  .card-red { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
+  .tag { display: inline-block; background: rgba(255,255,255,0.07); border-radius: 4px; padding: 2px 8px; font-size: 11px; margin: 2px; }
+  .tag-new { background: rgba(16,185,129,0.2); color: #34d399; }
+  .tag-mod { background: rgba(251,146,60,0.2); color: #fb923c; }
+  .tag-keep { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .badge { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: #64748b; margin-bottom: 6px; }
+  .muted { color: #64748b; font-size: 11px; }
+  .arrow { color: #334155; padding: 0 6px; }
+  .section { margin-bottom: 28px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pill { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 3px 9px; font-size: 11px; white-space: nowrap; }
+  .pill-indigo { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+  .pill-orange { background: rgba(251,146,60,0.2); color: #fb923c; }
+  .pill-green { background: rgba(16,185,129,0.2); color: #34d399; }
+  .sep { height: 1px; background: rgba(255,255,255,0.06); margin: 24px 0; }
+  code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 3px; font-family: 'SF Mono', monospace; font-size: 11px; color: #94a3b8; }
+  .method { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+  .get { background: rgba(99,102,241,0.25); color: #a5b4fc; }
+  .post { background: rgba(16,185,129,0.25); color: #34d399; }
+  .patch { background: rgba(251,146,60,0.25); color: #fb923c; }
+  .del { background: rgba(239,68,68,0.2); color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<h1>🏗️ Adaptive Pipeline — Full Design</h1>
+<p class="subtitle">Hybrid: asyncio (S/M) + Celery/Redis (L/XL) · Multi-user production · 2026-05-28</p>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: ARCHITECTURE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>① Kiến trúc tổng thể</h2>
+  <div style="display:flex; align-items:stretch; gap:8px; flex-wrap:wrap;">
+
+    <div class="card card-indigo" style="flex:1; min-width:120px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">📄</div>
+      <div style="color:#a5b4fc; font-weight:600;">Upload</div>
+      <div class="muted">PDF → DB</div>
+    </div>
+    <div style="display:flex; align-items:center; color:#334155;">→</div>
+    <div class="card card-green" style="flex:1.4; min-width:150px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">🆕</div>
+      <div style="color:#34d399; font-weight:600;">Volume Detector</div>
+      <div class="muted">tier · tokens · cost · quality</div>
+    </div>
+    <div style="display:flex; align-items:center; color:#334155; font-size:20px;">⟶</div>
+
+    <div style="display:flex; flex-direction:column; gap:8px; flex:3;">
+      <div class="card card-indigo">
+        <div style="color:#a5b4fc; font-weight:600; margin-bottom:6px;">S / M  ≤ 200 trang</div>
+        <div class="row">
+          <span class="pill pill-indigo">asyncio Semaphore pool</span>
+          <span class="pill pill-indigo">SSE /progress</span>
+          <span class="pill pill-indigo">PostgreSQL jobs table</span>
+        </div>
+      </div>
+      <div class="card card-orange">
+        <div style="color:#fb923c; font-weight:600; margin-bottom:6px;">L / XL  200+ trang</div>
+        <div class="row">
+          <span class="pill pill-orange">Celery Workers</span>
+          <span class="pill pill-orange">Redis Broker</span>
+          <span class="pill pill-orange">Checkpoint Resume</span>
+          <span class="pill pill-orange">Dead-letter queue</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:10px;">
+    <div class="badge">Shared modules — áp dụng cả 2 nhánh</div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+      <span class="tag tag-new">🆕 Quality Tier Engine</span>
+      <span class="tag tag-new">🆕 Cost Estimator</span>
+      <span class="tag tag-new">🆕 translate-all endpoint</span>
+      <span class="tag tag-new">🆕 google.genai migration</span>
+      <span class="tag tag-mod">♻️ main.py → routers/</span>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: VOLUME DETECTOR -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>② Volume Detector — module mới</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="badge">Logic phân loại</div>
+      <table>
+        <tr>
+          <th>Tier</th><th>Trang</th><th>Concurrency</th><th>Path</th>
+        </tr>
+        <tr>
+          <td><span style="color:#34d399;">S</span></td>
+          <td>&lt; 50</td>
+          <td>3 workers</td>
+          <td>asyncio</td>
+        </tr>
+        <tr>
+          <td><span style="color:#a5b4fc;">M</span></td>
+          <td>50–200</td>
+          <td>8 workers</td>
+          <td>asyncio</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fb923c;">L</span></td>
+          <td>200–500</td>
+          <td>priority-high</td>
+          <td>Celery</td>
+        </tr>
+        <tr>
+          <td><span style="color:#f87171;">XL</span></td>
+          <td>500+</td>
+          <td>priority-low</td>
+          <td>Celery</td>
+        </tr>
+      </table>
+    </div>
+    <div class="card card-green">
+      <div class="badge">Output: VolumeProfile</div>
+      <div style="font-size:11px; color:#94a3b8; line-height:2;">
+        <div><code>tier</code> → S / M / L / XL</div>
+        <div><code>page_count</code> → số trang thực</div>
+        <div><code>estimated_spans</code> → tổng số span ước tính</div>
+        <div><code>estimated_tokens</code> → tokens × giá Gemini</div>
+        <div><code>estimated_cost_usd</code> → chi phí dự kiến</div>
+        <div><code>recommended_quality</code> → fast / balanced / high</div>
+        <div><code>processing_path</code> → asyncio / celery</div>
+        <div><code>estimated_duration_min</code> → thời gian ước tính</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:10px; background:rgba(16,185,129,0.06);">
+    <div class="badge">Cost Estimator (tích hợp trong Volume Detector)</div>
+    <div class="row" style="margin-top:6px; flex-wrap:wrap; gap:8px; font-size:11px;">
+      <span>📏 <code>page_count × avg_spans_per_page</code></span>
+      <span class="arrow">×</span>
+      <span>📝 <code>avg_tokens_per_span × quality_multiplier</code></span>
+      <span class="arrow">×</span>
+      <span>💰 <code>gemini_price_per_1M_tokens</code></span>
+      <span class="arrow">=</span>
+      <span style="color:#34d399; font-weight:600;">Estimated cost USD</span>
+    </div>
+    <div class="muted" style="margin-top:6px;">quality_multiplier: fast=1× · balanced=2× · high=3× (3 Gemini calls)</div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: QUALITY TIER ENGINE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>③ Quality Tier Engine</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="badge">fast</div>
+      <h3 style="color:#34d399;">⚡ 1-phase</h3>
+      <div class="muted" style="margin-bottom:8px;">1 Gemini call/block</div>
+      <div style="font-size:11px; line-height:1.8;">
+        <div>→ Draft translation only</div>
+        <div>→ Best for L/XL docs</div>
+        <div>→ ~3× cheaper + faster</div>
+      </div>
+    </div>
+    <div class="card card-indigo">
+      <div class="badge">balanced  ← default M</div>
+      <h3 style="color:#a5b4fc;">⚖️ 2-phase</h3>
+      <div class="muted" style="margin-bottom:8px;">2 Gemini calls/block</div>
+      <div style="font-size:11px; line-height:1.8;">
+        <div>→ Draft + verify</div>
+        <div>→ Good quality/cost ratio</div>
+        <div>→ ~2× cheaper than high</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="badge">high  ← default S</div>
+      <h3 style="color:#fb923c;">🎯 3-phase (current)</h3>
+      <div class="muted" style="margin-bottom:8px;">3 Gemini calls/block</div>
+      <div style="font-size:11px; line-height:1.8;">
+        <div>→ Draft + glossary + verify</div>
+        <div>→ Best cho doc quan trọng</div>
+        <div>→ Giữ nguyên pipeline hiện tại</div>
+      </div>
+    </div>
+  </div>
+  <div class="muted" style="margin-top:8px;">User có thể override quality tier bất kể volume — VD: doc lớn nhưng muốn chất lượng cao, hoặc doc nhỏ nhưng chỉ cần fast.</div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: DATA MODEL -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>④ Data Model — thay đổi DB</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="badge">Bảng documents — thêm columns</div>
+      <table>
+        <tr><th>Column mới</th><th>Type</th><th>Ghi chú</th></tr>
+        <tr><td><code>volume_tier</code></td><td>VARCHAR</td><td>S/M/L/XL</td></tr>
+        <tr><td><code>quality_tier</code></td><td>VARCHAR</td><td>fast/balanced/high</td></tr>
+        <tr><td><code>estimated_cost_usd</code></td><td>FLOAT</td><td>từ Volume Detector</td></tr>
+        <tr><td><code>estimated_duration_min</code></td><td>INT</td><td>ETA dịch</td></tr>
+      </table>
+    </div>
+    <div class="card tag-new" style="background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.2);">
+      <div class="badge">Bảng jobs — MỚI HOÀN TOÀN</div>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Ghi chú</th></tr>
+        <tr><td><code>id</code></td><td>UUID</td><td>primary key</td></tr>
+        <tr><td><code>doc_id</code></td><td>VARCHAR</td><td>FK → documents</td></tr>
+        <tr><td><code>page_num</code></td><td>INT</td><td></td></tr>
+        <tr><td><code>stage</code></td><td>VARCHAR</td><td>extract/translate/compile</td></tr>
+        <tr><td><code>status</code></td><td>VARCHAR</td><td>pending/running/done/failed</td></tr>
+        <tr><td><code>volume_tier</code></td><td>VARCHAR</td><td>S/M/L/XL</td></tr>
+        <tr><td><code>quality_tier</code></td><td>VARCHAR</td><td>fast/balanced/high</td></tr>
+        <tr><td><code>retries</code></td><td>INT</td><td>default 0</td></tr>
+        <tr><td><code>error_msg</code></td><td>TEXT</td><td>last error</td></tr>
+        <tr><td><code>celery_task_id</code></td><td>VARCHAR</td><td>null nếu asyncio path</td></tr>
+        <tr><td><code>started_at</code></td><td>DATETIME</td><td>checkpoint resume</td></tr>
+        <tr><td><code>completed_at</code></td><td>DATETIME</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: NEW API ENDPOINTS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>⑤ API Endpoints — mới và thay đổi</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="badge">Endpoints mới</div>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Mô tả</th></tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td><code>/api/docs/{id}/volume</code></td>
+          <td>VolumeProfile + cost estimate</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td><code>/api/docs/{id}/translate-all</code></td>
+          <td>Dịch tất cả trang, dispatch jobs</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td><code>/api/docs/{id}/progress</code></td>
+          <td>SSE stream: real-time progress</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td><code>/api/docs/{id}/resume</code></td>
+          <td>Resume từ trang bị gián đoạn</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td><code>/api/jobs/{job_id}</code></td>
+          <td>Job status + metadata</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td><code>/api/docs/{id}/jobs</code></td>
+          <td>Tất cả jobs của 1 doc</td>
+        </tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="badge">Endpoints hiện tại — cập nhật</div>
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Thay đổi</th></tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td><code>/api/docs/upload</code></td>
+          <td>+ auto-detect volume sau upload</td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td><code>/api/docs/{id}/translate</code></td>
+          <td>+ param <code>quality_tier</code></td>
+        </tr>
+        <tr>
+          <td><span class="method post">POST</span></td>
+          <td><code>/api/docs/{id}/extract</code></td>
+          <td>+ job tracking vào jobs table</td>
+        </tr>
+        <tr>
+          <td><span class="method get">GET</span></td>
+          <td><code>/api/docs</code></td>
+          <td>+ trả về volume_tier, cost trong list</td>
+        </tr>
+      </table>
+      <div class="badge" style="margin-top:12px;">SSE Progress event format</div>
+      <div style="background:rgba(0,0,0,0.3); border-radius:6px; padding:8px; font-size:11px; color:#94a3b8; font-family:monospace; margin-top:6px;">
+        data: {"page": 12, "total": 80,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"status": "translating",<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"percent": 15,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"eta_min": 6}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: RESUME CAPABILITY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>⑥ Resume Capability</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="badge">Luồng resume</div>
+      <div style="font-size:12px; line-height:2;">
+        <div class="row"><span class="pill" style="background:rgba(239,68,68,0.15); color:#f87171;">1.</span> Job bị interrupt (mất mạng / crash)</div>
+        <div class="row"><span class="pill" style="background:rgba(239,68,68,0.15); color:#f87171;">2.</span> Page.status = <code>failed</code> hoặc <code>translating</code> stuck</div>
+        <div style="height:1px; background:rgba(255,255,255,0.05); margin: 8px 0;"></div>
+        <div class="row"><span class="pill pill-green">3.</span> User gọi <code>POST /resume</code></div>
+        <div class="row"><span class="pill pill-green">4.</span> System tìm pages chưa <code>compiled</code></div>
+        <div class="row"><span class="pill pill-green">5.</span> Re-queue từ đúng stage còn thiếu</div>
+        <div class="row"><span class="pill pill-green">6.</span> Giữ nguyên translations đã dịch xong</div>
+      </div>
+    </div>
+    <div class="card card-orange">
+      <div class="badge">Resume logic chi tiết</div>
+      <div style="font-size:11px; line-height:1.9;">
+        <div><strong style="color:#fb923c;">raw</strong> → cần extract lại</div>
+        <div><strong style="color:#fb923c;">extracted</strong> → cần translate từ đầu</div>
+        <div><strong style="color:#fb923c;">translating (stuck)</strong> → re-queue translate</div>
+        <div><strong style="color:#fb923c;">translated</strong> → chỉ cần compile</div>
+        <div><strong style="color:#fb923c;">failed</strong> → retry từ stage fail</div>
+        <div><strong style="color:#34d399;">compiled</strong> → skip (đã xong)</div>
+        <div style="margin-top:8px; color:#94a3b8;">Timeout "stuck": job chạy > 30 phút không cập nhật → tự động đánh dấu failed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 7: FILE STRUCTURE REFACTOR -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>⑦ Refactor — main.py → routers/ + workers/</h2>
+  <div class="grid-2">
+    <div class="card card-red">
+      <div class="badge">Hiện tại — vấn đề</div>
+      <div style="font-size:11px; color:#94a3b8; line-height:1.9;">
+        <div>backend/app/</div>
+        <div>&nbsp;&nbsp;<span style="color:#f87171;">⚠️</span> <code>main.py</code>  <span style="color:#f87171;">34KB — quá lớn</span></div>
+        <div>&nbsp;&nbsp;<code>config.py</code></div>
+        <div>&nbsp;&nbsp;<code>database.py</code></div>
+        <div>&nbsp;&nbsp;<code>models.py</code></div>
+        <div>&nbsp;&nbsp;<code>models_db.py</code></div>
+        <div>&nbsp;&nbsp;services/</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>extractor.py</code></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>translator.py</code></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>compiler.py</code></div>
+      </div>
+    </div>
+    <div class="card card-green">
+      <div class="badge">Sau refactor</div>
+      <div style="font-size:11px; color:#94a3b8; line-height:1.9;">
+        <div>backend/app/</div>
+        <div>&nbsp;&nbsp;<span class="tag tag-mod">mod</span> <code>main.py</code>  <em>chỉ còn app init + CORS</em></div>
+        <div>&nbsp;&nbsp;<code>config.py · database.py · models*.py</code></div>
+        <div>&nbsp;&nbsp;<span class="tag tag-new">new</span> routers/</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>documents.py</code>  <em>upload · list · delete</em></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>extraction.py</code>  <em>extract endpoints</em></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>translation.py</code>  <em>translate · translate-all</em></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>compilation.py</code>  <em>compile endpoint</em></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>jobs.py</code>  <em>job status · progress SSE</em></div>
+        <div>&nbsp;&nbsp;services/ (giữ + thêm mới)</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>extractor · translator · compiler</code></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag tag-new">new</span> <code>volume_detector.py</code></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag tag-new">new</span> <code>job_manager.py</code></div>
+        <div>&nbsp;&nbsp;<span class="tag tag-new">new</span> workers/</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>celery_app.py</code>  <em>Celery config + Redis</em></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<code>tasks.py</code>  <em>Celery task definitions</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 8: ROLLOUT PLAN -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>⑧ Rollout — thứ tự triển khai</h2>
+  <div class="grid-4">
+    <div class="card" style="border-top: 3px solid #34d399;">
+      <div class="badge">Phase 1</div>
+      <h3 style="color:#34d399;">Foundation</h3>
+      <div style="font-size:11px; line-height:1.8; margin-top:6px;">
+        <div>• google.genai migration</div>
+        <div>• main.py → routers/</div>
+        <div>• jobs table migration</div>
+        <div>• Volume Detector + Cost Estimator</div>
+      </div>
+    </div>
+    <div class="card" style="border-top: 3px solid #a5b4fc;">
+      <div class="badge">Phase 2</div>
+      <h3 style="color:#a5b4fc;">asyncio S/M</h3>
+      <div style="font-size:11px; line-height:1.8; margin-top:6px;">
+        <div>• asyncio Semaphore pools</div>
+        <div>• SSE progress endpoint</div>
+        <div>• translate-all endpoint</div>
+        <div>• Quality Tier Engine</div>
+      </div>
+    </div>
+    <div class="card" style="border-top: 3px solid #fb923c;">
+      <div class="badge">Phase 3</div>
+      <h3 style="color:#fb923c;">Celery L/XL</h3>
+      <div style="font-size:11px; line-height:1.8; margin-top:6px;">
+        <div>• Redis setup</div>
+        <div>• Celery workers + tasks</div>
+        <div>• Priority queues</div>
+        <div>• Dead-letter handling</div>
+      </div>
+    </div>
+    <div class="card" style="border-top: 3px solid #f87171;">
+      <div class="badge">Phase 4</div>
+      <h3 style="color:#f87171;">Resume + Polish</h3>
+      <div style="font-size:11px; line-height:1.8; margin-top:6px;">
+        <div>• Resume endpoint</div>
+        <div>• Stuck job timeout</div>
+        <div>• Retry exponential backoff</div>
+        <div>• Frontend progress UI</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

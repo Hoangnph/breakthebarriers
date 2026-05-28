@@ -1,0 +1,19 @@
+{
+  "0": "hurdles. This unreliability makes it difficult to deploy them in critical or complex",
+  "1": "applications where consistent performance is essential.",
+  "2": "Why: The Exception Handling and Recovery pattern provides a standardized solution",
+  "3": "for building robust and resilient AI agents. It equips them with the agentic capability to",
+  "4": "anticipate, manage, and recover from operational failures. The pattern involves",
+  "5": "proactive error detection, such as monitoring tool outputs and API responses, and",
+  "6": "reactive handling strategies like logging for diagnostics, retrying transient failures, or",
+  "7": "using fallback mechanisms. For more severe issues, it defines recovery protocols,",
+  "8": "including reverting to a stable state, self-correction by adjusting its plan, or escalating",
+  "9": "the problem to a human operator. This systematic approach ensures agents can",
+  "10": "maintain operational integrity, learn from failures, and function dependably in",
+  "11": "unpredictable settings.",
+  "12": "Rule of thumb: Use this pattern for any AI agent deployed in a dynamic, real-world",
+  "13": "environment where system failures, tool errors, network issues, or unpredictable",
+  "14": "inputs are possible and operational reliability is a key requirement.",
+  "15": "Visual summary",
+  "16": "6"
+}

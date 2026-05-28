@@ -1,0 +1,19 @@
+{
+  "0": "monitoring được thực hiện thông qua state management và tool interaction.",
+  "1": "Kết luận",
+  "2": "Chương này tập trung vào paradigm quan trọng Goal Setting and Monitoring. Tôi",
+  "3": "đã nhấn mạnh cách khái niệm này chuyển đổi AI agent từ hệ thống chỉ phản ứng thành",
+  "4": "thực thể chủ động, hướng mục tiêu. Văn bản nhấn mạnh tầm quan trọng của việc định nghĩa objective rõ ràng,",
+  "5": "có thể đo lường và thiết lập các quy trình monitoring nghiêm ngặt để theo dõi",
+  "6": "tiến độ. Các ứng dụng thực tế cho thấy paradigm này hỗ trợ vận hành tự chủ đáng tin cậy",
+  "7": "trong nhiều domain khác nhau, bao gồm customer service và",
+  "8": "robotics. Một ví dụ coding mang tính khái niệm minh họa cách triển khai các",
+  "9": "nguyên lý này trong một framework có cấu trúc, dùng agent directive và state",
+  "10": "management để hướng dẫn và đánh giá việc agent đạt được các goal đã chỉ định.",
+  "11": "Cuối cùng, trang bị cho agent khả năng hình thành và giám sát goal là một",
+  "12": "bước nền tảng hướng tới việc xây dựng các hệ thống AI thật sự thông minh và có trách nhiệm.",
+  "13": "Tài liệu tham khảo",
+  "14": "1.",
+  "15": "SMART Goals Framework. https://en.wikipedia.org/wiki/SMART_criteria",
+  "16": "13"
+}

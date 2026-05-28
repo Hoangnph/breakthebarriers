@@ -1,0 +1,17 @@
+{
+  "0": "cho bất kỳ LLM nào. Hơn nữa, nó tích hợp tối ưu đa mục tiêu, cho phép",
+  "1": "prompt engineering linh hoạt, và có khả năng đánh giá phân tán để xử lý hiệu quả",
+  "2": "các thử thách lập trình phức tạp.",
+  "3": "Hình 3: Kiến trúc nội bộ của OpenEvolve được quản lý bởi một controller. Controller này",
+  "4": "điều phối một số thành phần chính: program sampler, Program Database,",
+  "5": "Evaluator Pool, và LLM Ensembles. Chức năng chính của nó là hỗ trợ các quá trình học",
+  "6": "và thích nghi của những thành phần này để nâng cao chất lượng code.",
+  "7": "Đoạn code này dùng thư viện OpenEvolve để thực hiện tối ưu tiến hóa trên",
+  "8": "một chương trình. Nó khởi tạo hệ thống OpenEvolve với đường dẫn tới một chương trình ban đầu, một",
+  "9": "file đánh giá, và một file cấu hình. Dòng evolve.run(iterations=1000) bắt đầu",
+  "10": "quá trình tiến hóa, chạy 1000 vòng lặp để tìm một phiên bản cải thiện của",
+  "11": "chương trình. Cuối cùng, nó in các metric của chương trình tốt nhất tìm thấy trong quá trình tiến hóa,",
+  "12": "được định dạng với bốn chữ số thập phân.",
+  "13": "from openevolve import OpenEvolve",
+  "14": "9"
+}

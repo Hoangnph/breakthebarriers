@@ -1,0 +1,22 @@
+{
+  "0": "Hình 3: Knowledge Retrieval pattern: một AI agent để tìm và tổng hợp thông tin",
+  "1": "từ internet công khai nhằm phản hồi query của người dùng.",
+  "2": "Các điểm chính",
+  "3": "",
+  "4": "Knowledge Retrieval (RAG) tăng cường LLM bằng cách cho phép chúng truy cập thông tin bên ngoài,",
+  "5": "cập nhật, và cụ thể.",
+  "6": "",
+  "7": "Quy trình bao gồm Retrieval (tìm kiếm knowledge base để lấy các snippet liên quan)",
+  "8": "và Augmentation (thêm các snippet này vào prompt của LLM).",
+  "9": "",
+  "10": "RAG giúp LLM vượt qua các giới hạn như dữ liệu huấn luyện lỗi thời, giảm",
+  "11": "\"hallucinations,\" và cho phép tích hợp tri thức đặc thù miền.",
+  "12": "",
+  "13": "RAG cho phép câu trả lời có thể quy nguồn, vì phản hồi của LLM được neo trong",
+  "14": "các nguồn đã truy xuất.",
+  "15": "",
+  "16": "GraphRAG tận dụng knowledge graph để hiểu quan hệ giữa",
+  "17": "các phần thông tin khác nhau, cho phép nó trả lời các câu hỏi phức tạp cần",
+  "18": "tổng hợp dữ liệu từ nhiều nguồn.",
+  "19": "16"
+}

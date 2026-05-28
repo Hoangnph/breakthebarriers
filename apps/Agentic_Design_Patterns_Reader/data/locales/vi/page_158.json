@@ -1,0 +1,18 @@
+{
+  "0": "Hình 1: Cơ chế tự cải thiện của SICA, học và thích nghi dựa trên các phiên bản trước",
+  "1": "SICA đã trải qua quá trình tự cải thiện đáng kể, dẫn tới các tiến bộ trong chỉnh sửa code",
+  "2": "và điều hướng. Ban đầu, SICA dùng cách ghi đè file cơ bản cho",
+  "3": "các thay đổi code. Sau đó nó phát triển một \"Smart Editor\" có khả năng chỉnh sửa",
+  "4": "thông minh hơn và theo ngữ cảnh hơn. Công cụ này phát triển thành \"Diff-Enhanced Smart Editor\", tích hợp",
+  "5": "diff để sửa đổi có mục tiêu và chỉnh sửa dựa trên pattern, cùng một \"Quick Overwrite",
+  "6": "Tool\" để giảm nhu cầu xử lý.",
+  "7": "SICA tiếp tục triển khai \"Minimal Diff Output Optimization\" và \"Context-Sensitive",
+  "8": "Diff Minimization\", dùng phân tích Abstract Syntax Tree (AST) để tăng hiệu quả. Ngoài ra,",
+  "9": "một \"SmartEditor Input Normalizer\" cũng được thêm vào. Về điều hướng, SICA",
+  "10": "độc lập tạo ra một \"AST Symbol Locator\", dùng bản đồ cấu trúc của code",
+  "11": "(AST) để xác định các định nghĩa trong codebase. Về sau, một \"Hybrid Symbol Locator\"",
+  "12": "được phát triển, kết hợp tìm kiếm nhanh với kiểm tra AST. Nó tiếp tục được",
+  "13": "tối ưu qua \"Optimized AST Parsing in Hybrid Symbol Locator\" để tập trung vào các",
+  "14": "phần code liên quan, cải thiện tốc độ tìm kiếm. (xem Hình 2)",
+  "15": "5"
+}

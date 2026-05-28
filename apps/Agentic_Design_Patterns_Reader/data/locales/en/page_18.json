@@ -1,0 +1,22 @@
+{
+  "0": "Fig. 3: Various instances demonstrating the spectrum of agent complexity.",
+  "1": "Level 3: The Rise of Collaborative Multi-Agent Systems",
+  "2": "At Level 3, we see a significant paradigm shift in AI development, moving away from the",
+  "3": "pursuit of a single, all-powerful super-agent and towards the rise of sophisticated,",
+  "4": "collaborative multi-agent systems. In essence, this approach recognizes that complex",
+  "5": "challenges are often best solved not by a single generalist, but by a team of specialists",
+  "6": "working in concert. This model directly mirrors the structure of a human organization,",
+  "7": "where different departments are assigned specific roles and collaborate to tackle",
+  "8": "multi-faceted objectives. The collective strength of such a system lies in this division of",
+  "9": "labor and the synergy created through coordinated effort. For detailed information, refer",
+  "10": "to Chapter 7.",
+  "11": "To bring this concept to life, consider the intricate workflow of launching a new product.",
+  "12": "Rather than one agent attempting to handle every aspect, a \"Project Manager\" agent",
+  "13": "could serve as the central coordinator. This manager would orchestrate the entire",
+  "14": "process by delegating tasks to other specialized agents: a \"Market Research\" agent to",
+  "15": "gather consumer data, a \"Product Design\" agent to develop concepts, and a",
+  "16": "\"Marketing\" agent to craft promotional materials. The key to their success would be the",
+  "17": "seamless communication and information sharing between them, ensuring all individual",
+  "18": "efforts align to achieve the collective goal.",
+  "19": "5"
+}

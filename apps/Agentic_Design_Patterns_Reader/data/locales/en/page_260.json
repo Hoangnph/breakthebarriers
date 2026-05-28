@@ -1,0 +1,22 @@
+{
+  "0": "Fig. 2: Resource-Aware Optimization Design Pattern",
+  "1": "Key Takeaways",
+  "2": "",
+  "3": "Resource-Aware Optimization is Essential: Intelligent agents can manage",
+  "4": "computational, temporal, and financial resources dynamically. Decisions",
+  "5": "regarding model usage and execution paths are made based on real-time",
+  "6": "constraints and objectives.",
+  "7": "",
+  "8": "Multi-Agent Architecture for Scalability: Google's ADK provides a multi-agent",
+  "9": "framework, enabling modular design. Different agents (answering, routing,",
+  "10": "critique) handle specific tasks.",
+  "11": "",
+  "12": "Dynamic, LLM-Driven Routing: A Router Agent directs queries to language",
+  "13": "models (Gemini Flash for simple, Gemini Pro for complex) based on query",
+  "14": "complexity and budget. This optimizes cost and performance.",
+  "15": "",
+  "16": "Critique Agent Functionality: A dedicated Critique Agent provides feedback for",
+  "17": "self-correction, performance monitoring, and refining routing logic, enhancing",
+  "18": "system effectiveness.",
+  "19": "15"
+}

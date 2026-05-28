@@ -1,0 +1,20 @@
+{
+  "0": "deployment, Guardrails are",
+  "1": "implemented as a final safety layer to",
+  "2": "filter outputs and block harmful actions",
+  "3": "in real-time.",
+  "4": "Enhancing AI Agent Capabilities",
+  "5": "AI agents are systems that can perceive",
+  "6": "their environment and take autonomous",
+  "7": "actions to achieve goals. Their",
+  "8": "effectiveness is enhanced by robust",
+  "9": "reasoning frameworks.",
+  "10": "Chain of Thought (CoT): This prompting",
+  "11": "technique encourages a model to",
+  "12": "explain its reasoning step-by-step",
+  "13": "before giving a final answer. This",
+  "14": "process of \"thinking out loud\" often",
+  "15": "leads to more accurate results on",
+  "16": "complex reasoning tasks.",
+  "17": "13"
+}

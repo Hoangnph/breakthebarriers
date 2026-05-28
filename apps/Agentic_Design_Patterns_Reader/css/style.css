@@ -1,0 +1,727 @@
+/* ==========================================================================
+   PREMIUM DESIGN SYSTEM & THEME TOKENS
+   ========================================================================== */
+
+   :root {
+    /* Base Color Definition (Deep Slate Blue Hue) */
+    --hue: 224;
+    
+    /* Light Theme (Aura Classic Light) */
+    --bg-app: hsl(var(--hue), 25%, 97%);
+    --bg-sidebar: hsla(var(--hue), 30%, 100%, 0.85);
+    --bg-toolbar: hsla(var(--hue), 30%, 100%, 0.85);
+    --bg-card: hsl(var(--hue), 30%, 100%);
+    --text-main: hsl(var(--hue), 40%, 16%);
+    --text-muted: hsl(var(--hue), 16%, 45%);
+    --text-light: hsl(var(--hue), 12%, 65%);
+    --border-color: hsla(var(--hue), 24%, 88%, 0.7);
+    --border-hover: hsla(var(--hue), 24%, 78%, 0.9);
+    
+    --primary: hsl(var(--hue), 85%, 54%);
+    --primary-hover: hsl(var(--hue), 85%, 44%);
+    --primary-alpha: hsla(var(--hue), 85%, 54%, 0.08);
+    --primary-glow: hsla(var(--hue), 85%, 54%, 0.25);
+    
+    --accent: hsl(200, 95%, 48%);
+    --accent-glow: hsla(200, 95%, 48%, 0.2);
+    
+    --btn-bg: hsl(var(--hue), 16%, 94%);
+    --btn-hover: hsl(var(--hue), 16%, 89%);
+    --btn-active: hsl(var(--hue), 16%, 84%);
+    
+    --scrollbar-thumb: hsla(var(--hue), 12%, 75%, 0.5);
+    --scrollbar-hover: hsla(var(--hue), 12%, 60%, 0.7);
+    
+    /* Premium Shadows & Blurs */
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 8px 20px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 16px 36px rgba(15, 23, 42, 0.12);
+    --backdrop-blur: blur(12px);
+    
+    /* Layout Constants */
+    --sidebar-width: 320px;
+    --toolbar-height: 64px;
+    --footer-height: 56px;
+    --border-radius-sm: 6px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 16px;
+    
+    /* Frame Dimensions */
+    --page-native-width: 918px;
+    --page-native-height: 1188px;
+    
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+body.dark-mode {
+    /* Dark Theme (Aura Midnight Obsidian) */
+    --bg-app: hsl(var(--hue), 22%, 9%);
+    --bg-sidebar: hsla(var(--hue), 24%, 13%, 0.85);
+    --bg-toolbar: hsla(var(--hue), 24%, 13%, 0.85);
+    --bg-card: hsl(var(--hue), 24%, 15%);
+    --text-main: hsl(var(--hue), 20%, 92%);
+    --text-muted: hsl(var(--hue), 12%, 68%);
+    --text-light: hsl(var(--hue), 10%, 46%);
+    --border-color: hsla(var(--hue), 18%, 22%, 0.6);
+    --border-hover: hsla(var(--hue), 18%, 32%, 0.8);
+    
+    --primary: hsl(var(--hue), 90%, 63%);
+    --primary-hover: hsl(var(--hue), 90%, 73%);
+    --primary-alpha: hsla(var(--hue), 90%, 63%, 0.16);
+    --primary-glow: hsla(var(--hue), 90%, 63%, 0.35);
+    
+    --accent: hsl(190, 90%, 55%);
+    --accent-glow: hsla(190, 90%, 55%, 0.25);
+    
+    --btn-bg: hsl(var(--hue), 14%, 18%);
+    --btn-hover: hsl(var(--hue), 14%, 24%);
+    --btn-active: hsl(var(--hue), 14%, 28%);
+    
+    --scrollbar-thumb: hsla(var(--hue), 10%, 30%, 0.5);
+    --scrollbar-hover: hsla(var(--hue), 10%, 45%, 0.7);
+    
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ==========================================================================
+   RESET & SYSTEM BASE
+   ========================================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINERS
+   ========================================================================== */
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   SIDEBAR (TABLE OF CONTENTS)
+   ========================================================================== */
+
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100%;
+    background-color: var(--bg-sidebar);
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 100;
+    transition: var(--transition-smooth);
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+    width: 0;
+    border-right-color: transparent;
+}
+
+.sidebar.collapsed * {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-header {
+    height: var(--toolbar-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sidebar-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* Search Box Container */
+.sidebar-search {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-color: var(--btn-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 0 12px;
+    height: 38px;
+    transition: var(--transition-smooth);
+}
+
+.search-box:focus-within {
+    border-color: var(--primary);
+    background-color: var(--bg-card);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.search-icon {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-right: 8px;
+    pointer-events: none;
+}
+
+#toc-search {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+}
+
+#toc-search::placeholder {
+    color: var(--text-light);
+}
+
+.clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    display: none; /* Managed by JS */
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-smooth);
+}
+
+.clear-btn:hover {
+    color: var(--text-main);
+    background-color: var(--btn-hover);
+}
+
+/* Sidebar Scrollable Content */
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+    scroll-behavior: smooth;
+}
+
+/* Collapsible TOC Structure */
+.toc-part-group {
+    margin-bottom: 8px;
+}
+
+.toc-part-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-muted);
+    transition: var(--transition-smooth);
+    border-radius: var(--border-radius-sm);
+    margin: 0 8px;
+    user-select: none;
+}
+
+.toc-part-header:hover {
+    background-color: var(--primary-alpha);
+    color: var(--primary);
+}
+
+.toc-part-header .part-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.toc-part-header i.chevron {
+    font-size: 11px;
+    margin-left: 8px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-light);
+}
+
+.toc-part-group.expanded .toc-part-header i.chevron {
+    transform: rotate(90deg);
+}
+
+.toc-part-pages {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-left: 8px;
+}
+
+.toc-part-group.expanded .toc-part-pages {
+    max-height: 1200px; /* High enough value to show all links in a part */
+}
+
+/* Navigation Links */
+.toc-page-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    margin: 2px 8px 2px 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-smooth);
+    border-left: 3px solid transparent;
+}
+
+.toc-page-link:hover {
+    color: var(--primary);
+    background-color: var(--btn-hover);
+    transform: translateX(4px);
+}
+
+.toc-page-link.active {
+    color: var(--primary);
+    background-color: var(--primary-alpha);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+
+/* Search Highlights */
+.toc-page-link mark {
+    background-color: hsl(45, 95%, 75%);
+    color: #000000;
+    font-weight: 600;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+body.dark-mode .toc-page-link mark {
+    background-color: hsl(45, 95%, 35%);
+    color: #ffffff;
+}
+
+/* Keyboard Shortcut helper badge inside sidebar footer */
+.sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+    background-color: hsla(var(--hue), 20%, 95%, 0.3);
+    font-size: 11px;
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+body.dark-mode .sidebar-footer {
+    background-color: hsla(var(--hue), 20%, 10%, 0.3);
+}
+
+.sidebar-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kbd-badge {
+    background: var(--btn-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: monospace;
+    font-weight: 600;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   MAIN CONTENT & TOOLBAR
+   ========================================================================== */
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    height: 100%;
+}
+
+.toolbar {
+    height: var(--toolbar-height);
+    background-color: var(--bg-toolbar);
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    box-shadow: var(--shadow-sm);
+    z-index: 90;
+    flex-shrink: 0;
+    transition: var(--transition-smooth);
+}
+
+.toolbar-left, .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.doc-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+
+/* Zoom Controls Pill Group */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    background-color: var(--btn-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 3px;
+    gap: 2px;
+}
+
+#zoom-level {
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 52px;
+    text-align: center;
+    color: var(--text-main);
+    user-select: none;
+}
+
+/* Language Switcher pill overrides */
+.lang-controls .icon-btn {
+    gap: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    width: 60px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+}
+
+#current-lang-text {
+    letter-spacing: 0.05em;
+    font-size: 11px;
+}
+
+/* ==========================================================================
+   BUTTONS & ICON-BUTTONS (PREMIUM MICRO-ANIMATIONS)
+   ========================================================================== */
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+    position: relative;
+}
+
+.icon-btn:hover {
+    background-color: var(--btn-hover);
+    color: var(--primary);
+}
+
+.icon-btn:active {
+    background-color: var(--btn-active);
+    transform: scale(0.94);
+}
+
+/* Icon rotation animation for dark-mode toggle */
+#toggle-theme i {
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#toggle-theme:hover i {
+    transform: rotate(25deg);
+}
+
+/* General standard button styles */
+.btn {
+    background-color: var(--btn-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.btn:hover {
+    background-color: var(--btn-hover);
+    border-color: var(--primary-glow);
+    color: var(--primary);
+}
+
+.btn:active {
+    background-color: var(--btn-active);
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Active Highlight for Zoom Scale Locks */
+.icon-btn.active {
+    background-color: var(--primary-alpha);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* ==========================================================================
+   VIEWER CONTAINER & PAGES
+   ========================================================================== */
+
+.viewer-container {
+    flex: 1;
+    overflow: auto;
+    background-color: var(--bg-app);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px;
+    position: relative;
+    scroll-behavior: auto; /* Fast instant responsiveness */
+}
+
+/* Page Frame Scaling Wrapper */
+.page-wrapper {
+    background-color: #ffffff;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    border-radius: var(--border-radius-sm);
+    transition: width 0.15s ease-out, height 0.15s ease-out;
+    overflow: hidden;
+    margin: auto; /* Centered in scroll viewport */
+}
+
+/* Native-scaled high performance frame viewer */
+#page-frame {
+    width: var(--page-native-width);
+    height: var(--page-native-height);
+    border: none;
+    background: #ffffff;
+    transform-origin: top left;
+    transition: transform 0.15s ease-out;
+    display: block;
+}
+
+/* High-performance CSS filters fallback for offline (file://) dark-mode */
+#page-frame.cors-fallback {
+    transition: filter 0.3s ease, transform 0.15s ease-out;
+}
+
+body.dark-mode #page-frame.cors-fallback {
+    filter: invert(0.915) hue-rotate(180deg) contrast(1.1) brightness(1.05);
+}
+
+/* ==========================================================================
+   PAGINATION FOOTER BAR
+   ========================================================================== */
+
+.pagination-bar {
+    height: var(--footer-height);
+    background-color: var(--bg-toolbar);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+    z-index: 80;
+    flex-shrink: 0;
+    transition: var(--transition-smooth);
+}
+
+.page-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+#page-input {
+    width: 64px;
+    height: 36px;
+    padding: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    background-color: var(--btn-bg);
+    color: var(--text-main);
+    transition: var(--transition-smooth);
+    outline: none;
+}
+
+#page-input:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-card);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Hide spin arrows in number inputs for cleaner UI */
+#page-input::-webkit-outer-spin-button,
+#page-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#page-input {
+    -moz-appearance: textfield;
+}
+
+#total-pages {
+    color: var(--text-light);
+}
+
+/* ==========================================================================
+   RESPONSIVE OVERLAYS & LAYOUT ADJUSTMENTS
+   ========================================================================== */
+
+.mobile-only {
+    display: none;
+}
+
+/* Custom Styled Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-hover);
+}
+
+/* Responsive Styles for Mobile Views */
+@media (max-width: 1024px) {
+    .doc-title {
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 290px;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        width: var(--sidebar-width);
+    }
+    
+    .sidebar.collapsed * {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    #toggle-sidebar {
+        display: none;
+    }
+    
+    .mobile-only {
+        display: flex;
+    }
+    
+    .zoom-controls {
+        display: none; /* Hide zoom controls on mobile due to space constraints */
+    }
+    
+    .viewer-container {
+        padding: 12px;
+    }
+}

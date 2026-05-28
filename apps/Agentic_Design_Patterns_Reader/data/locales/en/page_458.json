@@ -1,0 +1,21 @@
+{
+  "0": "Fine-tuning Techniques: Fine-tuning is",
+  "1": "the process of adapting a general",
+  "2": "pre-trained model to a specific task",
+  "3": "using a smaller, specialized dataset.",
+  "4": "The most common approach is",
+  "5": "Supervised Fine-Tuning (SFT), where",
+  "6": "the model is trained on labeled",
+  "7": "examples of correct input-output pairs. A",
+  "8": "popular variant is Instruction Tuning,",
+  "9": "which focuses on training the model to",
+  "10": "better follow user commands. To make",
+  "11": "this process more efficient,",
+  "12": "Parameter-Efficient Fine-Tuning (PEFT)",
+  "13": "methods are used, with top techniques",
+  "14": "including LoRA (Low-Rank Adaptation),",
+  "15": "which only updates a small number of",
+  "16": "parameters, and its memory-optimized",
+  "17": "version, QLoRA. Another technique,",
+  "18": "10"
+}

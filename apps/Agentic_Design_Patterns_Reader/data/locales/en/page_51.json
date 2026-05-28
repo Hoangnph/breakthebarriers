@@ -1,0 +1,17 @@
+{
+  "0": "designed with asynchronous operations in mind, allowing you to easily define steps",
+  "1": "that can run in parallel.",
+  "2": "Fig.1. Example of parallelization with sub-agents",
+  "3": "Frameworks like LangChain, LangGraph, and Google ADK provide mechanisms for",
+  "4": "parallel execution. In LangChain Expression Language (LCEL), you can achieve",
+  "5": "parallel execution by combining runnable objects using operators like | (for sequential)",
+  "6": "and by structuring your chains or graphs to have branches that execute concurrently.",
+  "7": "LangGraph, with its graph structure, allows you to define multiple nodes that can be",
+  "8": "executed from a single state transition, effectively enabling parallel branches in the",
+  "9": "workflow. Google ADK provides robust, native mechanisms to facilitate and manage",
+  "10": "the parallel execution of agents, significantly enhancing the efficiency and scalability",
+  "11": "of complex, multi-agent systems. This inherent capability within the ADK framework",
+  "12": "allows developers to design and implement solutions where multiple agents can",
+  "13": "operate concurrently, rather than sequentially.",
+  "14": "2"
+}

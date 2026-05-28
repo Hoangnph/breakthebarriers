@@ -1,0 +1,21 @@
+{
+  "0": "Without a dynamic management strategy, systems cannot adapt to varying task",
+  "1": "complexities or operate within budgetary and performance constraints.",
+  "2": "Why: The standardized solution is to build an agentic system that intelligently",
+  "3": "monitors and allocates resources based on the task at hand. This pattern typically",
+  "4": "employs a \"Router Agent\" to first classify the complexity of an incoming request. The",
+  "5": "request is then forwarded to the most suitable LLM or tool--a fast, inexpensive model",
+  "6": "for simple queries, and a more powerful one for complex reasoning. A \"Critique",
+  "7": "Agent\" can further refine the process by evaluating the quality of the response,",
+  "8": "providing feedback to improve the routing logic over time. This dynamic, multi-agent",
+  "9": "approach ensures the system operates efficiently, balancing response quality with",
+  "10": "cost-effectiveness.",
+  "11": "Rule of thumb: Use this pattern when operating under strict financial budgets for API",
+  "12": "calls or computational power, building latency-sensitive applications where quick",
+  "13": "response times are critical, deploying agents on resource-constrained hardware such",
+  "14": "as edge devices with limited battery life, programmatically balancing the trade-off",
+  "15": "between response quality and operational cost, and managing complex, multi-step",
+  "16": "workflows where different tasks have varying resource requirements.",
+  "17": "Visual Summary",
+  "18": "14"
+}

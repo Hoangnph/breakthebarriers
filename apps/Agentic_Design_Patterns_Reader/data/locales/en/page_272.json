@@ -1,0 +1,20 @@
+{
+  "0": "11",
+  "1": "Fig.3: Reasoning and Act",
+  "2": "ReAct operates in an interleaved manner: the agent executes an action, observes the",
+  "3": "outcome, and incorporates this observation into subsequent reasoning. This iterative",
+  "4": "loop of \"Thought, Action, Observation, Thought...\" allows the agent to dynamically",
+  "5": "adapt its plan, correct errors, and achieve goals requiring multiple interactions with",
+  "6": "the environment. This provides a more robust and flexible problem-solving approach",
+  "7": "compared to linear CoT, as the agent responds to real-time feedback. By combining",
+  "8": "language model understanding and generation with the capability to use tools, ReAct",
+  "9": "enables agents to perform complex tasks requiring both reasoning and practical",
+  "10": "execution. This approach is crucial for agents as it allows them to not only reason but",
+  "11": "also to practically execute steps and interact with dynamic environments.",
+  "12": "CoD (Chain of Debates) is a formal AI framework proposed by Microsoft where",
+  "13": "multiple, diverse models collaborate and argue to solve a problem, moving beyond a",
+  "14": "single AI's \"chain of thought.\" This system operates like an AI council meeting, where",
+  "15": "different models present initial ideas, critique each other's reasoning, and exchange",
+  "16": "counterarguments. The primary goal is to enhance accuracy, reduce bias, and improve",
+  "17": "11"
+}

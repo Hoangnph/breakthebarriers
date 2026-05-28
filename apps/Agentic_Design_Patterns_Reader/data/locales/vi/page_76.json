@@ -1,0 +1,18 @@
+{
+  "0": "Hình 2: Mẫu thiết kế Reflection, agent producer và agent critique",
+  "1": "Các điểm chính",
+  "2": "",
+  "3": "Ưu điểm chính của mẫu Reflection là khả năng tự sửa lỗi và tinh chỉnh",
+  "4": "đầu ra theo vòng lặp, dẫn đến chất lượng, độ chính xác",
+  "5": "và mức độ tuân thủ các instruction phức tạp cao hơn đáng kể.",
+  "6": "",
+  "7": "Nó bao gồm một vòng phản hồi gồm thực thi, đánh giá/phê bình và tinh chỉnh.",
+  "8": "Reflection là thiết yếu cho các tác vụ cần đầu ra chất lượng cao, chính xác hoặc nhiều sắc thái.",
+  "9": "",
+  "10": "",
+  "11": "Một cách triển khai mạnh là mô hình Producer-Critic, trong đó một",
+  "12": "agent riêng (hoặc vai trò được prompt) đánh giá đầu ra ban đầu. Sự tách biệt",
+  "13": "trách nhiệm này tăng tính khách quan và cho phép phản hồi chuyên biệt, có cấu trúc",
+  "14": "hơn.",
+  "15": "12"
+}

@@ -1,0 +1,15 @@
+{
+  "0": "Hình 2: Mẫu Prompt Chaining: Các agent nhận một chuỗi các prompt từ người dùng, với",
+  "1": "đầu ra của mỗi agent đóng vai trò là đầu vào cho agent tiếp theo trong chuỗi.",
+  "2": "Những Điểm Chính Rút Ra",
+  "3": "Dưới đây là một số điểm chính rút ra:",
+  "4": " Prompt Chaining chia nhỏ các nhiệm vụ phức tạp thành một chuỗi các bước nhỏ hơn, tập trung hơn.",
+  "5": "Mẫu này đôi khi được gọi là mẫu Đường ống (Pipeline).",
+  "6": " Mỗi bước trong một chuỗi liên quan đến một lệnh gọi LLM hoặc logic xử lý, sử dụng đầu ra của",
+  "7": "bước trước đó làm đầu vào.",
+  "8": " Mẫu này cải thiện độ tin cậy và khả năng quản lý của các tương tác phức tạp với",
+  "9": "các mô hình ngôn ngữ.",
+  "10": " Các framework như LangChain/LangGraph, và Google ADK cung cấp các công cụ mạnh mẽ để",
+  "11": "xác định, quản lý, và thực thi các trình tự nhiều bước này.",
+  "12": "12"
+}

@@ -1,0 +1,21 @@
+{
+  "0": "Fig.1: Example of multi-agent system",
+  "1": "Frameworks such as Crew AI and Google ADK are engineered to facilitate this",
+  "2": "paradigm by providing structures for the specification of agents, tasks, and their",
+  "3": "interactive procedures. This approach is particularly effective for challenges",
+  "4": "necessitating a variety of specialized knowledge, encompassing multiple discrete",
+  "5": "phases, or leveraging the advantages of concurrent processing and the corroboration",
+  "6": "of information across agents.",
+  "7": "Practical Applications & Use Cases",
+  "8": "Multi-Agent Collaboration is a powerful pattern applicable across numerous domains:",
+  "9": "",
+  "10": "Complex Research and Analysis: A team of agents could collaborate on a",
+  "11": "research project. One agent might specialize in searching academic databases,",
+  "12": "another in summarizing findings, a third in identifying trends, and a fourth in",
+  "13": "synthesizing the information into a report. This mirrors how a human research",
+  "14": "team might operate.",
+  "15": "",
+  "16": "Software Development: Imagine agents collaborating on building software. One",
+  "17": "agent could be a requirements analyst, another a code generator, a third a tester,",
+  "18": "3"
+}

@@ -1,0 +1,11 @@
+{
+  "0": "thông tin nó thu thập, chủ động xác định khoảng trống kiến thức, đối chiếu các điểm dữ liệu,",
+  "1": "và giải quyết các điểm không nhất quán.",
+  "2": "Hình 1: Agent Google Deep Research tạo kế hoạch thực thi để sử dụng Google",
+  "3": "Search như một tool.",
+  "4": "Một thành phần kiến trúc then chốt là khả năng của hệ thống trong việc quản lý quy trình này",
+  "5": "một cách bất đồng bộ. Thiết kế này bảo đảm rằng cuộc điều tra, vốn có thể bao gồm phân tích",
+  "6": "hàng trăm nguồn, vẫn chống chịu được lỗi đơn điểm và cho phép người dùng",
+  "7": "rời khỏi quy trình rồi được thông báo khi hoàn tất. Hệ thống cũng có thể tích hợp",
+  "8": "5"
+}

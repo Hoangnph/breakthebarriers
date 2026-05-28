@@ -1,0 +1,17 @@
+{
+  "0": "for any LLM. Furthermore, it incorporates multi-objective optimization, allows for",
+  "1": "flexible prompt engineering, and is capable of distributed evaluation to efficiently",
+  "2": "handle complex coding challenges.",
+  "3": "Fig. 3: The OpenEvolve internal architecture is managed by a controller. This controller",
+  "4": "orchestrates several key components: the program sampler, Program Database,",
+  "5": "Evaluator Pool, and LLM Ensembles. Its primary function is to facilitate their learning",
+  "6": "and adaptation processes to enhance code quality.",
+  "7": "This code snippet uses the OpenEvolve library to perform evolutionary optimization on",
+  "8": "a program. It initializes the OpenEvolve system with paths to an initial program, an",
+  "9": "evaluation file, and a configuration file. The evolve.run(iterations=1000) line starts the",
+  "10": "evolutionary process, running for 1000 iterations to find an improved version of the",
+  "11": "program. Finally, it prints the metrics of the best program found during the evolution,",
+  "12": "formatted to four decimal places.",
+  "13": "from openevolve import OpenEvolve",
+  "14": "9"
+}

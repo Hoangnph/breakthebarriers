@@ -1,0 +1,21 @@
+{
+  "0": "Bối cảnh của các framework agentic cung cấp một phổ đa dạng các công cụ, từ các thư viện cấp thấp",
+  "1": "để định nghĩa logic agent đến các nền tảng cấp cao để điều phối cộng tác đa tác tử.",
+  "2": "Ở cấp độ nền tảng, LangChain cho phép các luồng công việc đơn giản, tuyến tính,",
+  "3": "trong khi LangGraph giới thiệu các đồ thị có trạng thái, chu kỳ để lập luận phức tạp hơn.",
+  "4": "Các framework cấp cao hơn như CrewAI và ADK của Google chuyển trọng tâm sang điều phối",
+  "5": "các nhóm agent với các vai trò được xác định trước, trong khi các framework khác như LlamaIndex chuyên về",
+  "6": "các ứng dụng chuyên sâu dữ liệu. Sự đa dạng này trình bày cho các nhà phát triển một đánh đổi cốt lõi",
+  "7": "giữa kiểm soát chi tiết của các hệ thống dựa trên đồ thị và phát triển hợp lý hơn",
+  "8": "của các nền tảng có ý kiến hơn. Do đó, việc chọn framework phù hợp phụ thuộc vào",
+  "9": "liệu ứng dụng có đòi hỏi một chuỗi đơn giản, vòng lặp lập luận động hay",
+  "10": "một nhóm chuyên gia được quản lý. Cuối cùng, hệ sinh thái đang phát triển này trao quyền cho các nhà phát triển",
+  "11": "xây dựng các hệ thống AI ngày càng tinh vi hơn bằng cách chọn cấp độ",
+  "12": "trừu tượng chính xác mà dự án của họ yêu cầu.",
+  "13": "Tài Liệu Tham Khảo",
+  "14": "1. LangChain, https://www.langchain.com/",
+  "15": "2. LangGraph, https://www.langchain.com/langgraph",
+  "16": "3. ADK của Google, https://google.github.io/adk-docs/",
+  "17": "4. Crew.AI, https://docs.crewai.com/en/introduction",
+  "18": "8"
+}

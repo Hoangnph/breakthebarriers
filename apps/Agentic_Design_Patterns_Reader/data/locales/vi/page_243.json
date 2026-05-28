@@ -1,0 +1,20 @@
+{
+  "0": "Tóm tắt trực quan",
+  "1": "Hình 2: Pattern A2A inter-agent communication",
+  "2": "Các điểm chính",
+  "3": "Các điểm chính:",
+  "4": "",
+  "5": "Protocol Google A2A là một chuẩn mở dựa trên HTTP, hỗ trợ",
+  "6": "communication và collaboration giữa các AI agent được xây dựng bằng các",
+  "7": "framework khác nhau.",
+  "8": "",
+  "9": "AgentCard đóng vai trò định danh số cho agent, cho phép các agent khác automatic",
+  "10": "discovery và hiểu capability của nó.",
+  "11": "",
+  "12": "A2A cung cấp cả tương tác request-response đồng bộ (dùng",
+  "13": "`tasks/send`) và streaming update (dùng `tasks/sendSubscribe`) để",
+  "14": "đáp ứng các nhu cầu communication khác nhau.",
+  "15": "",
+  "16": "Protocol hỗ trợ hội thoại multi-turn, bao gồm trạng thái `input-required`",
+  "17": "13"
+}

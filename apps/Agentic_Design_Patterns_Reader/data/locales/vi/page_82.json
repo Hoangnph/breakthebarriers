@@ -1,0 +1,16 @@
+{
+  "0": "Hình 1: Một số ví dụ về Agent sử dụng Tools",
+  "1": "Ví dụ code thực hành (LangChain)",
+  "2": "Việc triển khai tool use trong framework LangChain là một quy trình hai giai đoạn.",
+  "3": "Ban đầu, một hoặc nhiều tool được định nghĩa, thường bằng cách đóng gói các",
+  "4": "hàm Python hiện có hoặc các thành phần runnable khác. Sau đó, các tool này được bind",
+  "5": "vào một mô hình ngôn ngữ, nhờ đó trao cho mô hình khả năng tạo một",
+  "6": "yêu cầu dùng tool có cấu trúc khi nó xác định rằng một lời gọi hàm bên ngoài là",
+  "7": "cần thiết để đáp ứng truy vấn của người dùng.",
+  "8": "Phần triển khai sau sẽ minh họa nguyên lý này bằng cách trước tiên định nghĩa một",
+  "9": "hàm đơn giản để mô phỏng một tool truy xuất thông tin. Sau đó, một agent sẽ được",
+  "10": "xây dựng và cấu hình để tận dụng tool này khi phản hồi đầu vào của người dùng. Việc",
+  "11": "chạy ví dụ này yêu cầu cài đặt các thư viện LangChain cốt lõi và",
+  "12": "một package provider dành riêng cho mô hình. Hơn nữa, việc xác thực đúng với",
+  "13": "4"
+}

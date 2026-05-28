@@ -1,0 +1,21 @@
+{
+  "0": "Fig.3: Evaluation Support for Google ADK",
+  "1": "The web-based UI enables interactive session creation and saving into existing or new",
+  "2": "eval sets, displaying evaluation status. Pytest integration allows running test files as",
+  "3": "part of integration tests by calling AgentEvaluator.evaluate, specifying the agent",
+  "4": "module and test file path.",
+  "5": "The command-line interface facilitates automated evaluation by providing the agent",
+  "6": "module path and eval set file, with options to specify a configuration file or print",
+  "7": "detailed results. Specific evals within a larger eval set can be selected for execution",
+  "8": "by listing them after the eval set filename, separated by commas.",
+  "9": "At a Glance",
+  "10": "What: Agentic systems and LLMs operate in complex, dynamic environments where",
+  "11": "their performance can degrade over time. Their probabilistic and non-deterministic",
+  "12": "nature means that traditional software testing is insufficient for ensuring reliability.",
+  "13": "Evaluating dynamic multi-agent systems is a significant challenge because their",
+  "14": "constantly changing nature and that of their environments demand the development",
+  "15": "of adaptive testing methods and sophisticated metrics that can measure collaborative",
+  "16": "success beyond individual performance. Problems like data drift, unexpected",
+  "17": "interactions, tool calling, and deviations from intended goals can arise after",
+  "18": "16"
+}

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(**/.env)",
+      "Write(**/.env)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))\" 2>/dev/null); if echo \"$FILE\" | grep -q 'break_the_barriers/backend/app'; then cd /Users/autoeyes/Project/AI_Educations/Agent_Skill_Creator/apps/break_the_barriers/backend && ../.venv/bin/pytest tests/ -x -q 2>&1 | tail -8; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

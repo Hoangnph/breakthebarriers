@@ -1,0 +1,21 @@
+{
+  "0": "Fig.1: Router pattern, using an LLM as a Router",
+  "1": "Key Takeaways",
+  "2": "",
+  "3": "Routing enables agents to make dynamic decisions about the next step in a",
+  "4": "workflow based on conditions.",
+  "5": "",
+  "6": "It allows agents to handle diverse inputs and adapt their behavior, moving beyond",
+  "7": "linear execution.",
+  "8": "",
+  "9": "Routing logic can be implemented using LLMs, rule-based systems, or embedding",
+  "10": "similarity.",
+  "11": "",
+  "12": "Frameworks like LangGraph and Google ADK provide structured ways to define",
+  "13": "and manage routing within agent workflows, albeit with different architectural",
+  "14": "approaches.",
+  "15": "Conclusion",
+  "16": "The Routing pattern is a critical step in building truly dynamic and responsive agentic",
+  "17": "systems. By implementing routing, we move beyond simple, linear execution flows and",
+  "18": "13"
+}

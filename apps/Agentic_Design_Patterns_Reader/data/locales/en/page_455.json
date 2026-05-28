@@ -1,0 +1,19 @@
+{
+  "0": "The development of a powerful",
+  "1": "language model follows a distinct",
+  "2": "sequence. It begins with Pre-training,",
+  "3": "where a massive base model is built by",
+  "4": "training it on a vast dataset of general",
+  "5": "internet text to learn language,",
+  "6": "reasoning, and world knowledge. Next is",
+  "7": "Fine-tuning, a specialization phase",
+  "8": "where the general model is further",
+  "9": "trained on smaller, task-specific",
+  "10": "datasets to adapt its capabilities for a",
+  "11": "particular purpose. The final stage is",
+  "12": "Alignment, where the specialized",
+  "13": "model's behavior is adjusted to ensure",
+  "14": "its outputs are helpful, harmless, and",
+  "15": "aligned with human values.",
+  "16": "7"
+}

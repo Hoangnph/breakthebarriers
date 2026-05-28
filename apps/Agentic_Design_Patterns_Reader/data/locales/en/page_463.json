@@ -1,0 +1,18 @@
+{
+  "0": "ReAct (Reason and Act): ReAct is an",
+  "1": "agent framework that combines",
+  "2": "reasoning and acting in a loop. The",
+  "3": "agent first \"thinks\" about what to do,",
+  "4": "then takes an \"action\" using a tool, and",
+  "5": "uses the resulting observation to inform",
+  "6": "its next thought, making it highly",
+  "7": "effective at solving complex tasks.",
+  "8": "Planning: This is an agent's ability to",
+  "9": "break down a high-level goal into a",
+  "10": "sequence of smaller, manageable",
+  "11": "sub-tasks. The agent then creates a",
+  "12": "plan to execute these steps in order,",
+  "13": "allowing it to handle complex, multi-step",
+  "14": "assignments.",
+  "15": "15"
+}

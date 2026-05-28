@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy trình dịch thuật và Đọc tài liệu AI Agentic</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Tài liệu quy trình dịch thuật cao cấp bảo toàn bố cục: Từ PDF gốc, qua bộ tách cấu trúc HTML pixel, dịch song ngữ AI thông minh, đến kệ tài liệu và trình đọc chi tiết.">
+    <meta name="keywords" content="AI Reader, Agentic Design Patterns, PDF to HTML, Translation Layout Preservation">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-project-diagram"></i>
+            <span>Agentic Reader Workflow</span>
+        </div>
+        <div class="nav-controls" style="display: flex; gap: 0.75rem;">
+            <a href="../plan/index.html" class="back-btn" id="header-plan-btn">
+                <i class="fas fa-route"></i> Kế hoạch & SA
+            </a>
+            <a href="../backend/index.html" class="back-btn" id="header-backend-btn">
+                <i class="fas fa-server"></i> API & Backend
+            </a>
+            <a href="../../index.html" class="back-btn" id="header-back-btn">
+                <i class="fas fa-arrow-left"></i> Quay lại ứng dụng chính
+            </a>
+        </div>
+        
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburger-btn" aria-label="Menu tài liệu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        
+        <!-- Welcome intro -->
+        <section class="intro-section">
+            <h1>Quy trình xử lý tài liệu thông minh</h1>
+            <p>Khám phá cách thức chúng tôi số hóa sách kỹ thuật PDF, tự động thông dịch Anh-Việt song ngữ và tái tạo bố cục tuyệt đối cho nhà phát triển.</p>
+        </section>
+
+        <!-- Stepper Pipeline Stepper -->
+        <section class="pipeline-container" aria-label="Workflow Steps">
+            
+            <!-- Step 1 Card -->
+            <div class="step-card active" data-step="step-1" style="--active-accent: var(--accent-blue); --active-accent-glow: var(--accent-blue-glow);">
+                <div class="step-number">1</div>
+                <i class="fas fa-file-import"></i>
+                <h3>Chuẩn bị Tài nguyên (Offline Prep)</h3>
+                <p>Tiền xử lý tĩnh một lần duy nhất, loại bỏ gánh nặng backend upload (YAGNI).</p>
+            </div>
+
+            <!-- Step 2 Card -->
+            <div class="step-card" data-step="step-2" style="--active-accent: var(--accent-purple); --active-accent-glow: var(--accent-purple-glow);">
+                <div class="step-number">2</div>
+                <i class="fas fa-code"></i>
+                <h3>Chuyển đổi Giữ nguyên Layout</h3>
+                <p>Số hóa cấu trúc HTML định vị pixel tuyệt đối (YAGNI & DRY).</p>
+            </div>
+
+            <!-- Step 3 Card -->
+            <div class="step-card" data-step="step-3" style="--active-accent: var(--accent-emerald); --active-accent-glow: var(--accent-emerald-glow);">
+                <div class="step-number">3</div>
+                <i class="fas fa-language"></i>
+                <h3>AI Thông dịch Đa ngôn ngữ</h3>
+                <p>Trích xuất index-mapped JSON (DRY) và biên dịch tĩnh.</p>
+            </div>
+
+            <!-- Step 4 Card -->
+            <div class="step-card" data-step="step-4" style="--active-accent: var(--accent-pink); --active-accent-glow: var(--accent-pink-glow);">
+                <div class="step-number">4</div>
+                <i class="fas fa-book-open"></i>
+                <h3>Trình đọc & Cân chỉnh dòng</h3>
+                <p>Dồn dòng chống đè chữ động (YAGNI) và cuộn trang mượt mà.</p>
+            </div>
+
+            <!-- Step 5 Card -->
+            <div class="step-card" data-step="step-5" style="--active-accent: var(--accent-orange); --active-accent-glow: var(--accent-orange-glow);">
+                <div class="step-number">5</div>
+                <i class="fas fa-mobile-alt"></i>
+                <h3>Tối ưu hóa đa thiết bị</h3>
+                <p>Trình đọc vanilla siêu nhẹ tương thích iOS, Android & Desktop.</p>
+            </div>
+
+        </section>
+
+        <!-- Dynamic Detailed Info Panel -->
+        <section class="detail-panel" aria-label="Step Specifications">
+            
+            <!-- Step 1 Details -->
+            <div class="detail-content active" id="step-1">
+                <div class="detail-text">
+                    <h2><i class="fas fa-file-import"></i> 1. Chuẩn bị Tài nguyên & API-First Backend</h2>
+                    <p>Để đáp ứng nhu cầu mở rộng linh hoạt, hệ thống kết hợp hoàn hảo giữa **quy trình chuẩn bị tài nguyên tĩnh (Offline Prep)** và **động cơ Backend API-First**. Để tuân thủ triệt để triết lý <strong>YAGNI (You Aren't Gonna Need It)</strong> và <strong>DRY (Don't Repeat Yourself)</strong>, hệ thống sử dụng cơ sở dữ liệu PostgreSQL thực tế để theo dõi trạng thái và lưu bộ đệm thông dịch động, thay vì chạy các chuyển đổi nhị phân nặng nề lúc runtime:</p>
+                    <ul>
+                        <li><strong>Quản lý Trạng thái qua PostgreSQL (PostgreSQL State Hub)</strong>: Toàn bộ vòng đời số hóa và thông dịch được lưu trữ và đồng bộ hóa qua 3 bảng dữ liệu quan hệ, giúp tránh việc dịch thuật lặp lại và dễ dàng phục hồi khi có sự cố.</li>
+                        <li><strong>Cấu trúc Thư mục Lưu trữ Khoa học (Static & Symlink Layout)</strong>: Tổ chức lưu trữ tài nguyên tĩnh tách biệt rõ ràng thông qua liên kết Symlink từ <code>data/</code> trỏ đến shared resources, giúp tối ưu dung lượng đĩa và độc lập hóa asset DRM.</li>
+                        <li><strong>Developer-first API Orchestration</strong>: Nhà phát triển và client dễ dàng tương tác qua hệ thống API RESTful phong phú của FastAPI, tự động khởi tạo bảng tự động (Metadata Create All) và sẵn sàng cho các quy trình biên dịch hàng loạt.</li>
+                    </ul>
+                </div>
+                <div class="detail-visual">
+                    <div class="upload-sandbox" id="sandbox-dropzone">
+                        <div class="file-dropzone">
+                            <i class="fas fa-terminal"></i>
+                            <p id="upload-status">Nhấn nút dưới để bắt đầu tiền biên dịch PDF cục bộ (Simulated CLI Build)</p>
+                        </div>
+                        <button class="sandbox-btn" id="sandbox-upload-btn">Khởi chạy offline pre-processing pipeline</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 Details -->
+            <div class="detail-content" id="step-2">
+                <div class="detail-text">
+                    <h2><i class="fas fa-code"></i> 2. Chuyển đổi và bảo toàn định dạng gốc</h2>
+                    <p>Khác với các công cụ đọc text thông thường làm mất đi sơ đồ thiết kế đồ họa, hệ thống sử dụng thuật toán số hóa chuyển đổi tài liệu sang HTML với cơ chế <strong>định vị tọa độ tuyệt đối (Absolute Positioning)</strong>. Để tuân thủ nghiêm ngặt triết lý <strong>YAGNI (You Aren't Gonna Need It)</strong> và <strong>DRY (Don't Repeat Yourself)</strong>, hệ thống sử dụng kiến trúc biên dịch tĩnh siêu nhẹ thay vì tích hợp các bộ giải mã nặng nề:</p>
+                    
+                    <div class="tech-solutions-container">
+                        <!-- Solution 1 -->
+                        <div class="tech-solution-card">
+                            <div class="card-icon" style="background: var(--accent-purple-glow); color: var(--accent-purple);">
+                                <i class="fas fa-file-code"></i>
+                            </div>
+                            <h4>1. Tiền biên dịch HTML Tĩnh (Poppler pdftohtml)</h4>
+                            <p class="card-sub">Áp dụng triết lý YAGNI - Loại bỏ gánh nặng tính toán runtime:</p>
+                            <ul>
+                                <li><strong>Offline Preserving</strong>: Sử dụng công cụ biên dịch hiệu năng cao <code>pdftohtml</code> (thuộc bộ tiện ích Poppler) để chuyển đổi PDF tĩnh một lần duy nhất sang HTML định vị tuyệt đối từng pixel.</li>
+                                <li><strong>Zero-JS Client Overhead</strong>: Không tích hợp các thư viện giải mã PDF nhị phân khổng lồ (như PDF.js) vào trình duyệt của người dùng, giúp giảm dung lượng tải trang và tăng tốc thời gian render lên gấp 10 lần.</li>
+                                <li><strong>Asset Inheritance</strong>: Kế thừa trực tiếp các file ảnh nền và cấu trúc CSS absolute gốc được sinh ra tĩnh.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Solution 2 -->
+                        <div class="tech-solution-card">
+                            <div class="card-icon" style="background: var(--accent-blue-glow); color: var(--accent-blue);">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <h4>2. Bóc tách Cấu trúc DOM Tinh gọn & Trạm Kiểm soát (BS4 - Quality Control)</h4>
+                            <p class="card-sub">Áp dụng triết lý DRY và kiểm soát chất lượng chặt chẽ:</p>
+                            <ul>
+                                <li><strong>BeautifulSoup (bs4) Parser</strong>: Kịch bản Python <code>extract_to_json.py</code> duyệt cây DOM của HTML gốc để trích xuất nội dung văn bản từ các thẻ <code>&lt;span&gt;</code> thành tệp tin JSON bản địa (English) theo cơ chế index 1-1.</li>
+                                <li><strong>Trạm Xác thực Cấu trúc (DOM Validator Check)</strong>: Tự động so khớp số lượng thẻ span giữa tệp locale Việt và Anh để đảm bảo không bị dịch thiếu dòng, sót chữ trước khi biên dịch ngược lại HTML.</li>
+                                <li><strong>Bộ kiểm soát mã hóa (Encoding Sanitizer):</strong> Phát hiện tệp rỗng, chuẩn hóa mã ký tự từ ISO-8859-1 sang UTF-8 tĩnh để hiển thị dấu tiếng Việt hoàn hảo không lỗi font.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Solution 3 -->
+                        <div class="tech-solution-card">
+                            <div class="card-icon" style="background: var(--accent-emerald-glow); color: var(--accent-emerald);">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <h4>3. Đồng bộ Local hóa Động (Regex Rebuild Engine)</h4>
+                            <p class="card-sub">Hiệu năng tối cao - Tự động tái dựng trang song ngữ:</p>
+                            <ul>
+                                <li><strong>Regex HTML Generator</strong>: Kịch bản <code>build_translated_html.py</code> sử dụng các biểu thức chính quy (Regular Expressions) siêu tốc để tìm kiếm và tráo đổi văn bản tiếng Anh sang tiếng Việt tĩnh, sinh ra các trang <code>pages_vi/</code> tương ứng.</li>
+                                <li><strong>Iframe Swap Runtime</strong>: Phía client-side chỉ cần hoán đổi thuộc tính <code>src</code> của thẻ <code>&lt;iframe&gt;</code> khi người dùng chuyển đổi ngôn ngữ (VIE/ENG) thay vì chạy code JavaScript dịch và chèn thẻ DOM phức tạp.</li>
+                                <li><strong>Accented Charset Fix</strong>: Tự động hiệu chỉnh mã ký tự (charset) từ ISO-8859-1 sang UTF-8 tĩnh để hiển thị hoàn hảo dấu tiếng Việt.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-visual">
+                    <div class="layout-sandbox">
+                        <div class="layout-preview-container" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; background: var(--bg-card); position: relative; box-shadow: var(--shadow-md);">
+                            <div class="layout-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                                <span style="font-size: 0.75rem; color: var(--accent-purple); font-weight: 600;"><i class="fas fa-file-invoice"></i> PDF to Absolute HTML Parser</span>
+                                <span class="badge" style="background: var(--accent-purple-glow); color: var(--accent-purple); border-color: var(--accent-purple);">100% Pixel Preserved</span>
+                            </div>
+                            <div class="layout-box" style="position: relative; width: 100%; height: 180px; border: 1px dashed rgba(139, 92, 246, 0.4); border-radius: 8px; padding: 12px; background: rgba(139, 92, 246, 0.02); overflow: hidden;">
+                                <div class="layout-grid-bg" style="position: absolute; inset: 0; background-image: radial-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 0); background-size: 12px 12px;"></div>
+                                <div class="mock-absolute-element" style="position: absolute; top: 20px; left: 15px; color: var(--accent-purple); font-family: var(--font-mono); font-size: 0.65rem; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.4); padding: 4px 6px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                    &lt;span style="position:absolute; top:20px; left:15px;"&gt;Part 1: Intro&lt;/span&gt;
+                                </div>
+                                <div class="mock-absolute-element" style="position: absolute; top: 70px; left: 15px; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.65rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 6px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                    &lt;span style="position:absolute; top:70px; left:15px;"&gt;Agentic Patterns&lt;/span&gt;
+                                </div>
+                                <div class="mock-absolute-element" style="position: absolute; top: 120px; left: 15px; color: var(--accent-emerald); font-family: var(--font-mono); font-size: 0.65rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 6px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                    &lt;span style="position:absolute; top:120px; left:15px;"&gt;Quality Assurance&lt;/span&gt;
+                                </div>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; margin-top: 10px; margin-bottom: 0;"><i class="fas fa-search-location"></i> Cây DOM HTML tuyệt đối bảo toàn vị trí chính xác của PDF gốc.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 Details -->
+            <div class="detail-content" id="step-3">
+                <div class="detail-text">
+                    <h2><i class="fas fa-language"></i> 3. AI Thông dịch & Hệ thống Bẫy lỗi (Safeguard Pipeline)</h2>
+                    <p>Để đảm bảo quá trình dịch thuật 482 trang sách diễn ra tin cậy 100%, bảo toàn bố cục pixel gốc và hiển thị mượt mà trên di động, hệ thống sử dụng một **Quy trình Quản lý, Kiểm soát Chất lượng & Bẫy lỗi khép kín (Safeguard Pipeline)**:</p>
+                    
+                    <h4 style="margin-top: 1rem; color: var(--accent-emerald); font-weight: 700; font-size: 0.95rem;">1. Hệ thống CSDL PostgreSQL & 6 Pha Di chuyển Dữ liệu Kỹ thuật</h4>
+                    <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">Để thay thế kiến trúc quản lý tệp tĩnh thủ công bằng một giải pháp tin cậy cấp doanh nghiệp, toàn bộ trạng thái tài liệu được quản trị qua **PostgreSQL Hub** kết hợp với REST API của FastAPI:</p>
+                    <ul style="margin-bottom: 1rem; font-size: 0.85rem;">
+                        <li><strong>Cơ sở Dữ liệu Quan hệ PostgreSQL:</strong> 
+                            <br>&bull; Bảng <code>documents</code>: Lưu trữ metadata tài liệu, tổng số trang, và trạng thái quy trình (<code>raw</code>, <code>extracted</code>, <code>translated</code>, <code>compiled</code>).
+                            <br>&bull; Bảng <code>pages</code>: Lưu trữ mã HTML gốc (<code>original_html</code>) và HTML đã biên dịch dịch song ngữ (<code>translated_html</code>), ràng buộc <strong>Cascade Delete</strong> với bảng documents.
+                            <br>&bull; Bảng <code>translations</code>: Lưu trữ đệm từng thẻ <code>&lt;span&gt;</code> dịch thuật độc lập (<code>span_id</code>, <code>original_text</code>, <code>translated_text</code>), giúp tránh dịch trùng lặp và giảm tải chi phí API (DRY).
+                        </li>
+                        <li style="margin-top: 0.5rem;"><strong>6 Pha Di chuyển Dữ liệu (Backend API Pipeline):</strong>
+                            <br>&bull; <em>Pha 1 (Upload):</em> Gọi <code>POST /api/docs/upload</code> để tải PDF lên, tạo record trong bảng <code>documents</code> với trạng thái ban đầu <code>raw</code>.
+                            <br>&bull; <em>Pha 2 (Extraction & Initial Mapping):</em> Gọi <code>POST /api/docs/{doc_id}/extract</code>, backend kích hoạt <code>pdftohtml</code> và parser BeautifulSoup để điền dữ liệu gốc vào bảng <code>pages</code> và từng thẻ span vào bảng <code>translations</code>, chuyển trạng thái tài liệu thành <code>extracted</code>.
+                            <br>&bull; <em>Pha 3 (Sanitization):</em> Tự động làm sạch các thẻ lỗi và chuyển bảng mã sang UTF-8 động trước khi cập nhật cơ sở dữ liệu.
+                            <br>&bull; <em>Pha 4 (AI Translation):</em> Gọi <code>POST /api/docs/{doc_id}/translate</code>, hệ thống kích hoạt chuỗi đại lý dịch thuật thông minh 3 giai đoạn (HFE) để dịch spans và lưu vào bảng <code>translations</code>.
+                            <br>&bull; <em>Pha 5 (Regex Reconstruction):</em> Gọi <code>POST /api/docs/{doc_id}/compile</code>, Regex Engine biên dịch động lại trang bằng cách tráo nội dung thẻ span, nhúng cơ chế Co dãn Font chống đè chữ (Dynamic Font Shrink), cập nhật <code>translated_html</code> của bảng <code>pages</code> và chuyển trạng thái tài liệu thành <code>compiled</code>.
+                            <br>&bull; <em>Pha 6 (Compiled Delivery):</em> Gọi <code>GET /api/docs/{doc_id}/pages/{page_num}</code> để lấy mã HTML dịch hoàn chỉnh, trả về phía client-side để hiển thị tuyệt đối.
+                        </li>
+                    </ul>
+
+                    <h4 style="color: var(--accent-blue); font-weight: 700; font-size: 0.95rem;">2. 3 Trạm Kiểm soát Chất lượng (Quality Gates)</h4>
+                    <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">Hậu kiểm tự động trước khi đóng gói sản phẩm tĩnh:</p>
+                    <ul style="margin-bottom: 1rem; font-size: 0.85rem;">
+                        <li><strong>Quality Gate 1 (Encoding Gate):</strong> Xác thực tệp dịch không trống và chuẩn hóa bộ mã ký tự sang UTF-8 để hiển thị dấu tiếng Việt chuẩn xác.</li>
+                        <li><strong>Quality Gate 2 (DOM Structural Gate):</strong> Đối chiếu số lượng thẻ <code>&lt;span&gt;</code> giữa file Anh và file Việt. Mọi sai số (do AI dịch sót) sẽ bị báo đỏ và chặn biên dịch trang lỗi.</li>
+                        <li><strong>Quality Gate 3 (Overlap Gate):</strong> Quét tọa độ <code>top</code>/<code>left</code> để cảnh báo sớm nguy cơ đè chữ.</li>
+                    </ul>
+
+                    <h4 style="color: var(--accent-orange); font-weight: 700; font-size: 0.95rem;">3. Quy trình Bẫy lỗi & Tự Phục hồi Động</h4>
+                    <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">Bẫy lỗi runtime khi tương tác dịch thuật ngoại vi hoặc render client:</p>
+                    <ul style="margin-bottom: 1rem; font-size: 0.85rem;">
+                        <li><strong>Bẫy lỗi Lệch phân mảnh API:</strong> Khi split tag <code>&lt;hr&gt;</code> nếu số lượng spans lệch, hệ thống tự động bẫy lỗi và chuyển sang cơ chế <strong>Dịch đơn lẻ từng đoạn (Paragraph Fallback)</strong> để bảo toàn trang.</li>
+                        <li><strong>Bẫy lỗi Cú pháp JSON Locale:</strong> Bắt lỗi cú pháp JSON và tự Regex sửa đổi. Nếu irreparable, tự động fallback hiển thị chữ gốc tiếng Anh kèm ký hiệu cảnh báo <code>[?]</code> để tránh làm treo trình đọc.</li>
+                        <li><strong>Bẫy lỗi Tràn trang di động (LSE Overflow):</strong> Nếu chữ Việt quá dài vượt canvas $1188\text{px}$, client-side tự động giảm tỷ lệ font-size $5\%-10\%$ toàn trang (Dynamic Font Shrink) để khít khung canvas di động.</li>
+                    </ul>
+
+                    <h4 style="color: var(--accent-purple); font-weight: 700; font-size: 0.95rem;">4. Cơ chế Thông dịch Chất lượng cao (Semantics Preservation)</h4>
+                    <p style="font-size: 0.875rem; margin-bottom: 0.75rem;">Đảm bảo việc dịch thuật đa ngôn ngữ trôi chảy và bảo toàn 100% ý nghĩa gốc:</p>
+                    <ul style="margin-bottom: 1rem; font-size: 0.85rem;">
+                        <li><strong>Context-Aware Reconstruction:</strong> Tự động gom các thẻ span cận kề thành câu hoàn chỉnh, tránh dịch vụn vặt làm mất ngữ cảnh. Dùng các mã định danh ẩn tinh gọn để ánh xạ 1-1 chính xác khi tái dựng HTML.</li>
+                        <li><strong>Agentic Multi-Stage Workflow:</strong> AI dịch thuật 3 bước khép kín (Dịch thô sát nghĩa -> Đánh bóng văn phong kỹ thuật -> Đối chiếu song song phát hiện và tự sửa sai lệch ngữ nghĩa).</li>
+                        <li><strong>Glossary-Enforced Injections:</strong> Áp dụng bảng từ điển thuật ngữ cốt lõi chuyên ngành để giữ nguyên giá trị tài liệu kỹ thuật gốc, ngăn việc dịch sai hoặc địa phương hóa quá mức.</li>
+                    </ul>
+                </div>
+                <div class="detail-visual">
+                    <div class="translation-sandbox-v2">
+                        <div class="lang-selector-bar">
+                            <button class="lang-tab active" data-lang="vi">VIE (Tiếng Việt)</button>
+                            <button class="lang-tab" data-lang="ja">JPN (日本語)</button>
+                            <button class="lang-tab" data-lang="fr">FRA (Français)</button>
+                        </div>
+                        <div class="translation-panes">
+                            <div class="trans-pane">
+                                <div class="pane-header">Gốc (English)</div>
+                                <div class="pane-body" id="mock-eng-text">
+                                    <div style="font-weight:bold; font-size:1.0rem; color:var(--accent-blue);">What makes an AI system become an Agent?</div>
+                                    <div style="margin-top:8px; font-size:0.7rem; color:var(--text-secondary);">To put it simply, an AI agent is a system designed to perceive its environment...</div>
+                                </div>
+                            </div>
+                            <div class="trans-pane">
+                                <div class="pane-header">AI Dịch thuật (Translated)</div>
+                                <div class="pane-body">
+                                    <!-- Vietnamese Translated Mock -->
+                                    <div class="lang-screen active" id="lang-vi">
+                                        <div style="font-weight:bold; font-size:1.0rem; color:var(--accent-purple); line-height:1.2;">
+                                            Điều gì làm cho một hệ thống AI trở thành một Tác tử (Agent)?
+                                        </div>
+                                        <div class="wrapped-line-highlight" style="font-size:0.65rem; margin-top:8px;">
+                                            <i class="fas fa-arrows-alt-v"></i> Dịch chuyển: +45px
+                                            <span class="shift-tag" style="display:inline-block;">SHIFT OK</span>
+                                        </div>
+                                        <div style="margin-top:8px; font-size:0.7rem; color:var(--text-secondary);">Nói một cách đơn giản, AI agent là một hệ thống được thiết kế để nhận thức môi trường...</div>
+                                    </div>
+                                    
+                                    <!-- Japanese Translated Mock -->
+                                    <div class="lang-screen" id="lang-ja">
+                                        <div style="font-weight:bold; font-size:1.0rem; color:var(--accent-emerald); line-height:1.2;">
+                                            AIシステムがエージェントになる理由は何でしょうか？
+                                        </div>
+                                        <div class="wrapped-line-highlight" style="font-size:0.65rem; margin-top:8px;">
+                                            <i class="fas fa-arrows-alt-v"></i> Dịch chuyển: +10px
+                                            <span class="shift-tag" style="display:inline-block; border-color:var(--accent-emerald); color:var(--accent-emerald); background:var(--accent-emerald-glow)">SHIFT OK</span>
+                                        </div>
+                                        <div style="margin-top:8px; font-size:0.7rem; color:var(--text-secondary);">簡単に言うと、AIエージェントとは、環境を認識するように設計されたシステムです...</div>
+                                    </div>
+                                    
+                                    <!-- French Translated Mock -->
+                                    <div class="lang-screen" id="lang-fr">
+                                        <div style="font-weight:bold; font-size:1.0rem; color:var(--accent-pink); line-height:1.2;">
+                                            Qu'est-ce qui fait qu'un système d'IA devient un Agent?
+                                        </div>
+                                        <div class="wrapped-line-highlight" style="font-size:0.65rem; margin-top:8px;">
+                                            <i class="fas fa-arrows-alt-v"></i> Dịch chuyển: +55px
+                                            <span class="shift-tag" style="display:inline-block; border-color:var(--accent-pink); color:var(--accent-pink); background:var(--accent-pink-glow)">SHIFT OK</span>
+                                        </div>
+                                        <div style="margin-top:8px; font-size:0.7rem; color:var(--text-secondary);">Pour faire simple, un agent d'IA est un système conçu pour percevoir son environnement...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 Details -->
+            <div class="detail-content" id="step-4">
+                <div class="detail-text">
+                    <h2><i class="fas fa-book-open"></i> 4. Trình đọc Static siêu nhẹ & DRY Navigation</h2>
+                    <p>Ứng dụng phía client tuân thủ nghiêm ngặt nguyên lý <strong>YAGNI</strong>, sử dụng HTML5 tĩnh và Vanilla Javascript thuần túy. Hệ thống hoàn toàn không sử dụng các framework nặng nề (như React, Vue, Next.js) hay trình quản lý trạng thái phức tạp, giúp trang tải tức thì:</p>
+                    <ul>
+                        <li><strong>YAGNI Client Ebook Reader</strong>: Chuyển đổi ngôn ngữ siêu tốc bằng cách hoán đổi thuộc tính `src` của thẻ `&lt;iframe&gt;` sang thư mục ngôn ngữ tương ứng (`pages/` hoặc `pages_vi/`), tận dụng bộ đệm (cache) tự nhiên của trình duyệt mà không cần chạy code JavaScript biên dịch phức tạp.</li>
+                        <li><strong>DRY State Machine (js/app.js)</strong>: Toàn bộ trạng thái thu phóng, ngôn ngữ, chương mục và trang hiện tại được quản lý tập trung trong một đối tượng `state` duy nhất. Không trùng lặp các hàm tính toán vị trí hay cập nhật giao diện.</li>
+                        <li><strong>Seamless Page Scrolling</strong>: Cơ chế phát hiện điểm cuối trang thông minh tự động tải trang kế tiếp khi người dùng cuộn chuột hoặc vuốt chạm, tạo cảm giác đọc liền mạch như ứng dụng bản địa.</li>
+                    </ul>
+                </div>
+                <div class="detail-visual">
+                    <div class="shelf-visual">
+                        <div class="mock-shelf-grid">
+                            <div class="mock-doc-card active">
+                                <img><i class="fas fa-file-pdf"></i></img>
+                                <h4>Agentic Design Patterns</h4>
+                                <span>Song ngữ Anh - Việt</span>
+                            </div>
+                            <div class="mock-doc-card">
+                                <img><i class="fas fa-file-pdf"></i></img>
+                                <h4>LLM Compiler Manual</h4>
+                                <span>Chỉ xem tiếng Anh</span>
+                            </div>
+                            <div class="mock-doc-card">
+                                <img><i class="fas fa-image"></i></img>
+                                <h4>System Architecture</h4>
+                                <span>Bản đồ thiết kế</span>
+                            </div>
+                        </div>
+                        <button class="sandbox-btn" id="sandbox-shelf-btn" style="width:100%;"><i class="fas fa-book-open"></i> Mở trình đọc tài liệu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5 Details -->
+            <div class="detail-content" id="step-5">
+                <div class="detail-text">
+                    <h2><i class="fas fa-mobile-alt"></i> 5. Tối ưu hóa đa thiết bị & YAGNI Delivery</h2>
+                    <p>Thay vì xây dựng các gói ứng dụng di động riêng biệt tốn kém (vi phạm YAGNI) hay lặp lại các hàm xử lý chạm vuốt riêng lẻ (vi phạm DRY), hệ thống sử dụng một bộ điều phối sự kiện hợp nhất có độ thích ứng cực cao:</p>
+                    <ul>
+                        <li><strong>YAGNI Platform-agnostic Optimization</strong>: Chỉ sử dụng một mã nguồn web tĩnh duy nhất chạy hoàn hảo trên mọi kích thước màn hình. Các thuộc tính CSS được tối ưu hóa mượt mà thay vì phát triển ứng dụng Native Android/iOS riêng biệt.</li>
+                        <li><strong>DRY Event Aggregator</strong>: Một bộ xử lý cử chỉ hợp nhất tự động quy đổi cả phím bấm (Desktop Arrow keys), cuộn chuột (Desktop Wheel), và chạm vuốt (iOS/Android Touch Swipes) thành cùng một lệnh điều hướng trang, tái sử dụng 100% logic chuyển trang.</li>
+                        <li><strong>Thiết kế thích ứng cao cấp</strong>: iOS (tối ưu mượt mà cho Safari Mobile chống giật lag khi cuộn trang), Android (co giãn cỡ chữ chuẩn Chrome Mobile), và Desktop (hỗ trợ phím tắt thu phóng, co giãn Fit-Width/Fit-Page vừa khít tức thì).</li>
+                    </ul>
+                </div>
+                <div class="detail-visual">
+                    <div class="device-sandbox">
+                        <div class="device-selector">
+                            <button class="device-tab active" data-device="ios"><i class="fab fa-apple"></i> iOS</button>
+                            <button class="device-tab" data-device="android"><i class="fab fa-android"></i> Android</button>
+                            <button class="device-tab" data-device="desktop"><i class="fas fa-desktop"></i> Desktop</button>
+                        </div>
+                        <div class="device-preview-viewport">
+                            <div class="device-screen active" id="screen-ios">
+                                <div class="mock-iphone">
+                                    <div class="notch"></div>
+                                    <div class="mock-browser-bar"><i class="fas fa-lock"></i> reader.ai/agent-patterns</div>
+                                    <div class="mock-screen-content">
+                                        <div class="mock-swipe-gesture">
+                                            <i class="fas fa-hand-pointer"></i>
+                                            <span>Vuốt lên để sang trang</span>
+                                        </div>
+                                        <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:20px;">Tối ưu hóa cảm ứng & Safari iOS</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="device-screen" id="screen-android">
+                                <div class="mock-android">
+                                    <div class="camera"></div>
+                                    <div class="mock-browser-bar"><i class="fas fa-lock"></i> reader.ai/agent-patterns</div>
+                                    <div class="mock-screen-content">
+                                        <div class="mock-gesture-dot"></div>
+                                        <div style="font-size:0.65rem; font-weight:bold; color:var(--accent-emerald); margin-top:10px;">Màn hình cảm ứng Android</div>
+                                        <div style="font-size:0.55rem; color:var(--text-secondary); margin-top:10px;">Chuyển trang bằng chạm lướt nhẹ</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="device-screen" id="screen-desktop">
+                                <div class="mock-desktop">
+                                    <div class="mock-browser-tabs">
+                                        <span class="active-tab">Agentic Reader</span>
+                                    </div>
+                                    <div class="mock-desktop-body">
+                                        <div class="keyboard-shortcuts">
+                                            <div class="kbd-row">
+                                                <kbd class="kbd-badge">&larr;</kbd> <kbd class="kbd-badge">&rarr;</kbd> <span>Chuyển trang</span>
+                                            </div>
+                                            <div class="kbd-row">
+                                                <kbd class="kbd-badge">+</kbd> <kbd class="kbd-badge">-</kbd> <span>Thu phóng tỷ lệ</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:15px;">Cuộn chuột chuyển trang + Phím tắt</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Technical Code Specification Section -->
+        <section class="specs-section">
+            <h2><i class="fas fa-terminal"></i> Thông số kỹ thuật thuật toán</h2>
+            
+            <div class="tab-container">
+                <div class="tab-headers">
+                    <button class="tab-btn active" data-tab="tab-pdf">1. Tiền xử lý (Prep)</button>
+                    <button class="tab-btn" data-tab="tab-layout">2. Cố định Layout</button>
+                    <button class="tab-btn" data-tab="tab-trans">3. Chống đè chữ (Layout Shift)</button>
+                    <button class="tab-btn" data-tab="tab-reader">4. Điều hướng (Page Scroll)</button>
+                    <button class="tab-btn" data-tab="tab-device">5. Đa thiết bị (Devices)</button>
+                    <button class="tab-btn" data-tab="tab-hfe-safeguard">6. Trình dịch HFE & Safeguard</button>
+                    <button class="tab-btn" data-tab="tab-automation-e2e">7. CSDL & Automation E2E</button>
+                </div>
+
+                <!-- Parser tab content -->
+                <div class="tab-content active" id="tab-pdf">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment"># 1. POPPLER CLI: Tiền biên dịch tài liệu gốc tĩnh sang HTML (YAGNI - Không chạy runtime)</span>
+<span class="code-comment"># Lệnh: pdftohtml -c -s -noframes Agentic_Design_Patterns.pdf ./data/pages/Agentic_Design_Patterns</span>
+
+<span class="code-comment"># 2. PYTHON WORKFLOW ORCHESTRATOR: Kiểm tra và làm sạch tài nguyên tĩnh</span>
+<span class="code-keyword">import</span> os
+
+<span class="code-keyword">def</span> <span class="code-function">verify_raw_assets</span>(pages_dir, total_expected=482):
+    print("Khởi chạy pipeline kiểm tra chất lượng tài nguyên tĩnh...")
+    missing_pages = []
+    
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(1, total_expected + 1):
+        page_path = os.path.join(pages_dir, f"Agentic_Design_Patterns-{i}.html")
+        <span class="code-keyword">if</span> <span class="code-keyword">not</span> os.path.exists(page_path):
+            missing_pages.append(i)
+            <span class="code-keyword">continue</span>
+            
+        # Kiểm tra tính toàn vẹn của tệp tĩnh
+        file_size = os.path.getsize(page_path)
+        <span class="code-keyword">if</span> file_size < 100:
+            print(f"Cảnh báo: Trang {i} có kích thước bất thường ({file_size} bytes).")
+            
+    <span class="code-keyword">if</span> <span class="code-keyword">not</span> missing_pages:
+        print(f"Thành công: Đã xác thực đầy đủ {total_expected} trang HTML tĩnh sẵn sàng cho DRY parsing.")
+    <span class="code-keyword">else</span>:
+        print(f"Lỗi: Thiếu các trang: {missing_pages}")</code></pre>
+                    </div>
+                </div>
+
+                <!-- Layout preservation tab content -->
+                <!-- Layout preservation tab content -->
+                <div class="tab-content" id="tab-layout">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment">// 1. POPPLER CLI: Tiền biên dịch PDF tĩnh sang HTML absolute định vị tọa độ (YAGNI)</span>
+<span class="code-comment">// Lệnh: pdftohtml -c -s -noframes doc.pdf ./data/pages/Agentic_Design_Patterns</span>
+
+<span class="code-comment">// 2. PYTHON BEAUTIFULSOUP (extract_to_json.py): Bóc tách text span giữ nguyên index (DRY)</span>
+<span class="code-keyword">import</span> os, json
+<span class="code-keyword">from</span> bs4 <span class="code-keyword">import</span> BeautifulSoup
+
+<span class="code-keyword">def</span> <span class="code-function">extract_spans_to_json</span>(html_path, json_output_path):
+    <span class="code-keyword">with</span> open(html_path, <span class="code-string">'r'</span>, encoding=<span class="code-string">'ISO-8859-1'</span>) <span class="code-keyword">as</span> f:
+        soup = BeautifulSoup(f.read(), <span class="code-string">'html.parser'</span>)
+    
+    <span class="code-comment"># Trích xuất toàn bộ các thẻ &lt;span&gt; chứa chữ từ pdftohtml</span>
+    spans = soup.find_all(<span class="code-string">'span'</span>)
+    texts = {str(idx): span.get_text() <span class="code-keyword">for</span> idx, span <span class="code-keyword">in</span> enumerate(spans)}
+    
+    <span class="code-keyword">with</span> open(json_output_path, <span class="code-string">'w'</span>, encoding=<span class="code-string">'utf-8'</span>) <span class="code-keyword">as</span> f:
+        json.dump(texts, f, ensure_ascii=<span class="code-keyword">False</span>, indent=<span class="code-number">2</span>)
+
+<span class="code-comment">// 3. PYTHON REGEX BUILDER (build_translated_html.py): Đồng bộ hóa ngôn ngữ giữ nguyên tọa độ absolute</span>
+<span class="code-keyword">import</span> re
+
+<span class="code-keyword">def</span> <span class="code-function">build_translated_page</span>(html_path, json_trans_path, output_path):
+    <span class="code-keyword">with</span> open(html_path, <span class="code-string">'r'</span>, encoding=<span class="code-string">'ISO-8859-1'</span>) <span class="code-keyword">as</span> f:
+        html_content = f.read()
+    <span class="code-keyword">with</span> open(json_trans_path, <span class="code-string">'r'</span>, encoding=<span class="code-string">'utf-8'</span>) <span class="code-keyword">as</span> f:
+        translations = json.load(f)
+
+    <span class="code-keyword">class</span> <span class="code-class">SpanReplacer</span>:
+        <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self, translations):
+            self.idx = <span class="code-number">0</span>
+            self.translations = translations
+        <span class="code-keyword">def</span> <span class="code-function">__call__</span>(self, match):
+            idx_str = str(self.idx)
+            self.idx += <span class="code-number">1</span>
+            opening, content, closing = match.group(<span class="code-number">1</span>), match.group(<span class="code-number">2</span>), match.group(<span class="code-number">3</span>)
+            <span class="code-comment"># Tráo nội dung dịch nếu tồn tại, giữ nguyên toàn bộ CSS inline style của thẻ span gốc!</span>
+            <span class="code-keyword">return</span> f<span class="code-string">"{opening}{self.translations[idx_str]}{closing}"</span> <span class="code-keyword">if</span> idx_str <span class="code-keyword">in</span> self.translations <span class="code-keyword">else</span> match.group(<span class="code-number">0</span>)
+
+    replacer = SpanReplacer(translations)
+    <span class="code-comment"># Sử dụng Regex thế chỗ nội dung text span cực nhanh</span>
+    new_html = re.sub(r<span class="code-string">'(&lt;span[^&gt;]*&gt;)(.*?)(&lt;/span&gt;)'</span>, replacer, html_content, flags=re.I|re.S)
+    
+    <span class="code-keyword">with</span> open(output_path, <span class="code-string">'w'</span>, encoding=<span class="code-string">'utf-8'</span>) <span class="code-keyword">as</span> f:
+        f.write(new_html)</code></pre>
+                    </div>
+                </div>
+
+                <!-- Layout Shift tab content -->
+                <div class="tab-content" id="tab-trans">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment">// Thuật toán dồn dòng động chống đè chữ tối tân trong js/app.js</span>
+<span class="code-keyword">function</span> <span class="code-function">adjustIframeLayout</span>(iframeDoc) {
+    <span class="code-keyword">let</span> accumulatedShift = <span class="code-number">0</span>;
+    
+    <span class="code-comment">// Sắp xếp các phần tử từ trên xuống dưới dựa theo tọa độ top gốc</span>
+    divs.<span class="code-function">sort</span>((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top));
+    
+    divs.<span class="code-function">forEach</span>(div => {
+        <span class="code-keyword">const</span> originalTop = parseFloat(div.getAttribute(<span class="code-string">'data-original-top'</span>)) || <span class="code-number">0</span>;
+        
+        <span class="code-comment">// Tịnh tiến phần tử theo lượng dồn tích lũy trước đó</span>
+        div.style.top = <span class="code-string">`${originalTop + accumulatedShift}px`</span>;
+        
+        <span class="code-keyword">if</span> (shouldWrap(div)) {
+            <span class="code-keyword">const</span> unwrapped = div.<span class="code-function">getBoundingClientRect</span>().height;
+            div.style.whiteSpace = <span class="code-string">'normal'</span>; <span class="code-comment">// Cho phép xuống dòng</span>
+            <span class="code-keyword">const</span> wrapped = div.<span class="code-function">getBoundingClientRect</span>().height;
+            
+            <span class="code-keyword">if</span> (wrapped > unwrapped) {
+                <span class="code-comment">// Cộng dồn chênh lệch chiều cao vào tích lũy</span>
+                accumulatedShift += (wrapped - unwrapped);
+            }
+        }
+    });
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Scroll transition tab content -->
+                <div class="tab-content" id="tab-reader">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment">// Xử lý chuyển trang liền mạch khi người dùng cuộn chuột hoặc vuốt chạm</span>
+<span class="code-keyword">function</span> <span class="code-function">handleWheel</span>(e) {
+    <span class="code-keyword">const</span> container = viewerContainer;
+    <span class="code-keyword">const</span> atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - <span class="code-number">2</span>;
+    <span class="code-keyword">const</span> atTop = container.scrollTop <= <span class="code-number">2</span>;
+    
+    <span class="code-keyword">if</span> (e.deltaY > <span class="code-number">0</span> && atBottom) {
+        <span class="code-comment">// Cuộn xuống cuối -> Chuyển sang trang sau</span>
+        <span class="code-function">loadPage</span>(currentPage + <span class="code-number">1</span>, <span class="code-keyword">false</span>); <span class="code-comment">// Tải đầu trang sau</span>
+    } <span class="code-keyword">else</span> <span class="code-keyword">if</span> (e.deltaY < <span class="code-number">0</span> && atTop) {
+        <span class="code-comment">// Cuộn lên đỉnh -> Quay lại trang trước</span>
+        <span class="code-function">loadPage</span>(currentPage - <span class="code-number">1</span>, <span class="code-keyword">true</span>); <span class="code-comment">// Tải cuối trang trước</span>
+    }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Device tab content -->
+                <div class="tab-content" id="tab-device">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment">// Tối ưu cảm ứng cho iOS/Android & phím tắt cho Desktop</span>
+<span class="code-keyword">const</span> <span class="code-function">initDeviceAdaptation</span> = () => {
+    <span class="code-keyword">const</span> isMobile = <span class="code-regexp">/iPhone|iPad|iPod|Android/i</span>.<span class="code-function">test</span>(navigator.userAgent);
+    
+    <span class="code-keyword">if</span> (isMobile) {
+        <span class="code-comment">// Tối ưu cử chỉ vuốt chạm cho iOS & Android</span>
+        <span class="code-function">bindTouchGestures</span>();
+    } <span class="code-keyword">else</span> {
+        <span class="code-comment">// Phím tắt bàn phím tiện ích cho Desktop</span>
+        window.<span class="code-function">addEventListener</span>(<span class="code-string">'keydown'</span>, (e) => {
+            <span class="code-keyword">if</span> (e.key === <span class="code-string">'ArrowRight'</span>) <span class="code-function">nextPage</span>();
+            <span class="code-keyword">if</span> (e.key === <span class="code-string">'ArrowLeft'</span>) <span class="code-function">prevPage</span>();
+            <span class="code-keyword">if</span> (e.key === <span class="code-string">'+'</span>) <span class="code-function">zoomIn</span>();
+            <span class="code-keyword">if</span> (e.key === <span class="code-string">'-'</span>) <span class="code-function">zoomOut</span>();
+        });
+    }
+};</code></pre>
+                    </div>
+                </div>
+
+                <!-- HFE & Safeguard Tab Content -->
+                <div class="tab-content" id="tab-hfe-safeguard">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment"># 1. THUẬT TOÁN TÁI LẬP NGỮ CẢNH (HFE Context Reconstruction Python Spec)</span>
+<span class="code-keyword">def</span> <span class="code-function">reconstruct_context_and_index</span>(spans_list, threshold_y=5.0):
+    <span class="code-comment"># Sắp xếp span theo dòng (tọa độ y) và left</span>
+    spans_list.sort(key=lambda x: (x['top'], x['left']))
+    groups = []
+    current_group = []
+    
+    for span in spans_list:
+        if not current_group:
+            current_group.append(span)
+        else:
+            if abs(span['top'] - current_group[0]['top']) < threshold_y:
+                current_group.append(span)
+            else:
+                groups.append(current_group)
+                current_group = [span]
+    if current_group:
+        groups.append(current_group)
+        
+    reconstructed_blocks = []
+    for group in groups:
+        group.sort(key=lambda x: x['left'])
+        text_parts = [f"[s:{s['index']}] {s['text']}" for s in group]
+        reconstructed_blocks.append(" ".join(text_parts))
+    return reconstructed_blocks
+
+<span class="code-comment"># 2. HỆ THỐNG PROMPTS ĐA TÁC TỬ (HFE 3-Steps Agentic System Prompts)</span>
+Draft_Prompt = """
+You are a high-fidelity translator. Translate from English to Vietnamese.
+CRITICAL: Preserve the exactly indexed span placeholders [s:idx] at their corresponding translated positions.
+Do not translate or modify [s:idx].
+"""
+
+Refine_Prompt = """
+You are a Senior IT Architect. Polish the draft Vietnamese translation.
+Make it sound natural and use industry-standard Vietnamese technical terminology.
+CRITICAL: You must NOT touch or remove [s:idx] placeholders.
+"""
+
+Verify_Prompt = """
+You are a Semantic Alignment Auditor. Compare the original and polished text.
+Ensure no placeholders [s:idx] are misplaced. Output the final correct aligned Vietnamese translation.
+"""
+
+<span class="code-comment">// 3. DYNAMIC FONT SHRINK CLIENT-SIDE (Safeguard JavaScript Recovery)</span>
+<span class="code-keyword">function</span> <span class="code-function">adjustFontSizeToFit</span>(iframe, maxHeight = 1188, step = 0.02, minScale = 0.75) {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    const body = doc.body;
+    
+    if (!body.style.fontSize) {
+        body.style.fontSize = "100%";
+    }
+    let currentScale = 1.0;
+    
+    function getAbsoluteBoundingBottom() {
+        let maxBottom = 0;
+        const elements = body.querySelectorAll('div, span, p');
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const bottom = (el.offsetTop || 0) + (el.offsetHeight || rect.height || 0);
+            if (bottom > maxBottom) {
+                maxBottom = bottom;
+            }
+        });
+        return maxBottom;
+    }
+    
+    let realBottom = getAbsoluteBoundingBottom();
+    while (realBottom > maxHeight && currentScale > minScale) {
+        currentScale -= step;
+        body.style.fontSize = `${currentScale * 100}%`;
+        if (typeof window.applyLayoutShiftEngine === 'function') {
+            window.applyLayoutShiftEngine(doc);
+        }
+        realBottom = getAbsoluteBoundingBottom();
+    }
+    return {
+        finalBottom: realBottom,
+        fittedScale: currentScale,
+        overflowRecovered: realBottom <= maxHeight
+    };
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- CSDL & Automation E2E tab content -->
+                <div class="tab-content" id="tab-automation-e2e">
+                    <div class="code-wrapper">
+                        <pre><code><span class="code-comment"># ==============================================================================</span>
+<span class="code-comment"># 1. CẤU TRÚC CƠ SỞ DỮ LIỆU POSTGRESQL HUB (SQLAlchemy ORM - backend/app/models_db.py)</span>
+<span class="code-comment"># ==============================================================================</span>
+<span class="code-keyword">from</span> sqlalchemy <span class="code-keyword">import</span> Column, String, Integer, DateTime, ForeignKey, Text
+<span class="code-keyword">from</span> sqlalchemy.orm <span class="code-keyword">import</span> relationship
+<span class="code-keyword">from</span> backend.app.database <span class="code-keyword">import</span> Base
+
+<span class="code-keyword">class</span> <span class="code-class">DBDocument</span>(Base):
+    __tablename__ = <span class="code-string">"documents"</span>
+
+    id = Column(String, primary_key=<span class="code-keyword">True</span>, index=<span class="code-keyword">True</span>)
+    filename = Column(String, nullable=<span class="code-keyword">False</span>)
+    total_pages = Column(Integer, default=<span class="code-number">0</span>)
+    status = Column(String, default=<span class="code-string">"raw"</span>)  <span class="code-comment"># raw, extracted, translated, compiled</span>
+    
+    pages = relationship(<span class="code-string">"DBPage"</span>, back_populates=<span class="code-string">"document"</span>, cascade=<span class="code-string">"all, delete-orphan"</span>)
+    translations = relationship(<span class="code-string">"DBTranslation"</span>, back_populates=<span class="code-string">"document"</span>, cascade=<span class="code-string">"all, delete-orphan"</span>)
+
+<span class="code-keyword">class</span> <span class="code-class">DBPage</span>(Base):
+    __tablename__ = <span class="code-string">"pages"</span>
+
+    id = Column(Integer, primary_key=<span class="code-keyword">True</span>, index=<span class="code-keyword">True</span>, autoincrement=<span class="code-keyword">True</span>)
+    document_id = Column(String, ForeignKey(<span class="code-string">"documents.id"</span>, ondelete=<span class="code-string">"CASCADE"</span>), nullable=<span class="code-keyword">False</span>, index=<span class="code-keyword">True</span>)
+    page_num = Column(Integer, nullable=<span class="code-keyword">False</span>)
+    original_html = Column(Text, nullable=<span class="code-keyword">True</span>)
+    translated_html = Column(Text, nullable=<span class="code-keyword">True</span>)
+    status = Column(String, default=<span class="code-string">"raw"</span>)
+
+<span class="code-keyword">class</span> <span class="code-class">DBTranslation</span>(Base):
+    __tablename__ = <span class="code-string">"translations"</span>
+
+    id = Column(Integer, primary_key=<span class="code-keyword">True</span>, index=<span class="code-keyword">True</span>, autoincrement=<span class="code-keyword">True</span>)
+    document_id = Column(String, ForeignKey(<span class="code-string">"documents.id"</span>, ondelete=<span class="code-string">"CASCADE"</span>), nullable=<span class="code-keyword">False</span>, index=<span class="code-keyword">True</span>)
+    page_num = Column(Integer, nullable=<span class="code-keyword">False</span>)
+    span_id = Column(String, nullable=<span class="code-keyword">False</span>)
+    original_text = Column(Text, nullable=<span class="code-keyword">False</span>)
+    translated_text = Column(Text, nullable=<span class="code-keyword">True</span>)
+
+<span class="code-comment"># ==============================================================================</span>
+<span class="code-comment"># 2. KHỞI CHẠY BỘ AUTOMATION TEST TOÀN DIỆN E2E (run_e2e_automation_tests.py)</span>
+<span class="code-comment"># ==============================================================================</span>
+<span class="code-keyword">def</span> <span class="code-function">main</span>():
+    <span class="code-comment"># TẦNG 1: Kiểm tra môi trường cấu hình & Kết nối DB PostgreSQL thực tế</span>
+    env_ok = check_environment()
+    
+    <span class="code-comment"># TẦNG 2: Khởi chạy bộ kiểm thử Backend (TDD PYTEST - 17/17 cases Passed)</span>
+    pytest_ok = run_pytest_suite()
+    
+    <span class="code-comment"># TẦNG 3: Xác thực DOM & Assets Tĩnh Frontend (Rà soát 100% không thẻ hở, không hỏng liên kết)</span>
+    front_ok = validate_frontend()
+    
+    <span class="code-comment"># TẦNG 4: Trình diễn chuỗi API Số hóa E2E & DOM Quality Gate 2 (Sử dụng FastAPI TestClient)</span>
+    api_ok = run_e2e_api_flow()
+    
+    <span class="code-comment"># Báo cáo DashBoard kết quả tổng hợp</span>
+    exit_code = print_summary(env_ok, pytest_ok, front_ok, api_ok)
+    sys.exit(exit_code)</code></pre>
+                    </div>
+                </div>
+            </div> <!-- Đóng .tab-container -->
+
+        </section>
+
+        <!-- Premium Call-to-Action -->
+        <section class="cta-section">
+            <h2>Trải nghiệm Trình đọc cao cấp ngay bây giờ</h2>
+            <p>Tất cả quy trình xử lý, giữ dáng bố cục và bộ dịch chuyển chống đè chữ đều đang hoạt động hoàn hảo trên app chính.</p>
+            <a href="../../index.html" class="cta-btn" id="cta-launch-btn">
+                <i class="fas fa-rocket"></i> Bắt đầu đọc sách kỹ thuật
+            </a>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <p>&copy; 2026 Agentic Design Patterns Reader. Thiết kế với trải nghiệm người dùng tối cao và các nguyên tắc TDD, DRY, YAGNI.</p>
+    </footer>
+
+    <!-- Navigation Drawer (Hamburger Menu) -->
+    <div class="nav-drawer" id="nav-drawer">
+        <div class="drawer-glow"></div>
+        <div class="drawer-header">
+            <div class="logo">
+                <i class="fas fa-brain logo-icon"></i>
+                <span class="logo-text">Docs Explorer</span>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn" aria-label="Đóng Menu">&times;</button>
+        </div>
+        <nav class="drawer-links">
+            <div class="drawer-section-title">Hệ thống Tài liệu</div>
+            
+            <a href="../../index.html" class="drawer-link">
+                <i class="fas fa-home"></i>
+                <div>
+                    <h4>Bàn làm việc chính</h4>
+                    <p>Bảng điều khiển & Trình quản lý AI</p>
+                </div>
+            </a>
+            
+            <a href="../plan/index.html" class="drawer-link">
+                <i class="fas fa-route"></i>
+                <div>
+                    <h4>Kế hoạch & SA gốc</h4>
+                    <p>Bản đồ kiến trúc & Lộ trình 6 bước</p>
+                </div>
+            </a>
+            
+            <a href="../frontend/index.html" class="drawer-link">
+                <i class="fas fa-mobile-alt"></i>
+                <div>
+                    <h4>Kế hoạch Frontend</h4>
+                    <p>Đặc tả Touch, Autoscale & LSE</p>
+                </div>
+            </a>
+            
+            <a href="#" class="drawer-link active" onclick="return false;">
+                <i class="fas fa-project-diagram"></i>
+                <div>
+                    <h4>Quy trình số hóa</h4>
+                    <p>Chuỗi 5 bước xử lý tuyệt đối</p>
+                </div>
+            </a>
+            
+            <a href="../backend/index.html" class="drawer-link">
+                <i class="fas fa-server"></i>
+                <div>
+                    <h4>API & Backend</h4>
+                    <p>Môi trường ảo & Thử nghiệm trực tiếp</p>
+                </div>
+            </a>
+
+            <div class="drawer-section-title">Mô-đun Tương lai</div>
+            
+            <a href="#" class="drawer-link disabled" onclick="return false;">
+                <i class="fas fa-file-circle-plus"></i>
+                <div>
+                    <h4>Thêm tài liệu mới</h4>
+                    <p>Tự động tích hợp sau khi biên dịch</p>
+                </div>
+            </a>
+        </nav>
+        <div class="drawer-footer">
+            <p>&copy; 2026 Smart Documentations System</p>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- Main Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

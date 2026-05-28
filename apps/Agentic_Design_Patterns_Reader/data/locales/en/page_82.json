@@ -1,0 +1,16 @@
+{
+  "0": "Fig.1: Some examples of an Agent using Tools",
+  "1": "Hands-On Code Example (LangChain)",
+  "2": "The implementation of tool use within the LangChain framework is a two-stage",
+  "3": "process. Initially, one or more tools are defined, typically by encapsulating existing",
+  "4": "Python functions or other runnable components. Subsequently, these tools are bound",
+  "5": "to a language model, thereby granting the model the capability to generate a",
+  "6": "structured tool-use request when it determines that an external function call is",
+  "7": "required to fulfill a user's query.",
+  "8": "The following implementation will demonstrate this principle by first defining a simple",
+  "9": "function to simulate an information retrieval tool. Following this, an agent will be",
+  "10": "constructed and configured to leverage this tool in response to user input. The",
+  "11": "execution of this example requires the installation of the core LangChain libraries and",
+  "12": "a model-specific provider package. Furthermore, proper authentication with the",
+  "13": "4"
+}

@@ -1,0 +1,22 @@
+{
+  "0": "Fig.2: Parallelization design pattern",
+  "1": "Key Takeaways",
+  "2": "Here are the key takeaways:",
+  "3": "",
+  "4": "Parallelization is a pattern for executing independent tasks concurrently to",
+  "5": "improve efficiency.",
+  "6": "",
+  "7": "It is particularly useful when tasks involve waiting for external resources, such",
+  "8": "as API calls.",
+  "9": "",
+  "10": "The adoption of a concurrent or parallel architecture introduces substantial",
+  "11": "complexity and cost, impacting key development phases such as design,",
+  "12": "debugging, and system logging.",
+  "13": "",
+  "14": "Frameworks like LangChain and Google ADK provide built-in support for",
+  "15": "defining and managing parallel execution.",
+  "16": "",
+  "17": "In LangChain Expression Language (LCEL), RunnableParallel is a key construct",
+  "18": "for running multiple runnables side-by-side.",
+  "19": "14"
+}

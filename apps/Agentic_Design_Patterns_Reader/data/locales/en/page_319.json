@@ -1,0 +1,13 @@
+{
+  "0": "Fig. 2: Contract execution example among agents",
+  "1": "The third pillar is Quality-Focused Iterative Execution. Unlike agents designed for",
+  "2": "low-latency responses, a contractor prioritizes correctness and quality. It operates on",
+  "3": "a principle of self-validation and correction. For a code generation contract, for",
+  "4": "example, the agent would not just write the code; it would generate multiple",
+  "5": "algorithmic approaches, compile and run them against a suite of unit tests defined",
+  "6": "within the contract, score each solution on metrics like performance, security, and",
+  "7": "readability, and only submit the version that passes all validation criteria. This internal",
+  "8": "loop of generating, reviewing, and improving its own work until the contract's",
+  "9": "specifications are met is crucial for building trust in its outputs.",
+  "10": "14"
+}

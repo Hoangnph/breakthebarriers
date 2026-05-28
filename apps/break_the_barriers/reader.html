@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Smart Reader - Trình đọc tài liệu song ngữ AI</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Trình đọc sách di động tối cao (Mobile-First Ebook Reader) - Phá vỡ rào cản ngôn ngữ với AI và Layout Shift Engine.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="reader_style.css">
+</head>
+<body class="theme-dark">
+
+    <!-- Background glowing decorative spheres -->
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Header Control Bar -->
+    <header class="reader-header">
+        <div class="header-left">
+            <button class="icon-btn" id="btn-back" title="Quay lại Dashboard">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="doc-meta-info">
+                <h2 id="reader-doc-title">Đang tải tài liệu...</h2>
+                <span id="page-counter">Trang 0 / 0</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <!-- Language selectors -->
+            <div class="control-group language-controls">
+                <button class="mode-btn active" data-mode="vi" title="Chỉ xem tiếng Việt">VI</button>
+                <button class="mode-btn" data-mode="en" title="Chỉ xem tiếng Anh">EN</button>
+                <button class="mode-btn" data-mode="bilingual" title="Xem song ngữ song hành">Song ngữ</button>
+            </div>
+
+            <!-- Zoom controls -->
+            <div class="control-group zoom-controls">
+                <button class="zoom-btn" id="zoom-out" title="Thu nhỏ"><i class="fas fa-search-minus"></i></button>
+                <span class="zoom-text" id="zoom-percent">100%</span>
+                <button class="zoom-btn" id="zoom-in" title="Phóng to"><i class="fas fa-search-plus"></i></button>
+            </div>
+
+            <!-- Theme controls -->
+            <div class="control-group theme-controls">
+                <button class="theme-btn active" data-theme="dark" title="Giao diện tối"><i class="fas fa-moon"></i></button>
+                <button class="theme-btn" data-theme="light" title="Giao diện sáng"><i class="fas fa-sun"></i></button>
+                <button class="theme-btn" data-theme="sepia" title="Giao diện Sepia dịu mắt"><i class="fas fa-eye"></i></button>
+            </div>
+
+            <!-- Hamburger TOC Drawer button -->
+            <button class="hamburger-menu" id="hamburger-btn" aria-label="Menu mục lục">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Drawer (TOC) -->
+    <div class="nav-drawer" id="nav-drawer">
+        <div class="drawer-glow"></div>
+        <div class="drawer-header">
+            <div class="logo">
+                <i class="fas fa-book-open logo-icon"></i>
+                <span class="logo-text">Mục Lục Sách</span>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn" aria-label="Đóng Menu">&times;</button>
+        </div>
+        <div class="drawer-actions" style="padding: 1rem 1.5rem 0.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="#" id="btn-go-preview" class="toc-item" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: #f59e0b !important;">
+                <i class="fas fa-tasks"></i>
+                <span>Quản lý trang dịch</span>
+            </a>
+        </div>
+        <nav class="drawer-links" id="toc-list" style="padding-top: 0.5rem;">
+            <!-- Dynamic page items populate here -->
+        </nav>
+        <div class="drawer-footer">
+            <p id="drawer-doc-id">Document ID</p>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- Main Content Reader Viewport -->
+    <main class="reader-viewport" id="reader-container">
+        <!-- Interactive 3D flip card structure -->
+        <div class="flip-book-wrapper" id="flip-book-wrapper">
+            <div class="page-card" id="active-page-card">
+                <div class="page-card-inner">
+                    <!-- Sandboxed Iframe containing Poppler's HTML output -->
+                    <iframe id="reader-iframe" src="about:blank" sandbox="allow-same-origin allow-scripts"></iframe>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile Portrait) -->
+    <footer class="reader-footer">
+        <button class="nav-btn" id="btn-prev" title="Trang trước">
+            <i class="fas fa-chevron-left"></i> Trang trước
+        </button>
+        <div class="progress-indicator">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        <button class="nav-btn" id="btn-next" title="Trang sau">
+            Trang sau <i class="fas fa-chevron-right"></i>
+        </button>
+    </footer>
+
+    <!-- Custom Script files -->
+    <script src="reader_app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "0": "22",
+  "1": "Fig. 7: Reasoning design pattern",
+  "2": "Key Takeaways",
+  "3": "",
+  "4": "By making their reasoning explicit, agents can formulate transparent, multi-step",
+  "5": "plans, which is the foundational capability for autonomous action and user",
+  "6": "trust.",
+  "7": "",
+  "8": "The ReAct framework provides agents with their core operational loop,",
+  "9": "empowering them to move beyond mere reasoning and interact with external",
+  "10": "tools to dynamically act and adapt within an environment.",
+  "11": "",
+  "12": "The Scaling Inference Law implies an agent's performance is not just about its",
+  "13": "underlying model size, but its allocated \"thinking time,\" allowing for more",
+  "14": "deliberate and higher-quality autonomous actions.",
+  "15": "",
+  "16": "Chain-of-Thought (CoT) serves as an agent's internal monologue, providing a",
+  "17": "structured way to formulate a plan by breaking a complex goal into a sequence",
+  "18": "of manageable actions.",
+  "19": "22"
+}

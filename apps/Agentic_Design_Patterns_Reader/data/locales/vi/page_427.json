@@ -1,0 +1,19 @@
+{
+  "0": "Việc phát triển một mô hình ngôn ngữ mạnh mẽ",
+  "1": "tuân theo một chuỗi riêng biệt. Nó bắt đầu với Tiền Đào Tạo (Pre-training),",
+  "2": "nơi một mô hình cơ sở khổng lồ được xây dựng bằng cách",
+  "3": "đào tạo nó trên một tập dữ liệu lớn của văn bản internet tổng quát",
+  "4": "để học ngôn ngữ, lập luận và kiến thức thế giới.",
+  "5": "Tiếp theo là Tinh Chỉnh (Fine-tuning), giai đoạn chuyên môn hóa",
+  "6": "nơi mô hình tổng quát được đào tạo thêm trên các",
+  "7": "tập dữ liệu nhỏ hơn, đặc thù nhiệm vụ để thích ứng khả năng",
+  "8": "cho một mục đích cụ thể.",
+  "9": "Giai đoạn cuối là Căn Chỉnh (Alignment), nơi hành vi",
+  "10": "của mô hình chuyên biệt được điều chỉnh để đảm bảo",
+  "11": "đầu ra hữu ích, vô hại và",
+  "12": "phù hợp với các giá trị con người.",
+  "13": "",
+  "14": "",
+  "15": "",
+  "16": "7"
+}

@@ -1,0 +1,22 @@
+{
+  "0": "Fig.2: Tool use design pattern",
+  "1": "Key Takeaways",
+  "2": "",
+  "3": "Tool Use (Function Calling) allows agents to interact with external systems and",
+  "4": "access dynamic information.",
+  "5": "",
+  "6": "It involves defining tools with clear descriptions and parameters that the LLM",
+  "7": "can understand.",
+  "8": "",
+  "9": "The LLM decides when to use a tool and generates structured function calls.",
+  "10": "",
+  "11": "Agentic frameworks execute the actual tool calls and return the results to the",
+  "12": "LLM.",
+  "13": "",
+  "14": "Tool Use is essential for building agents that can perform real-world actions",
+  "15": "and provide up-to-date information.",
+  "16": "",
+  "17": "LangChain simplifies tool definition using the @tool decorator and provides",
+  "18": "create_tool_calling_agent and AgentExecutor for building tool-using agents.",
+  "19": "20"
+}

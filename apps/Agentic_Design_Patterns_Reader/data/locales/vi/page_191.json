@@ -1,0 +1,17 @@
+{
+  "0": "Hình 1: Ví dụ Goal Setting and Monitor",
+  "1": "Khi đã có assignment này, AI programmer bắt tay vào việc và tạo bản nháp",
+  "2": "code đầu tiên. Tuy nhiên, thay vì nộp ngay phiên bản ban đầu này, nó",
+  "3": "dừng lại để thực hiện một bước then chốt: tự review nghiêm ngặt. Nó tỉ mỉ so sánh",
+  "4": "sản phẩm của chính mình với từng mục trong checklist chất lượng bạn cung cấp, đóng vai",
+  "5": "người kiểm định chất lượng của chính nó. Sau quá trình kiểm tra này, nó đưa ra một",
+  "6": "kết luận đơn giản, không thiên vị về tiến độ của mình: \"True\" nếu công việc đáp ứng mọi tiêu chuẩn, hoặc \"False\" nếu chưa",
+  "7": "đạt.",
+  "8": "Nếu kết luận là \"False\", AI không bỏ cuộc. Nó bước vào một pha sửa đổi có suy xét,",
+  "9": "dùng insight từ self-critique để xác định điểm yếu và viết lại",
+  "10": "code một cách thông minh. Chu kỳ nháp, tự review, và tinh chỉnh này tiếp tục, với",
+  "11": "mỗi vòng lặp nhằm tiến gần hơn tới goal. Quy trình này lặp lại cho tới khi AI cuối cùng",
+  "12": "đạt trạng thái \"True\" bằng cách thỏa mãn mọi yêu cầu, hoặc cho tới khi nó chạm một",
+  "13": "giới hạn số lần thử được định nghĩa sẵn, giống như developer làm việc với deadline. Khi",
+  "14": "9"
+}

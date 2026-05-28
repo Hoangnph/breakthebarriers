@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<style type="text/css">
+body { background-color: #FFFFFF; }
+.ff0 { font-family: sans-serif; }
+</style>
+</head>
+<body>
+<div id="page-container">
+<div class="pf w0 h0" data-page-no="1">
+<span class="ff0 fs0 fc0 sc0 ls0" id="s1" style="position:absolute; left:100.5px; top:200.0px;">Lập trình Nhập môn</span>
+<span class="ff0 fs0 fc0 sc0 ls0" id="s2" style="position:absolute; left:180.2px; top:200.3px;">Programming</span>
+<span class="ff0 fs0 fc0 sc0 ls0" id="s3" style="position:absolute; left:100.5px; top:230.0px;">Dòng chữ thứ hai</span>
+<span class="ff0 fs0 fc0 sc0 ls0" id="s4" style="position:absolute; left:100.5px; top:260.0px;">Xin chào Thế giới</span>
+</div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+    // Dynamic Font Shrink Auto-Recovery Script
+    const pageWidthLimit = 1188; // Spec absolute canvas width limit
+    const pageContainer = document.getElementById('page-container') || document.body;
+    
+    function performDynamicFontShrink() {
+        const absoluteSpans = document.querySelectorAll('span[style*="left"]');
+        let maximumRightCoordinate = 0;
+        
+        absoluteSpans.forEach(span => {
+            const rect = span.getBoundingClientRect();
+            const leftCoord = parseFloat(span.style.left) || 0;
+            const approxWidth = span.textContent.length * 8; // Bounding box approximation
+            const rightCoord = leftCoord + approxWidth;
+            
+            if (rightCoord > maximumRightCoordinate) {
+                maximumRightCoordinate = rightCoord;
+            }
+        });
+        
+        if (maximumRightCoordinate > pageWidthLimit) {
+            const ratio = pageWidthLimit / maximumRightCoordinate;
+            const shrinkFactor = Math.max(0.75, Math.min(1.0, ratio));
+            console.log(`[Safeguard] Page boundary overflow detected (${maximumRightCoordinate}px). Shrinking fonts by ${shrinkFactor}`);
+            document.body.style.fontSize = `${shrinkFactor * 100}%`;
+        }
+    }
+    
+    performDynamicFontShrink();
+});
+</script>
+</body>
+</html>

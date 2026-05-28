@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Documentations - Bàn làm việc & Kệ Tài liệu AI</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Hệ thống Smart Documentations: Nền tảng số hóa tài liệu kỹ thuật cao cấp, tích hợp AI thông dịch đa ngôn ngữ và trình đọc bảo toàn bố cục pixel.">
+    <meta name="keywords" content="Smart Documentations, AI Translation, Ebook Reader, Absolute Layout HTML">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Background glowing decorative spheres -->
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-brain logo-icon"></i>
+            <span class="logo-text">Smart Documentations</span>
+        </div>
+        <div class="nav-links" style="display: flex; gap: 0.75rem;">
+            <a href="docs/plan/index.html" class="nav-link-btn">
+                <i class="fas fa-route"></i> Kế hoạch & SA
+            </a>
+            <a href="docs/workflow/index.html" class="nav-link-btn">
+                <i class="fas fa-project-diagram"></i> Quy trình
+            </a>
+            <a href="docs/backend/index.html" class="nav-link-btn">
+                <i class="fas fa-server"></i> API & Backend
+            </a>
+        </div>
+
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburger-btn" aria-label="Menu tài liệu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Welcome Hero Section -->
+        <section class="hero-section">
+            <span class="badge">Dự án Mới: break_the_barriers</span>
+            <h1>Phá vỡ rào cản ngôn ngữ với <span>AI Smart Docs</span></h1>
+            <p>Hệ thống số hóa tài liệu kỹ thuật cao cấp tự động. Bảo toàn tuyệt đối sơ đồ thiết kế gốc, phân chia layout pixel thông minh và dịch thuật song ngữ tinh tế bằng trí tuệ nhân tạo.</p>
+        </section>
+
+        <!-- Dynamic Grid of Modules -->
+        <section class="modules-grid" aria-label="Các mô-đun hệ thống">
+            
+            <!-- Module 1: Workflow Viz -->
+            <div class="module-card active-module" id="module-workflow">
+                <div class="card-glow"></div>
+                <div class="module-icon icon-blue">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h2>Quy trình số hóa & Dịch thuật</h2>
+                <p>Khám phá bản đồ chi tiết 5 bước của quy trình xử lý tài liệu tĩnh offline: Từ tách HTML pdftohtml, trích xuất text JSON (DRY), dịch thuật AI, đến chống đè chữ động.</p>
+                <div class="module-status">
+                    <span class="status-dot online"></span> Sẵn sàng hoạt động
+                </div>
+                <a href="docs/workflow/index.html" class="module-action-btn">
+                    Mở tài liệu Quy trình <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Module 2: Ebook Reader -->
+            <div class="module-card active-module" id="module-reader">
+                <div class="card-glow"></div>
+                <div class="module-icon icon-purple">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <h2>Kệ tài liệu & Trình đọc PDF HTML</h2>
+                <p>Nền tảng đọc sách kỹ thuật song ngữ mượt mà. Hỗ trợ zoom tinh tế 20%-300%, lọc Dark/Light HSL dịu mắt và chuyển trang tự động qua cuộn chuột.</p>
+                <div class="module-status">
+                    <span class="status-dot online" style="background-color: var(--accent-purple); box-shadow: 0 0 10px var(--accent-purple);"></span> Lập lộ trình thiết kế
+                </div>
+                <button class="module-action-btn" id="launch-reader-btn" style="background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color:#fff; cursor:pointer;">
+                    Mở Trình đọc song ngữ <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Module 3: AI Engine -->
+            <div class="module-card active-module" id="module-ai">
+                <div class="card-glow"></div>
+                <div class="module-icon icon-emerald">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <h2>AI Thông dịch Đa ngôn ngữ</h2>
+                <p>Trình biên dịch tĩnh thông minh dựa trên index-mapping phẳng (DRY). Tự động phân tích ngữ cảnh lập trình viên, hỗ trợ tiếng Việt, Nhật, Pháp...</p>
+                <div class="module-status">
+                    <span class="status-dot online" style="background-color: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald);"></span> Thiết lập logic AI
+                </div>
+                <button class="module-action-btn" id="launch-ai-btn" style="background: linear-gradient(135deg, var(--accent-emerald), var(--accent-blue)); color:#fff; cursor:pointer;">
+                    Kích hoạt AI Engine <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Digital Document Workspace Section -->
+        <section class="workspace-section" id="workspace">
+            <div class="workspace-header">
+                <h2><i class="fas fa-folder-open"></i> Bàn Làm Việc Số Hóa & Kệ Tài Liệu</h2>
+                <p>Tải lên PDF nguyên bản để AI tự động bóc tách tọa độ, thông dịch ngữ nghĩa và biên dịch LSE.</p>
+            </div>
+            
+            <div class="workspace-grid">
+                <!-- Dropzone Box -->
+                <div class="upload-container" id="dropzone">
+                    <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+                    <div class="dropzone-inner">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Kéo & Thả tệp PDF vào đây</h3>
+                        <p>Hoặc chạm để duyệt file từ thiết bị</p>
+                        <span class="file-limits">Định dạng hỗ trợ: .pdf | Dung lượng tối đa: 50MB</span>
+                    </div>
+                    <div class="upload-progress-container" id="upload-progress-container" style="display: none;">
+                        <div class="upload-progress-bar">
+                            <div class="upload-progress-fill" id="upload-progress-fill"></div>
+                        </div>
+                        <span class="upload-progress-text" id="upload-progress-text">Đang tải lên: 0%</span>
+                    </div>
+                </div>
+
+                <!-- Document Shelves Grid -->
+                <div class="shelf-container">
+                    <div class="shelf-toolbar">
+                        <span class="shelf-title"><i class="fas fa-list"></i> Danh sách tài liệu (<span id="doc-count">0</span>)</span>
+                        <button class="btn-refresh" id="btn-refresh-shelf" title="Làm mới danh sách">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="shelf-grid" id="document-shelf">
+                        <!-- Dynamic Document Cards will be rendered here -->
+                        <div class="empty-shelf" id="empty-shelf-view">
+                            <i class="fas fa-book-reader empty-icon"></i>
+                            <p>Chưa có tài liệu nào được tải lên. Hãy kéo thả PDF để bắt đầu quy trình!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Principles Section -->
+        <section class="principles-section">
+            <h2>Triết lý thiết kế & Tiêu chuẩn phát triển</h2>
+            <div class="principles-grid">
+                <div class="principle-item">
+                    <i class="fas fa-leaf text-emerald"></i>
+                    <h3>YAGNI (You Aren't Gonna Need It)</h3>
+                    <p>Loại bỏ gánh nặng runtime. Biên dịch tĩnh 1 lần duy nhất offline, triển khai tĩnh CDN chi phí 0đ, không upload API phức tạp.</p>
+                </div>
+                <div class="principle-item">
+                    <i class="fas fa-recycle text-purple"></i>
+                    <h3>DRY (Don't Repeat Yourself)</h3>
+                    <p>Lưu trữ index-mapped JSON phẳng cho văn bản dịch. Kế thừa 100% tọa độ CSS từ HTML absolute gốc, không sao chép style.</p>
+                </div>
+                <div class="principle-item">
+                    <i class="fas fa-gauge-high text-blue"></i>
+                    <h3>Trải nghiệm tối cao (UX-first)</h3>
+                    <p>Tự động dồn dòng chống đè chữ (Layout Shift Engine), tối ưu hóa cảm ứng chạm mượt mà trên iOS/Android và phím tắt Desktop.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Smart Documentations System • Thiết kế với triết lý DRY, YAGNI và vẻ đẹp đỉnh cao.</p>
+    </footer>
+
+    <!-- Premium Informational Modal -->
+    <div class="modal-overlay" id="dev-modal">
+        <div class="modal-container">
+            <div class="modal-glow"></div>
+            <div class="modal-icon-wrapper" id="modal-icon-container">
+                <i class="fas fa-cubes" id="modal-icon"></i>
+            </div>
+            <h3 class="modal-title" id="modal-title">Đang thiết lập hệ thống</h3>
+            <p class="modal-body" id="modal-body">
+                Tính năng này đang được phát triển theo đúng lộ trình kế hoạch từng bước của dự án.
+            </p>
+            <button class="modal-close-btn" id="modal-close-btn">Xác nhận & Quay lại</button>
+        </div>
+    </div>
+
+    <!-- Translation Memory Editor Modal -->
+    <div class="modal-overlay" id="tm-modal">
+        <div class="modal-container tm-modal-container">
+            <div class="modal-glow"></div>
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <i class="fas fa-database tm-modal-icon"></i>
+                    <h3>Bộ Nhớ Dịch Thuật (Translation Memory Editor)</h3>
+                </div>
+                <button class="modal-close" id="tm-modal-close-btn">&times;</button>
+            </div>
+            <div class="tm-modal-body">
+                <div class="tm-search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="tm-search-input" placeholder="Tìm kiếm cụm từ gốc tiếng Anh hoặc bản dịch tiếng Việt...">
+                </div>
+                <div class="tm-results-container" id="tm-results-list">
+                    <!-- Dynamic search results render here -->
+                </div>
+            </div>
+            <div class="tm-modal-footer">
+                <span class="tm-stats">Tìm thấy <strong id="tm-match-count">0</strong> cụm từ</span>
+                <button class="btn-primary" id="tm-save-btn" style="display:none;"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Drawer (Hamburger Menu) -->
+    <div class="nav-drawer" id="nav-drawer">
+        <div class="drawer-glow"></div>
+        <div class="drawer-header">
+            <div class="logo">
+                <i class="fas fa-brain logo-icon"></i>
+                <span class="logo-text">Docs Explorer</span>
+            </div>
+            <button class="drawer-close" id="drawer-close-btn" aria-label="Đóng Menu">&times;</button>
+        </div>
+        <nav class="drawer-links">
+            <div class="drawer-section-title">Hệ thống Tài liệu</div>
+            
+            <a href="index.html" class="drawer-link active">
+                <i class="fas fa-home"></i>
+                <div>
+                    <h4>Bàn làm việc chính</h4>
+                    <p>Bảng điều khiển & Trình quản lý AI</p>
+                </div>
+            </a>
+            
+            <a href="docs/plan/index.html" class="drawer-link">
+                <i class="fas fa-route"></i>
+                <div>
+                    <h4>Kế hoạch & SA gốc</h4>
+                    <p>Bản đồ kiến trúc & Lộ trình 6 bước</p>
+                </div>
+            </a>
+            
+            <a href="docs/frontend/index.html" class="drawer-link">
+                <i class="fas fa-mobile-alt"></i>
+                <div>
+                    <h4>Kế hoạch Frontend</h4>
+                    <p>Đặc tả Touch, Autoscale & LSE</p>
+                </div>
+            </a>
+            
+            <a href="docs/workflow/index.html" class="drawer-link">
+                <i class="fas fa-project-diagram"></i>
+                <div>
+                    <h4>Quy trình số hóa</h4>
+                    <p>Chuỗi 5 bước xử lý tuyệt đối</p>
+                </div>
+            </a>
+            
+            <a href="docs/backend/index.html" class="drawer-link">
+                <i class="fas fa-server"></i>
+                <div>
+                    <h4>API & Backend</h4>
+                    <p>Môi trường ảo & Thử nghiệm trực tiếp</p>
+                </div>
+            </a>
+
+            <div class="drawer-section-title">Mô-đun Tương lai</div>
+            
+            <a href="#" class="drawer-link disabled" onclick="return false;">
+                <i class="fas fa-file-circle-plus"></i>
+                <div>
+                    <h4>Thêm tài liệu mới</h4>
+                    <p>Tự động tích hợp sau khi biên dịch</p>
+                </div>
+            </a>
+        </nav>
+        <div class="drawer-footer">
+            <p>&copy; 2026 Smart Documentations System</p>
+        </div>
+    </div>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>

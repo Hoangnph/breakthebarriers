@@ -1,0 +1,22 @@
+{
+  "0": "Fig. 1: OpenRouter Web site (https://openrouter.ai/)",
+  "1": "Beyond Dynamic Model Switching: A Spectrum of",
+  "2": "Agent Resource Optimizations",
+  "3": "Resource-aware optimization is paramount in developing intelligent agent systems",
+  "4": "that operate efficiently and effectively within real-world constraints. Let's see a",
+  "5": "number of additional techniques:",
+  "6": "Dynamic Model Switching is a critical technique involving the strategic selection of",
+  "7": "large language models based on the intricacies of the task at hand and the available",
+  "8": "computational resources. When faced with simple queries, a lightweight,",
+  "9": "cost-effective LLM can be deployed, whereas complex, multifaceted problems",
+  "10": "necessitate the utilization of more sophisticated and resource-intensive models.",
+  "11": "Adaptive Tool Use & Selection ensures agents can intelligently choose from a suite",
+  "12": "of tools, selecting the most appropriate and efficient one for each specific sub-task,",
+  "13": "with careful consideration given to factors like API usage costs, latency, and execution",
+  "14": "time. This dynamic tool selection enhances overall system efficiency by optimizing the",
+  "15": "use of external APIs and services.",
+  "16": "Contextual Pruning & Summarization plays a vital role in managing the amount of",
+  "17": "information processed by agents, strategically minimizing the prompt token count and",
+  "18": "reducing inference costs by intelligently summarizing and selectively retaining only the",
+  "19": "12"
+}

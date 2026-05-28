@@ -1,0 +1,21 @@
+{
+  "0": "Các Kỹ Thuật Tinh Chỉnh: Tinh chỉnh là",
+  "1": "quá trình điều chỉnh mô hình tiền đào tạo tổng quát",
+  "2": "cho một nhiệm vụ cụ thể",
+  "3": "sử dụng tập dữ liệu nhỏ hơn, chuyên biệt.",
+  "4": "Cách tiếp cận phổ biến nhất là",
+  "5": "Tinh Chỉnh Có Giám Sát (SFT), nơi",
+  "6": "mô hình được đào tạo trên các ví dụ",
+  "7": "có nhãn của các cặp đầu vào-đầu ra chính xác.",
+  "8": "Một biến thể phổ biến là Điều Chỉnh Theo Hướng Dẫn (Instruction Tuning),",
+  "9": "tập trung vào đào tạo mô hình để",
+  "10": "tuân theo lệnh người dùng tốt hơn.",
+  "11": "Để làm cho quá trình này hiệu quả hơn,",
+  "12": "các phương pháp Tinh Chỉnh Hiệu Quả Tham Số (PEFT)",
+  "13": "được sử dụng, với các kỹ thuật hàng đầu bao gồm",
+  "14": "LoRA (Low-Rank Adaptation),",
+  "15": "chỉ cập nhật một số lượng nhỏ tham số, và phiên bản tối ưu hóa bộ nhớ của nó, QLoRA.",
+  "16": "Một kỹ thuật khác,",
+  "17": "",
+  "18": "10"
+}

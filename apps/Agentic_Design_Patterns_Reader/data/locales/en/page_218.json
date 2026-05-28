@@ -1,0 +1,18 @@
+{
+  "0": "maintenance cost. In summary, it excels where deep, interconnected insights are more",
+  "1": "critical than the speed and simplicity of standard RAG.",
+  "2": "Agentic RAG: An evolution of this pattern, known as Agentic RAG (see Fig.2),",
+  "3": "introduces a reasoning and decision-making layer to significantly enhance the",
+  "4": "reliability of information extraction. Instead of just retrieving and augmenting, an",
+  "5": "\"agent\"--a specialized AI component--acts as a critical gatekeeper and refiner of",
+  "6": "knowledge. Rather than passively accepting the initially retrieved data, this agent",
+  "7": "actively interrogates its quality, relevance, and completeness, as illustrated by the",
+  "8": "following scenarios.",
+  "9": "First, an agent excels at reflection and source validation. If a user asks, \"What is our",
+  "10": "company's policy on remote work?\" a standard RAG might pull up a 2020 blog post",
+  "11": "alongside the official 2025 policy document. The agent, however, would analyze the",
+  "12": "documents' metadata, recognize the 2025 policy as the most current and",
+  "13": "authoritative source, and discard the outdated blog post before sending the correct",
+  "14": "context to the LLM for a precise answer.",
+  "15": "6"
+}

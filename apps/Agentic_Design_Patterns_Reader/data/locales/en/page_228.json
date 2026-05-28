@@ -1,0 +1,22 @@
+{
+  "0": "Fig. 3: Knowledge Retrieval pattern: an AI agent to find and synthesize information",
+  "1": "from the public internet in response to user queries.",
+  "2": "Key Takeaways",
+  "3": "",
+  "4": "Knowledge Retrieval (RAG) enhances LLMs by allowing them to access external,",
+  "5": "up-to-date, and specific information.",
+  "6": "",
+  "7": "The process involves Retrieval (searching a knowledge base for relevant snippets)",
+  "8": "and Augmentation (adding these snippets to the LLM's prompt).",
+  "9": "",
+  "10": "RAG helps LLMs overcome limitations like outdated training data, reduces",
+  "11": "\"hallucinations,\" and enables domain-specific knowledge integration.",
+  "12": "",
+  "13": "RAG allows for attributable answers, as the LLM's response is grounded in",
+  "14": "retrieved sources.",
+  "15": "",
+  "16": "GraphRAG leverages a knowledge graph to understand the relationships between",
+  "17": "different pieces of information, allowing it to answer complex questions that",
+  "18": "require synthesizing data from multiple sources.",
+  "19": "16"
+}

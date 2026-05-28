@@ -1,0 +1,19 @@
+{
+  "0": "việc xử lý các mục tiêu tinh vi, đa lĩnh vực trở nên kém hiệu quả và có thể",
+  "1": "dẫn đến kết quả không đầy đủ hoặc chưa tối ưu.",
+  "2": "Lý do: Mẫu Multi-Agent Collaboration cung cấp một giải pháp chuẩn hóa bằng cách tạo",
+  "3": "một hệ thống gồm nhiều agent hợp tác. Một vấn đề phức tạp được chia nhỏ thành",
+  "4": "các bài toán con nhỏ hơn, dễ quản lý hơn. Mỗi bài toán con sau đó được giao cho một",
+  "5": "agent chuyên biệt với các tool và năng lực chính xác cần thiết để giải nó. Các",
+  "6": "agent này làm việc cùng nhau thông qua các giao thức giao tiếp và mô hình tương tác",
+  "7": "được định nghĩa, như chuyển giao tuần tự, các luồng công việc song song hoặc ủy quyền phân cấp. Cách tiếp cận",
+  "8": "agentic, phân tán này tạo ra hiệu ứng cộng hưởng, cho phép cả nhóm",
+  "9": "đạt được kết quả mà bất kỳ agent đơn lẻ nào cũng không thể.",
+  "10": "Quy tắc kinh nghiệm: Dùng mẫu này khi một tác vụ quá phức tạp cho một agent đơn lẻ và có thể",
+  "11": "được phân rã thành các tác vụ con riêng biệt cần kỹ năng hoặc tool chuyên biệt. Nó lý tưởng",
+  "12": "cho các vấn đề hưởng lợi từ chuyên môn đa dạng, xử lý song song hoặc một",
+  "13": "workflow có cấu trúc với nhiều giai đoạn, chẳng hạn như nghiên cứu và phân tích phức tạp, phát triển phần mềm",
+  "14": "hoặc tạo nội dung sáng tạo.",
+  "15": "Tóm tắt trực quan",
+  "16": "17"
+}

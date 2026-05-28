@@ -1,0 +1,19 @@
+{
+  "0": "Hình 2: Các agent giao tiếp và tương tác theo nhiều cách khác nhau.",
+  "1": "6. Custom: Mô hình \"Custom\" đại diện cho mức linh hoạt tối đa trong thiết kế hệ thống đa agent",
+  "2": ". Nó cho phép tạo ra các cấu trúc quan hệ và",
+  "3": "giao tiếp độc đáo, được điều chỉnh chính xác theo các yêu cầu cụ thể của một",
+  "4": "vấn đề hoặc ứng dụng nhất định. Điều này có thể bao gồm các cách tiếp cận lai kết hợp các yếu tố",
+  "5": "từ các mô hình đã nêu trước đó, hoặc các thiết kế hoàn toàn mới xuất hiện từ",
+  "6": "những ràng buộc và cơ hội riêng của môi trường. Các mô hình custom thường phát sinh",
+  "7": "từ nhu cầu tối ưu cho các chỉ số hiệu năng cụ thể, xử lý các",
+  "8": "môi trường rất động, hoặc đưa tri thức chuyên ngành vào",
+  "9": "kiến trúc của hệ thống. Thiết kế và triển khai mô hình custom thường đòi hỏi hiểu biết sâu",
+  "10": "về các nguyên lý hệ thống đa agent và cân nhắc cẩn thận",
+  "11": "các giao thức giao tiếp, cơ chế phối hợp và hành vi nổi lên.",
+  "12": "Tóm lại, việc lựa chọn mô hình quan hệ và giao tiếp cho một",
+  "13": "hệ thống đa agent là một quyết định thiết kế quan trọng. Mỗi mô hình mang lại các lợi thế",
+  "14": "và bất lợi riêng, và lựa chọn tối ưu phụ thuộc vào các yếu tố như",
+  "15": "độ phức tạp của tác vụ, số lượng agent, mức độ tự chủ mong muốn, nhu cầu",
+  "16": "6"
+}

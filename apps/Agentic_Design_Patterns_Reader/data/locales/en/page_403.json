@@ -1,0 +1,19 @@
+{
+  "0": "The emergence of these powerful AI command-line agents marks a fundamental shift in",
+  "1": "software development, transforming the terminal into a dynamic and collaborative",
+  "2": "environment. As we've seen, there is no single \"best\" tool; instead, a vibrant ecosystem",
+  "3": "is forming where each agent offers a specialized strength. The ideal choice depends",
+  "4": "entirely on the developer's needs: Claude for complex architectural tasks, Gemini for",
+  "5": "versatile and multimodal problem-solving, Aider for git-centric and direct code editing,",
+  "6": "and GitHub Copilot for seamless integration into the GitHub workflow. As these tools",
+  "7": "continue to evolve, proficiency in leveraging them will become an essential skill,",
+  "8": "fundamentally changing how developers build, debug, and manage software.",
+  "9": "References",
+  "10": "1. Anthropic. Claude. https://docs.anthropic.com/en/docs/claude-code/cli-reference",
+  "11": "2. Google Gemini Cli https://github.com/google-gemini/gemini-cli",
+  "12": "3. Aider. https://aider.chat/",
+  "13": "4. GitHub Copilot CLI",
+  "14": "https://docs.github.com/en/copilot/github-copilot-enterprise/copilot-cli",
+  "15": "5. Terminal Bench: https://www.tbench.ai/",
+  "16": "5"
+}

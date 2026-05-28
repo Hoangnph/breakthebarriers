@@ -1,0 +1,19 @@
+{
+  "0": "Hình 1: Design pattern quản lý memory",
+  "1": "Các điểm chính",
+  "2": "Tóm tắt nhanh các ý chính về memory management:",
+  "3": "",
+  "4": "Memory cực kỳ quan trọng để agent theo dõi thông tin, học hỏi, và",
+  "5": "cá nhân hóa tương tác.",
+  "6": "",
+  "7": "Conversational AI dựa vào cả short-term memory cho ngữ cảnh tức thời trong",
+  "8": "một cuộc chat đơn lẻ và long-term memory cho tri thức bền vững qua nhiều",
+  "9": "session.",
+  "10": "",
+  "11": "Short-term memory (phần thông tin tức thời) là tạm thời, thường bị giới hạn bởi",
+  "12": "context window của LLM hoặc cách framework truyền ngữ cảnh.",
+  "13": "",
+  "14": "Long-term memory (phần thông tin được giữ lại) lưu thông tin qua các cuộc chat khác nhau",
+  "15": "bằng storage bên ngoài như vector database và được truy cập thông qua search.",
+  "16": "20"
+}

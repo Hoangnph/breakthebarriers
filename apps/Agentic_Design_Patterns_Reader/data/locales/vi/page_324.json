@@ -1,0 +1,19 @@
+{
+  "0": "Để đảm bảo độ tin cậy trong các ứng dụng quan trọng, mô hình đang chuyển từ các agent đơn giản,",
+  "1": "được thúc đẩy bởi prompt sang các \"nhà thầu\" nâng cao bị ràng buộc bởi các thỏa thuận chính thức. Các",
+  "2": "agent nhà thầu này hoạt động theo các điều khoản rõ ràng, có thể xác minh, cho phép chúng thương lượng,",
+  "3": "phân tách nhiệm vụ và tự xác nhận công việc của mình để đáp ứng các tiêu chuẩn chất lượng nghiêm ngặt.",
+  "4": "Cách tiếp cận có cấu trúc này biến đổi các agent từ các công cụ không thể đoán trước thành các",
+  "5": "hệ thống có trách nhiệm có khả năng xử lý các nhiệm vụ phức tạp, rủi ro cao. Cuối cùng, sự tiến hóa này là",
+  "6": "rất quan trọng để xây dựng sự tin tưởng cần thiết để triển khai AI agentic tinh vi trong",
+  "7": "các lĩnh vực quan trọng.",
+  "8": "Tài Liệu Tham Khảo",
+  "9": "Các nghiên cứu liên quan bao gồm:",
+  "10": "1. ADK Web: https://github.com/google/adk-web",
+  "11": "2. ADK Evaluate: https://google.github.io/adk-docs/evaluate/",
+  "12": "3. Khảo Sát về Đánh Giá các Agent dựa trên LLM, https://arxiv.org/abs/2503.16416",
+  "13": "4. Agent-as-a-Judge: Đánh Giá Agent với Agent, https://arxiv.org/abs/2410.10934",
+  "14": "5. Agent Companion, gulli et al:",
+  "15": "https://www.kaggle.com/whitepaper-agent-companion",
+  "16": "19"
+}

@@ -1,0 +1,19 @@
+{
+  "0": "Điều gì làm cho một hệ thống AI trở thành một Tác tử (Agent)?",
+  "1": "Nói một cách đơn giản, AI agent là một hệ thống được thiết kế để nhận thức môi trường của nó và thực hiện",
+  "2": "các hành động để đạt được một mục tiêu cụ thể. Nó là một sự tiến hóa từ một Mô hình Ngôn ngữ",
+  "3": "Lớn (LLM) tiêu chuẩn, được tăng cường với khả năng lập kế hoạch, sử dụng công cụ, và tương tác với",
+  "4": "môi trường xung quanh. Hãy coi một Agentic AI như một trợ lý thông minh học hỏi trong quá trình làm việc. Nó",
+  "5": "tuân theo một vòng lặp 5 bước đơn giản để hoàn thành công việc (xem Hình 1):",
+  "6": "1. Nhận Nhiệm Vụ: Bạn cung cấp cho nó một mục tiêu, chẳng hạn như \"sắp xếp lịch trình của tôi.\"",
+  "7": "2. Quét Môi Trường: Nó thu thập tất cả các thông tin cần thiết - đọc email,",
+  "8": "kiểm tra lịch, và truy cập danh bạ - để hiểu những gì đang diễn ra.",
+  "9": "3. Suy Nghĩ Thấu Đáo: Nó vạch ra một kế hoạch hành động bằng cách xem xét",
+  "10": "cách tiếp cận tối ưu để đạt được mục tiêu.",
+  "11": "4. Hành Động: Nó thực thi kế hoạch bằng cách gửi lời mời, lên lịch các cuộc họp,",
+  "12": "và cập nhật lịch của bạn.",
+  "13": "5. Học Hỏi và Cải Thiện: Nó quan sát các kết quả thành công và điều chỉnh cho phù hợp.",
+  "14": "Ví dụ, nếu một cuộc họp được dời lại, hệ thống sẽ học từ sự kiện này để",
+  "15": "nâng cao hiệu suất trong tương lai.",
+  "16": "1"
+}

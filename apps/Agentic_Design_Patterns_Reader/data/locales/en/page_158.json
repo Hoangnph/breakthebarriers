@@ -1,0 +1,18 @@
+{
+  "0": "Fig.1: SICA's self-improvement, learning and adapting based on its past versions",
+  "1": "SICA underwent significant self-improvement, leading to advancements in code",
+  "2": "editing and navigation. Initially, SICA utilized a basic file-overwriting approach for",
+  "3": "code changes. It subsequently developed a \"Smart Editor\" capable of more intelligent",
+  "4": "and contextual edits. This evolved into a \"Diff-Enhanced Smart Editor,\" incorporating",
+  "5": "diffs for targeted modifications and pattern-based editing, and a \"Quick Overwrite",
+  "6": "Tool\" to reduce processing demands.",
+  "7": "SICA further implemented \"Minimal Diff Output Optimization\" and \"Context-Sensitive",
+  "8": "Diff Minimization,\" using Abstract Syntax Tree (AST) parsing for efficiency. Additionally,",
+  "9": "a \"SmartEditor Input Normalizer\" was added. In terms of navigation, SICA",
+  "10": "independently created an \"AST Symbol Locator,\" using the code's structural map",
+  "11": "(AST) to identify definitions within the codebase. Later, a \"Hybrid Symbol Locator\"",
+  "12": "was developed, combining a quick search with AST checking. This was further",
+  "13": "optimized via \"Optimized AST Parsing in Hybrid Symbol Locator\" to focus on relevant",
+  "14": "code sections, improving search speed.(see Fig. 2)",
+  "15": "5"
+}

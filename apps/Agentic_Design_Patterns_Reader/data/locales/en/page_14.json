@@ -1,0 +1,19 @@
+{
+  "0": "What makes an AI system an Agent?",
+  "1": "In simple terms, an AI agent is a system designed to perceive its environment and take",
+  "2": "actions to achieve a specific goal. It's an evolution from a standard Large Language",
+  "3": "Model (LLM), enhanced with the abilities to plan, use tools, and interact with its",
+  "4": "surroundings. Think of an Agentic AI as a smart assistant that learns on the job. It",
+  "5": "follows a simple, five-step loop to get things done (see Fig.1):",
+  "6": "1. Get the Mission: You give it a goal, like \"organize my schedule.\"",
+  "7": "2. Scan the Scene: It gathers all the necessary information--reading emails,",
+  "8": "checking calendars, and accessing contacts--to understand what's happening.",
+  "9": "3. Think It Through: It devises a plan of action by considering the optimal",
+  "10": "approach to achieve the goal.",
+  "11": "4. Take Action: It executes the plan by sending invitations, scheduling meetings,",
+  "12": "and updating your calendar.",
+  "13": "5. Learn and Get Better: It observes successful outcomes and adapts accordingly.",
+  "14": "For example, if a meeting is rescheduled, the system learns from this event to",
+  "15": "enhance its future performance.",
+  "16": "1"
+}

@@ -1,0 +1,18 @@
+{
+  "0": "ReAct (Lý Luận và Hành Động): ReAct là",
+  "1": "framework agent kết hợp",
+  "2": "lập luận và hành động trong một vòng lặp.",
+  "3": "Agent đầu tiên \"suy nghĩ\" về việc cần làm,",
+  "4": "sau đó thực hiện \"hành động\" sử dụng công cụ,",
+  "5": "và sử dụng quan sát kết quả để thông tin",
+  "6": "suy nghĩ tiếp theo, làm cho nó hiệu quả cao",
+  "7": "trong giải quyết các nhiệm vụ phức tạp.",
+  "8": "Lập Kế Hoạch: Đây là khả năng của agent",
+  "9": "phân tách một mục tiêu cấp cao thành",
+  "10": "một chuỗi các nhiệm vụ phụ nhỏ hơn, có thể quản lý.",
+  "11": "Agent sau đó tạo ra một kế hoạch để thực thi các bước này theo thứ tự,",
+  "12": "cho phép nó xử lý các nhiệm vụ phức tạp, nhiều bước.",
+  "13": "",
+  "14": "",
+  "15": "15"
+}

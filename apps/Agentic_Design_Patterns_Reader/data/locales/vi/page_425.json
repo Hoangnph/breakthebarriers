@@ -1,0 +1,19 @@
+{
+  "0": "Mạng Nơ-ron Hồi Quy (RNN): Mạng nơ-ron hồi quy là",
+  "1": "kiến trúc nền tảng đã có trước Transformer.",
+  "2": "RNN xử lý thông tin tuần tự,",
+  "3": "sử dụng các vòng lặp để duy trì \"bộ nhớ\" của các đầu vào trước đó,",
+  "4": "làm cho chúng phù hợp cho các nhiệm vụ như",
+  "5": "xử lý văn bản và giọng nói.",
+  "6": "Hỗn Hợp Chuyên Gia (MoE): Mixture of Experts là kiến trúc mô hình hiệu quả",
+  "7": "nơi mạng \"router\" chọn động",
+  "8": "một tập hợp nhỏ các mạng \"expert\"",
+  "9": "để xử lý bất kỳ đầu vào nào.",
+  "10": "Điều này cho phép các mô hình có số lượng tham số khổng lồ",
+  "11": "trong khi giữ chi phí tính toán có thể quản lý được.",
+  "12": "",
+  "13": "",
+  "14": "",
+  "15": "",
+  "16": "5"
+}
