@@ -1,8 +1,9 @@
 import json
 import asyncio
 import logging
+from datetime import datetime, timezone, timedelta
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -120,3 +121,109 @@ async def progress_stream(doc_id: str):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+STUCK_JOB_TIMEOUT_MINUTES = 30
+
+
+@router.post("/api/docs/{doc_id}/resume")
+async def resume_document(
+    doc_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # 1. Mark stuck running jobs as failed (started > 30 min ago)
+    stuck_cutoff = datetime.now(timezone.utc) - timedelta(minutes=STUCK_JOB_TIMEOUT_MINUTES)
+    stuck_jobs = (
+        db.query(DBJob)
+        .filter(
+            DBJob.doc_id == doc_id,
+            DBJob.status == "running",
+            DBJob.started_at != None,
+            DBJob.started_at < stuck_cutoff,
+        )
+        .all()
+    )
+    for job in stuck_jobs:
+        job.status = "failed"
+        job.error_msg = f"Timeout: job ran > {STUCK_JOB_TIMEOUT_MINUTES} minutes without completing"
+    if stuck_jobs:
+        db.commit()
+        logger.info(f"Marked {len(stuck_jobs)} stuck jobs as failed for doc {doc_id}")
+
+    # 2. Reset stuck translating pages to extracted (so they get re-translated)
+    stuck_pages = (
+        db.query(DBPage)
+        .filter(DBPage.document_id == doc_id, DBPage.status == "translating")
+        .all()
+    )
+    for page in stuck_pages:
+        page.status = "extracted"
+    if stuck_pages:
+        db.commit()
+
+    # 3. Survey page statuses
+    all_pages = db.query(DBPage).filter(DBPage.document_id == doc_id).all()
+    raw_pages = [p for p in all_pages if p.status == "raw"]
+    translate_pages = [p for p in all_pages if p.status in ("extracted", "failed")]
+    compile_pages = [p for p in all_pages if p.status == "translated"]
+
+    tier = doc.volume_tier or "M"
+    quality = doc.quality_tier or "high"
+    queued = 0
+
+    # 4. Re-extract if pages still raw
+    if raw_pages:
+        from backend.app.routers.extraction import run_background_extract
+        background_tasks.add_task(run_background_extract, doc_id)
+        queued += len(raw_pages)
+
+    # 5. Re-translate extracted/failed pages
+    if translate_pages:
+        new_jobs = []
+        for page in translate_pages:
+            job = DBJob(
+                doc_id=doc_id,
+                page_num=page.page_num,
+                stage="translate",
+                status="pending",
+                volume_tier=tier,
+                quality_tier=quality,
+            )
+            db.add(job)
+            new_jobs.append(job)
+        db.commit()
+        for job in new_jobs:
+            db.refresh(job)
+
+        jobs_data = [(job.id, job.page_num) for job in new_jobs]
+
+        async def _dispatch_translate():
+            from backend.app.services.job_manager import dispatch_all_translation_jobs
+            await dispatch_all_translation_jobs(jobs_data, doc_id, "vi", quality, tier)
+
+        background_tasks.add_task(_dispatch_translate)
+        queued += len(translate_pages)
+
+    # 6. Compile translated pages
+    if compile_pages:
+        from backend.app.routers.compilation import run_background_compile
+        for page in compile_pages:
+            background_tasks.add_task(run_background_compile, doc_id, page.page_num)
+        queued += len(compile_pages)
+
+    return {
+        "status": "resumed" if queued > 0 else "nothing_to_do",
+        "doc_id": doc_id,
+        "queued": queued,
+        "detail": {
+            "raw_pages_re_extracted": len(raw_pages),
+            "pages_re_translated": len(translate_pages),
+            "pages_re_compiled": len(compile_pages),
+            "stuck_jobs_reset": len(stuck_jobs),
+        },
+    }

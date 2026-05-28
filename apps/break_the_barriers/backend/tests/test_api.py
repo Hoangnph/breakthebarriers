@@ -442,3 +442,91 @@ def test_translate_all_lxl_calls_celery(client, monkeypatch, db_session):
         f"Expected {data['total_pages']} Celery calls, got {len(celery_calls)}"
     )
     assert all(c["tier"] == "XL" for c in celery_calls)
+
+
+def test_resume_document_not_found(client):
+    response = client.post("/api/docs/nonexistent/resume")
+    assert response.status_code == 404
+
+def test_resume_document_returns_ok(client):
+    """Resume on any document returns 200 with correct fields."""
+    response = client.post("/api/docs/clean_code/resume")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["doc_id"] == "clean_code"
+    assert "queued" in data
+    assert "status" in data
+    assert "detail" in data
+
+def test_resume_requeues_extracted_pages(client, db_session):
+    """Pages with status 'extracted' must be re-queued for translation."""
+    from backend.app.models_db import DBPage
+    from backend.app.database import get_db
+    from backend.app.main import app
+    from fastapi.testclient import TestClient
+
+    def override():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override
+    c = TestClient(app)
+
+    # Extract to create pages
+    c.post("/api/docs/clean_code/extract")
+
+    # Manually set page 1 to 'extracted' to simulate interrupted translation
+    page = db_session.query(DBPage).filter(
+        DBPage.document_id == "clean_code", DBPage.page_num == 1
+    ).first()
+    if page:
+        page.status = "extracted"
+        db_session.commit()
+
+    resp = c.post("/api/docs/clean_code/resume")
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["queued"] > 0
+    assert data["detail"]["pages_re_translated"] > 0
+
+def test_resume_marks_stuck_jobs_failed(client, db_session):
+    """Jobs running > 30 min must be marked failed on resume."""
+    from backend.app.models_db import DBJob
+    from datetime import datetime, timezone, timedelta
+    from backend.app.database import get_db
+    from backend.app.main import app
+    from fastapi.testclient import TestClient
+
+    stuck_job = DBJob(
+        doc_id="clean_code",
+        page_num=1,
+        stage="translate",
+        status="running",
+        volume_tier="S",
+        quality_tier="high",
+        started_at=datetime.now(timezone.utc) - timedelta(minutes=45),
+    )
+    db_session.add(stuck_job)
+    db_session.commit()
+    db_session.refresh(stuck_job)
+    job_id = stuck_job.id
+
+    def override():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override
+    c = TestClient(app)
+    c.post("/api/docs/clean_code/resume")
+    app.dependency_overrides.clear()
+
+    db_session.expire_all()
+    updated = db_session.query(DBJob).filter(DBJob.id == job_id).first()
+    assert updated.status == "failed"
+    assert "timeout" in (updated.error_msg or "").lower()
