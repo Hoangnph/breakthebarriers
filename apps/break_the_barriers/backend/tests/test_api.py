@@ -268,3 +268,94 @@ def test_translate_all_jobs_visible_in_list(client):
     jobs = response.json()
     assert len(jobs) > 0
     assert all(j["stage"] == "translate" for j in jobs)
+
+def test_get_job_status(client):
+    # Setup: extract then translate-all to create jobs
+    client.post("/api/docs/clean_code/extract")
+    translate_resp = client.post(
+        "/api/docs/clean_code/translate-all",
+        json={"target_lang": "vi"}
+    )
+    job_ids = translate_resp.json()["job_ids"]
+    assert len(job_ids) > 0
+
+    job_id = job_ids[0]
+    response = client.get(f"/api/jobs/{job_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == job_id
+    assert data["doc_id"] == "clean_code"
+    assert data["stage"] == "translate"
+    assert "status" in data
+    assert "volume_tier" in data
+    assert "quality_tier" in data
+
+def test_get_job_status_not_found(client):
+    response = client.get("/api/jobs/nonexistent-job-id")
+    assert response.status_code == 404
+
+def test_list_document_jobs_empty(client):
+    # No jobs created yet — fresh test isolation from conftest
+    response = client.get("/api/docs/clean_code/jobs")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+def test_list_document_jobs_after_translate_all(client):
+    client.post("/api/docs/clean_code/extract")
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+
+    response = client.get("/api/docs/clean_code/jobs")
+    assert response.status_code == 200
+    jobs = response.json()
+    assert len(jobs) == 10  # 10 pages in clean_code
+    for job in jobs:
+        assert "id" in job
+        assert "page_num" in job
+        assert job["stage"] == "translate"
+
+def test_list_document_jobs_filter_by_status(client):
+    client.post("/api/docs/clean_code/extract")
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+
+    # All jobs start as pending (or may be done if background ran sync in test)
+    response = client.get("/api/docs/clean_code/jobs")
+    assert response.status_code == 200
+    jobs = response.json()
+    # Filter by an actual status that should exist
+    first_status = jobs[0]["status"]
+    filtered = client.get(f"/api/docs/clean_code/jobs?status={first_status}")
+    assert filtered.status_code == 200
+    filtered_jobs = filtered.json()
+    assert all(j["status"] == first_status for j in filtered_jobs)
+
+def test_progress_stream_returns_sse(client, db_session):
+    # Extract then compile all pages so the SSE generator can exit on its first
+    # iteration (done == total > 0). We also patch the generator's SessionLocal
+    # to use the same in-memory test DB so it sees the compiled pages, and patch
+    # asyncio.sleep to a no-op so the generator does not sleep between iterations.
+    from unittest.mock import patch, AsyncMock
+    from tests.conftest import TestingSessionLocal
+
+    client.post("/api/docs/clean_code/extract")
+    for page_num in range(1, 11):
+        client.post("/api/docs/clean_code/compile", json={"page_num": page_num})
+
+    async def instant_sleep(_):
+        pass
+
+    with patch("backend.app.routers.jobs.SessionLocal", TestingSessionLocal), \
+         patch("backend.app.routers.jobs.asyncio.sleep", instant_sleep):
+        response = client.get("/api/docs/clean_code/progress")
+
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+    content = response.text
+    assert "data:" in content
+    import json as _json
+    for line in content.splitlines():
+        if line.startswith("data:"):
+            data = _json.loads(line[5:].strip())
+            assert "total" in data
+            assert "percent" in data
+            assert "status" in data
+            break
