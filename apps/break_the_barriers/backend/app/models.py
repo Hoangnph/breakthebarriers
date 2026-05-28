@@ -16,6 +16,7 @@ class ExtractionResult(BaseModel):
 class TranslationRequest(BaseModel):
     page_num: int
     target_lang: str = "vi"
+    quality_tier: str = "high"
 
 class CompilationRequest(BaseModel):
     page_num: int
@@ -34,3 +35,14 @@ class TranslationItem(BaseModel):
 
 class TranslationUpdate(BaseModel):
     translated_text: str
+
+
+class VolumeProfileResponse(BaseModel):
+    tier: str
+    page_count: int
+    estimated_spans: int
+    estimated_tokens: int
+    estimated_cost_usd: float
+    recommended_quality: str
+    processing_path: str
+    estimated_duration_min: int

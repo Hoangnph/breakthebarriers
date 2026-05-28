@@ -186,3 +186,20 @@ def test_estimate_pdf_pages_reads_count(tmp_path):
     fake_pdf.write_bytes(pdf_content)
     assert estimate_pdf_pages(str(fake_pdf)) == 42
 
+
+def test_dbjob_can_be_created(db_session):
+    from backend.app.models_db import DBJob
+    job = DBJob(
+        doc_id="clean_code",
+        stage="translate",
+        volume_tier="S",
+        quality_tier="high",
+    )
+    db_session.add(job)
+    db_session.commit()
+    db_session.refresh(job)
+    assert job.id is not None
+    assert job.status == "pending"
+    assert job.retries == 0
+    assert job.page_num is None
+
