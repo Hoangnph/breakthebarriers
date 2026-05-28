@@ -234,3 +234,37 @@ def test_upload_auto_detects_volume(client):
     assert list_response.status_code == 200
     doc_ids = [d["id"] for d in list_response.json()]
     assert "small_book" in doc_ids
+
+
+def test_translate_all_creates_jobs(client):
+    # Extract first so pages exist
+    client.post("/api/docs/clean_code/extract")
+
+    response = client.post(
+        "/api/docs/clean_code/translate-all",
+        json={"target_lang": "vi", "quality_tier": "high"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "started"
+    assert data["doc_id"] == "clean_code"
+    assert data["total_pages"] == 10
+    assert "job_ids" in data
+    assert len(data["job_ids"]) == 10
+
+def test_translate_all_doc_not_found(client):
+    response = client.post(
+        "/api/docs/nonexistent/translate-all",
+        json={"target_lang": "vi"}
+    )
+    assert response.status_code == 404
+
+def test_translate_all_jobs_visible_in_list(client):
+    client.post("/api/docs/clean_code/extract")
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+
+    response = client.get("/api/docs/clean_code/jobs")
+    assert response.status_code == 200
+    jobs = response.json()
+    assert len(jobs) > 0
+    assert all(j["stage"] == "translate" for j in jobs)

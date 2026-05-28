@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from backend.app.database import get_db, get_background_db
-from backend.app.models import TranslationRequest, TranslationItem, TranslationUpdate
-from backend.app.models_db import DBDocument, DBPage, DBTranslation
+from backend.app.models import TranslationRequest, TranslationItem, TranslationUpdate, TranslateAllRequest
+from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBJob
 from backend.app.services.extractor import Extractor
 from backend.app.services.translator import Translator
 from backend.app.routers.compilation import _perform_compilation
@@ -169,4 +169,78 @@ def update_translation(doc_id: str, span_id: str, payload: TranslationUpdate, db
         "affected_pages": affected_pages,
         "recompiled_pages": recompiled_pages,
         "message": f"Translation updated and {len(recompiled_pages)} affected pages re-compiled successfully"
+    }
+
+
+async def _dispatch_all_jobs_background(
+    jobs_data: list,
+    doc_id: str,
+    target_lang: str,
+    quality: str,
+    tier: str,
+) -> None:
+    """Async background task that fans out all page translation jobs via JobManager."""
+    from backend.app.services.job_manager import dispatch_all_translation_jobs
+    await dispatch_all_translation_jobs(jobs_data, doc_id, target_lang, quality, tier)
+
+
+@router.post("/api/docs/{doc_id}/translate-all")
+async def translate_all_pages(
+    doc_id: str,
+    payload: TranslateAllRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Only translate pages not yet compiled
+    pages = (
+        db.query(DBPage)
+        .filter(DBPage.document_id == doc_id, DBPage.status != "compiled")
+        .order_by(DBPage.page_num)
+        .all()
+    )
+    if not pages:
+        return {"status": "nothing_to_do", "doc_id": doc_id, "total_pages": 0, "job_ids": []}
+
+    tier = doc.volume_tier or "M"
+    quality = payload.quality_tier or doc.quality_tier or "high"
+
+    # Create a DBJob record per page before dispatching
+    created_jobs = []
+    for page in pages:
+        job = DBJob(
+            doc_id=doc_id,
+            page_num=page.page_num,
+            stage="translate",
+            status="pending",
+            volume_tier=tier,
+            quality_tier=quality,
+        )
+        db.add(job)
+        created_jobs.append(job)
+    db.commit()
+    for job in created_jobs:
+        db.refresh(job)
+
+    jobs_data = [(job.id, job.page_num) for job in created_jobs]
+
+    background_tasks.add_task(
+        _dispatch_all_jobs_background,
+        jobs_data,
+        doc_id,
+        payload.target_lang,
+        quality,
+        tier,
+    )
+
+    return {
+        "status": "started",
+        "doc_id": doc_id,
+        "total_pages": len(created_jobs),
+        "quality_tier": quality,
+        "volume_tier": tier,
+        "job_ids": [j.id for j in created_jobs],
     }
