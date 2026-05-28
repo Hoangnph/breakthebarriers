@@ -67,6 +67,9 @@ class Translator:
         api_key = os.getenv("GEMINI_API_KEY")
         is_pytest = "pytest" in sys.modules
 
+        if quality not in ("fast", "balanced", "high"):
+            quality = "high"
+
         if is_pytest or not api_key:
             return Translator._translate_mock(text, target_lang, glossary)
 
@@ -108,12 +111,15 @@ class Translator:
                 refined_text = client.models.generate_content(model=MODEL, contents=prompt_refine).text.strip()
 
             # PHASE 3: Verification (for quality="balanced" and "high")
-            prompt_verify = (
-                f"Check the {lang_name} translation for natural flow. Ensure all '[s:span_id]' placeholders are intact.\n"
-                f"Output ONLY the final {lang_name} string.\n\n"
-                f"Source:\n{text}\n\nTranslated:\n{refined_text}\n\nFinal {lang_name} Output:"
-            )
-            return client.models.generate_content(model=MODEL, contents=prompt_verify).text.strip()
+            if quality in ("balanced", "high"):
+                prompt_verify = (
+                    f"Check the {lang_name} translation for natural flow. Ensure all '[s:span_id]' placeholders are intact.\n"
+                    f"Output ONLY the final {lang_name} string.\n\n"
+                    f"Source:\n{text}\n\nTranslated:\n{refined_text}\n\nFinal {lang_name} Output:"
+                )
+                return client.models.generate_content(model=MODEL, contents=prompt_verify).text.strip()
+
+            return refined_text
 
         except Exception as e:
             logger.error(f"Gemini API Translation failed: {e}. Falling back to mock translator.")
