@@ -1,4 +1,6 @@
 import os
+import sys
+import shutil
 import logging
 from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -16,8 +18,6 @@ router = APIRouter()
 
 
 def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
-    import sys
-    import shutil
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")

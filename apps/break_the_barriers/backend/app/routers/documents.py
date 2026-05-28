@@ -180,14 +180,19 @@ def get_page_content(
     raw: bool = Query(False),
     db: Session = Depends(get_db)
 ):
+    from backend.app.services.compiler import Compiler
+    from backend.app.services.translator import Translator
+    from backend.app.models_db import DBTranslation
+
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     page = db.query(DBPage).filter(DBPage.document_id == doc_id, DBPage.page_num == page_num).first()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
+
     if lang == "en":
-        html = page.original_html or ""
+        html = page.original_html
     else:
         if page.translated_html:
             html = page.translated_html
@@ -202,5 +207,29 @@ def get_page_content(
             html = Compiler.inject_translation(page.original_html, trans_dict)
 
     if raw:
-        return HTMLResponse(content=html)
-    return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html, "status": page.status}
+        script_inject = """
+<script>
+window.addEventListener('load', () => {
+    const div = document.querySelector('div[style*="width"]');
+    if (div) {
+        const styleAttr = div.getAttribute('style') || '';
+        const wMatch = styleAttr.match(/width:\\s*(\\d+)/i);
+        const hMatch = styleAttr.match(/height:\\s*(\\d+)/i);
+        const w = wMatch ? parseInt(wMatch[1]) : (parseInt(div.style.width) || 900);
+        const h = hMatch ? parseInt(hMatch[1]) : (parseInt(div.style.height) || 1260);
+        window.parent.postMessage({ type: 'page_size', width: w, height: h, page_num: %d }, '*');
+    } else {
+        window.parent.postMessage({ type: 'page_size', width: 900, height: 1260, page_num: %d }, '*');
+    }
+});
+</script>
+""" % (page_num, page_num)
+        if "</head>" in (html or "").lower():
+            html_injected = html.replace("</head>", f"{script_inject}</head>", 1)
+        elif "</body>" in (html or "").lower():
+            html_injected = html.replace("</body>", f"{script_inject}</body>", 1)
+        else:
+            html_injected = (html or "") + script_inject
+        return HTMLResponse(content=html_injected)
+
+    return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html}

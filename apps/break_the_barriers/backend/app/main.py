@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(
     title="Smart Documentations API",
     description="API-First Backend for Digitizing and High-Fidelity Translation of PDF books",
-    version="2.0.0"
+    version="1.0.0"
 )
 
 app.add_middleware(
