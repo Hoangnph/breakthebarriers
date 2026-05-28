@@ -1,0 +1,59 @@
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: break_the_barriers
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d break_the_barriers"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    env_file: .env.docker
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/break_the_barriers
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build: .
+    env_file: .env.docker
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/break_the_barriers
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A backend.app.workers.celery_app worker
+      --loglevel=info -Q celery-high,celery-low
+    profiles:
+      - celery
+
+volumes:
+  postgres_data:
+  redis_data:
