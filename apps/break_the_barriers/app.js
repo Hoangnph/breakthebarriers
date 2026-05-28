@@ -12,8 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Environment: Full-Stack Integrated Client");
     console.log("Design Standards: TDD, YAGNI, DRY, UX-first");
 
-    const API_BASE = 'http://localhost:8005';
+    const API_BASE = 'http://localhost:8000';
     let pollingInterval = null;
+    let activeProgressESS = null;
     let activeTMDocId = null;
 
     // ---------------------------------------------------------
@@ -287,6 +288,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn-doc-action" disabled>
                             <i class="fas fa-spinner fa-spin"></i> Đang dịch...
                         </button>
+                        <button class="btn-doc-action" onclick="triggerResume('${doc.id}')" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;cursor:pointer;">
+                            <i class="fas fa-redo"></i> Resume
+                        </button>
                         <button class="btn-doc-action" onclick="openPreview('${doc.id}')" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); color: #cbd5e1; cursor: pointer;">
                             <i class="fas fa-eye"></i> Xem Trang
                         </button>
@@ -427,24 +431,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // ---------------------------------------------------------
+    // SSE Translation Progress Bar
+    // ---------------------------------------------------------
+    const showTranslationProgress = (docId) => {
+        const card = document.querySelector(`.doc-card[data-id="${docId}"]`);
+        if (!card) return;
+
+        let progressBar = card.querySelector('.translation-sse-progress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.className = 'translation-sse-progress';
+            progressBar.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span class="tp-label" style="color:#a5b4fc;font-size:11px;font-weight:600;">🤖 Đang dịch...</span>
+                    <span class="tp-percent" style="color:#a5b4fc;font-size:11px;font-weight:700;">0%</span>
+                </div>
+                <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                    <div class="tp-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#a855f7);border-radius:3px;transition:width 0.6s ease;"></div>
+                </div>
+                <div class="tp-detail" style="color:#64748b;font-size:10px;margin-top:4px;">Đang khởi động...</div>
+            `;
+            progressBar.style.cssText = 'margin-top:10px;padding:10px 12px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;';
+            card.appendChild(progressBar);
+        }
+
+        if (activeProgressESS) activeProgressESS.close();
+
+        activeProgressESS = new EventSource(`${API_BASE}/api/docs/${docId}/progress`);
+
+        activeProgressESS.onmessage = async (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                const pct = data.percent || 0;
+                const done = data.compiled || 0;
+                const total = data.total || 0;
+                const eta = data.eta_min > 0 ? ` · ETA ${data.eta_min} phút` : '';
+
+                progressBar.querySelector('.tp-percent').textContent = `${pct}%`;
+                progressBar.querySelector('.tp-bar-fill').style.width = `${pct}%`;
+                progressBar.querySelector('.tp-detail').textContent = `Trang ${done}/${total} hoàn thành${eta}`;
+
+                if (data.status === 'completed' || pct >= 100) {
+                    activeProgressESS.close();
+                    progressBar.querySelector('.tp-label').textContent = '✅ Dịch hoàn tất!';
+                    progressBar.querySelector('.tp-detail').textContent = `Tất cả ${total} trang đã dịch xong.`;
+                    setTimeout(() => { progressBar.remove(); fetchDocuments(); }, 3000);
+                }
+            } catch (_) {}
+        };
+
+        activeProgressESS.onerror = () => {
+            activeProgressESS.close();
+            if (progressBar.parentNode) progressBar.remove();
+            fetchDocuments();
+        };
+    };
+
+    window.triggerResume = async (docId) => {
+        try {
+            showNotification('🔄 Resume', 'Đang phân tích pipeline bị gián đoạn...', 'info');
+            const res = await fetch(`${API_BASE}/api/docs/${docId}/resume`, { method: 'POST', mode: 'cors' });
+            if (!res.ok) throw new Error('Không thể khởi động lại pipeline.');
+            const data = await res.json();
+            if (data.queued > 0) {
+                showNotification('✅ Đã Resume', `Khởi động lại ${data.queued} tác vụ bị gián đoạn.`, 'success');
+                showTranslationProgress(docId);
+            } else {
+                showNotification('ℹ️ Không có gì', 'Tài liệu đã hoàn tất hoặc chưa bắt đầu.', 'info');
+            }
+            await fetchDocuments();
+        } catch (err) {
+            showNotification('Lỗi', err.message, 'error');
+        }
+    };
+
     window.triggerTranslation = async (docId, totalPages = 1) => {
         try {
-            showNotification('Tiến Trình', `Bắt đầu gửi dữ liệu dịch tới Gemini AI cho tất cả ${totalPages} trang...`, 'info');
-            
-            // Loop and translate all pages concurrently in the background using async_mode=true
-            const promises = [];
-            for (let page = 1; page <= totalPages; page++) {
-                promises.push(
-                    fetch(`${API_BASE}/api/docs/${docId}/translate?async_mode=true`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ page_num: page, target_lang: 'vi' }),
-                        mode: 'cors'
-                    })
-                );
-            }
-            
-            await Promise.all(promises);
+            showNotification('🤖 AI Pipeline', `Gửi ${totalPages} trang tới Adaptive Pipeline...`, 'info');
+            const res = await fetch(`${API_BASE}/api/docs/${docId}/translate-all`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_lang: 'vi' }),
+                mode: 'cors',
+            });
+            if (!res.ok) throw new Error('Không thể khởi chạy pipeline dịch thuật.');
+            const data = await res.json();
+            const tierLabel = data.volume_tier ? ` (${data.volume_tier} tier)` : '';
+            showNotification('Pipeline Bắt Đầu', `${data.total_pages} trang đang được xử lý${tierLabel}`, 'success');
+            showTranslationProgress(docId);
             await fetchDocuments();
         } catch (err) {
             showNotification('Lỗi', err.message, 'error');
