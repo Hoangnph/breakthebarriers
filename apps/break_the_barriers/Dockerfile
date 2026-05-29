@@ -1,8 +1,11 @@
 FROM python:3.11-slim
 
-# pdftohtml CLI (Poppler)
+# pdftohtml CLI (Poppler) + system libs for Docling (opencv, openmp)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         poppler-utils \
+        libgomp1 \
+        libglib2.0-0 \
+        libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
