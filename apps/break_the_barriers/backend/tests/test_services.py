@@ -532,10 +532,8 @@ def test_create_and_decode_token():
 
 
 def test_decode_invalid_token():
+    import pytest as _pytest
     from backend.app.services.auth_service import decode_token
-    try:
+    with _pytest.raises(ValueError, match="Invalid"):
         decode_token("not.a.valid.token")
-        assert False, "Should have raised ValueError"
-    except ValueError as e:
-        assert "Invalid" in str(e)
 

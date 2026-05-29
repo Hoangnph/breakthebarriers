@@ -20,7 +20,10 @@ def get_optional_user(
         payload = decode_token(token)
     except ValueError:
         return None
-    return db.query(DBUser).filter(DBUser.id == payload["sub"]).first()
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+    return db.query(DBUser).filter(DBUser.id == user_id).first()
 
 
 def get_current_user(
@@ -29,13 +32,28 @@ def get_current_user(
 ) -> DBUser:
     """Return DBUser or raise 401. Use on protected endpoints."""
     if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     token = authorization.removeprefix("Bearer ").strip()
     try:
         payload = decode_token(token)
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    user = db.query(DBUser).filter(DBUser.id == payload["sub"]).first()
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token claims", headers={"WWW-Authenticate": "Bearer"})
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found or inactive")
+        raise HTTPException(
+            status_code=401,
+            detail="User not found or inactive",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
