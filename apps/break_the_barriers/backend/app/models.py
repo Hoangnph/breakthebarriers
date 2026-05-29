@@ -51,3 +51,25 @@ class VolumeProfileResponse(BaseModel):
 class TranslateAllRequest(BaseModel):
     target_lang: str = "vi"
     quality_tier: Optional[str] = None
+
+class UserRegister(BaseModel):
+    email: str
+    password: str
+    full_name: str = ""
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserInfo(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    plan: str
+    pages_limit: int
+    pages_used_this_month: int
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserInfo
