@@ -53,6 +53,25 @@ def test_extract_spans(sample_absolute_html):
     assert spans[0]["top"] == 200.0
     assert spans[0]["left"] == 100.5
 
+def test_docling_extractor_table_html():
+    from unittest.mock import MagicMock
+    from backend.app.services.extractor import DoclingExtractor
+
+    table_item = MagicMock()
+    table_item.label = "table"
+    table_item.text = "Col A\tCol B\nVal 1\tVal 2\nVal 3\tVal 4"
+    table_item.prov = []
+
+    items = [(table_item, 1)]
+    html = DoclingExtractor._items_to_page_html(items, page_no=1)
+
+    assert "<table>" in html
+    assert "<th>" in html
+    assert "<td>" in html
+    assert "Col A" in html
+    assert "Val 1" in html
+
+
 # -------------------------------------------------------------
 # 2. Translator Tests
 # -------------------------------------------------------------

@@ -361,8 +361,7 @@ class DoclingExtractor:
             elif label == "picture":
                 body_parts.append(f'<figure><img src="" alt="Figure on page {page_no}"/></figure>')
             elif label == "table":
-                # Docling may provide a structured table — fall back to pre for now
-                body_parts.append(f"<pre>{html_lib.escape(text)}</pre>")
+                body_parts.append(DoclingExtractor._table_text_to_html(text))
             else:
                 body_parts.append(f"<p>{wrap(text)}</p>")
 
@@ -378,3 +377,27 @@ class DoclingExtractor:
             + "\n".join(body_parts)
             + "\n</body>\n</html>"
         )
+
+    @staticmethod
+    def _table_text_to_html(text: str) -> str:
+        """
+        Convert tab-delimited table text (from Docling) to a semantic HTML table.
+        First row becomes <th> header cells; remaining rows become <td> data cells.
+        Falls back to <pre> when the text has no tab structure.
+        """
+        lines = [line for line in text.strip().splitlines() if line.strip()]
+        if not lines or "\t" not in lines[0]:
+            return f"<pre>{html_lib.escape(text)}</pre>"
+
+        rows = [line.split("\t") for line in lines]
+        header = rows[0]
+        body_rows = rows[1:]
+
+        ths = "".join(f"<th>{html_lib.escape(cell.strip())}</th>" for cell in header)
+        trs = "".join(
+            "<tr>"
+            + "".join(f"<td>{html_lib.escape(cell.strip())}</td>" for cell in row)
+            + "</tr>"
+            for row in body_rows
+        )
+        return f"<table><thead><tr>{ths}</tr></thead><tbody>{trs}</tbody></table>"
