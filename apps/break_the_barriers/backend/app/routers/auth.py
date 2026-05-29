@@ -23,7 +23,7 @@ def _user_info(user: DBUser) -> UserInfo:
     )
 
 
-@router.post("/api/auth/register", response_model=TokenResponse)
+@router.post("/api/auth/register", response_model=TokenResponse, status_code=201)
 def register(body: UserRegister, db: Session = Depends(get_db)):
     if db.query(DBUser).filter(DBUser.email == body.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -44,17 +44,25 @@ def login(body: UserLogin, db: Session = Depends(get_db)):
     user = db.query(DBUser).filter(DBUser.email == body.email).first()
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is deactivated")
     # Reset quota if new calendar month
     now = datetime.now(timezone.utc)
     reset_at = user.pages_reset_at
+    needs_reset = reset_at is None
     if reset_at is not None:
         if reset_at.tzinfo is None:
             reset_at = reset_at.replace(tzinfo=timezone.utc)
         if reset_at.year != now.year or reset_at.month != now.month:
+            needs_reset = True
+    if needs_reset:
+        try:
             user.pages_used_this_month = 0
             user.pages_reset_at = now
             db.commit()
             db.refresh(user)
+        except Exception:
+            db.rollback()
     token = create_access_token(user.id, user.email, user.plan)
     return TokenResponse(access_token=token, user=_user_info(user))
 

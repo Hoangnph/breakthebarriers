@@ -570,7 +570,7 @@ def test_register_user(client):
         "password": "testpass123",
         "full_name": "Test User"
     })
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"

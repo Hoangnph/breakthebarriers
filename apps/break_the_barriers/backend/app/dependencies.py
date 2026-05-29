@@ -23,7 +23,10 @@ def get_optional_user(
     user_id = payload.get("sub")
     if not user_id:
         return None
-    return db.query(DBUser).filter(DBUser.id == user_id).first()
+    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    if not user or not user.is_active:
+        return None
+    return user
 
 
 def get_current_user(
