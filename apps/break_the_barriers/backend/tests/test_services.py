@@ -394,3 +394,98 @@ def test_dispatch_all_routes_lxl_to_celery(monkeypatch):
     assert set(jid for jid, _ in celery_called) == {"j1", "j2"}
     assert all(tier == "L" for _, tier in celery_called)
 
+
+# -------------------------------------------------------------
+# EpubParser Tests
+# -------------------------------------------------------------
+
+import io
+import zipfile
+
+
+def _make_minimal_epub(chapters: dict) -> bytes:
+    """
+    Create an in-memory EPUB using ebooklib's own API.
+    chapters = {"ch1.xhtml": "<html><body><p>Hello</p></body></html>", ...}
+    """
+    from ebooklib import epub as _epub
+    book = _epub.EpubBook()
+    book.set_identifier("test-id")
+    book.set_title("Test Book")
+    book.set_language("en")
+
+    chapter_items = []
+    for i, (fname, content) in enumerate(chapters.items()):
+        c = _epub.EpubHtml(title=f"Chapter {i + 1}", file_name=fname, lang="en")
+        c.content = content.encode("utf-8")
+        book.add_item(c)
+        chapter_items.append(c)
+
+    book.add_item(_epub.EpubNcx())
+    book.add_item(_epub.EpubNav())
+    book.spine = ["nav"] + chapter_items
+
+    buf = io.BytesIO()
+    _epub.write_epub(buf, book, {})
+    return buf.getvalue()
+
+
+def test_epub_parser_extracts_chapters(tmp_path):
+    from backend.app.services.epub_parser import EpubParser
+
+    epub_bytes = _make_minimal_epub({
+        "ch1.xhtml": "<html><body><p>Chapter One text</p></body></html>",
+        "ch2.xhtml": "<html><body><h1>Chapter Two</h1><p>Body text</p></body></html>",
+    })
+    epub_path = str(tmp_path / "test.epub")
+    with open(epub_path, "wb") as f:
+        f.write(epub_bytes)
+
+    out_dir = str(tmp_path / "out")
+    files = EpubParser.extract_chapters_to_html(epub_path, out_dir, "test_book")
+
+    assert len(files) == 2
+    for path in files:
+        assert os.path.exists(path)
+
+
+def test_epub_parser_wraps_spans(tmp_path):
+    from backend.app.services.epub_parser import EpubParser
+
+    epub_bytes = _make_minimal_epub({
+        "ch1.xhtml": "<html><body><p>Hello World</p></body></html>",
+    })
+    epub_path = str(tmp_path / "test.epub")
+    with open(epub_path, "wb") as f:
+        f.write(epub_bytes)
+
+    out_dir = str(tmp_path / "out")
+    files = EpubParser.extract_chapters_to_html(epub_path, out_dir, "test_book")
+
+    with open(files[0]) as f:
+        html = f.read()
+
+    spans = Extractor.extract_spans(html)
+    assert len(spans) >= 1
+    assert any("Hello World" in s["text"] for s in spans)
+
+
+def test_epub_parser_responsive_css(tmp_path):
+    from backend.app.services.epub_parser import EpubParser
+
+    epub_bytes = _make_minimal_epub({
+        "ch1.xhtml": "<html><body><p>text</p></body></html>",
+    })
+    epub_path = str(tmp_path / "test.epub")
+    with open(epub_path, "wb") as f:
+        f.write(epub_bytes)
+
+    out_dir = str(tmp_path / "out")
+    files = EpubParser.extract_chapters_to_html(epub_path, out_dir, "test_book")
+
+    with open(files[0]) as f:
+        html = f.read()
+
+    assert "max-width" in html
+    assert "charset" in html.lower()
+
