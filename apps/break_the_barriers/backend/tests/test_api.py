@@ -621,3 +621,43 @@ def test_get_me(client):
 def test_get_me_no_token(client):
     response = client.get("/api/auth/me")
     assert response.status_code == 401
+
+
+def test_upload_with_auth_sets_user_id(client, db_session):
+    from backend.app.models_db import DBDocument
+    reg = client.post("/api/auth/register", json={
+        "email": "uploader@example.com", "password": "pass123456", "full_name": "U"
+    })
+    assert reg.status_code == 201
+    token = reg.json()["access_token"]
+    user_id = reg.json()["user"]["id"]
+    files = {"file": ("auth_book.pdf", b"%PDF-1.4 mock content", "application/pdf")}
+    resp = client.post("/api/docs/upload", files=files,
+                       headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    doc = db_session.query(DBDocument).filter_by(id="auth_book").first()
+    assert doc is not None
+    assert doc.user_id == user_id
+
+
+def test_upload_without_auth_still_works(client):
+    files = {"file": ("noauth_book.pdf", b"%PDF-1.4 mock", "application/pdf")}
+    resp = client.post("/api/docs/upload", files=files)
+    assert resp.status_code == 200
+
+
+def test_quota_exceeded(client, db_session):
+    from backend.app.models_db import DBUser
+    reg = client.post("/api/auth/register", json={
+        "email": "quota@example.com", "password": "pass123456", "full_name": "Q"
+    })
+    assert reg.status_code == 201
+    token = reg.json()["access_token"]
+    user = db_session.query(DBUser).filter_by(email="quota@example.com").first()
+    user.pages_used_this_month = user.pages_limit  # free = 20, fill it up
+    db_session.commit()
+    files = {"file": ("over_quota.pdf", b"%PDF-1.4 mock content", "application/pdf")}
+    resp = client.post("/api/docs/upload", files=files,
+                       headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 402
+    assert "Quota" in resp.json()["detail"]

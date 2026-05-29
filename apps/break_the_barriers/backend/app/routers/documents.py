@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.models import DocumentMetadata
-from backend.app.models_db import DBDocument, DBPage, DBTranslation
+from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBUser
+from backend.app.dependencies import get_optional_user
 from backend.app.core import DATA_DIR, estimate_pdf_pages
 from backend.app.services.volume_detector import VolumeDetector
 from backend.app.services.translator import Translator
@@ -67,7 +68,11 @@ def _estimate_epub_chapters(content: bytes) -> int:
 
 
 @router.post("/api/docs/upload", response_model=DocumentMetadata)
-async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_document(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: Optional[DBUser] = Depends(get_optional_user),
+):
     is_epub = file.filename.lower().endswith(".epub")
     is_pdf = file.filename.lower().endswith(".pdf")
     if not (is_pdf or is_epub):
@@ -91,6 +96,14 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
             except ValueError:
                 pass
 
+    # Quota check — only when authenticated
+    if current_user is not None:
+        if current_user.pages_used_this_month + estimated_pages > current_user.pages_limit:
+            raise HTTPException(
+                status_code=402,
+                detail=f"Quota exceeded ({current_user.pages_used_this_month}/{current_user.pages_limit} pages used). Please upgrade your plan."
+            )
+
     # Auto-detect volume profile after upload
     volume = VolumeDetector.detect(page_count=estimated_pages)
 
@@ -112,6 +125,12 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         doc.estimated_duration_min = volume.estimated_duration_min
     db.commit()
     db.refresh(doc)
+
+    # Link document to user and consume quota
+    if current_user is not None:
+        doc.user_id = current_user.id
+        current_user.pages_used_this_month += estimated_pages
+        db.commit()
 
     return DocumentMetadata(
         id=doc.id, filename=doc.filename, total_pages=doc.total_pages,
