@@ -508,3 +508,34 @@ def test_epub_parser_responsive_css(tmp_path):
     assert "max-width" in html
     assert "charset" in html.lower()
 
+
+# -------------------------------------------------------------
+# AuthService Tests
+# -------------------------------------------------------------
+
+def test_hash_and_verify_password():
+    from backend.app.services.auth_service import hash_password, verify_password
+    hashed = hash_password("mypassword123")
+    assert hashed != "mypassword123"
+    assert verify_password("mypassword123", hashed)
+    assert not verify_password("wrongpassword", hashed)
+
+
+def test_create_and_decode_token():
+    from backend.app.services.auth_service import create_access_token, decode_token
+    token = create_access_token("user-123", "test@example.com", "free")
+    assert isinstance(token, str)
+    payload = decode_token(token)
+    assert payload["sub"] == "user-123"
+    assert payload["email"] == "test@example.com"
+    assert payload["plan"] == "free"
+
+
+def test_decode_invalid_token():
+    from backend.app.services.auth_service import decode_token
+    try:
+        decode_token("not.a.valid.token")
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "Invalid" in str(e)
+
