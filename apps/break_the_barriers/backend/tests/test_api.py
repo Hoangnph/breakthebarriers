@@ -558,3 +558,66 @@ def test_resume_marks_stuck_jobs_failed(client, db_session):
     updated = db_session.query(DBJob).filter(DBJob.id == job_id).first()
     assert updated.status == "failed"
     assert "timeout" in (updated.error_msg or "").lower()
+
+
+# -------------------------------------------------------------
+# Auth Tests (SP2)
+# -------------------------------------------------------------
+
+def test_register_user(client):
+    response = client.post("/api/auth/register", json={
+        "email": "newuser@example.com",
+        "password": "testpass123",
+        "full_name": "Test User"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == "newuser@example.com"
+    assert data["user"]["plan"] == "free"
+    assert data["user"]["pages_limit"] == 20
+
+
+def test_register_duplicate_email(client):
+    payload = {"email": "dup@example.com", "password": "pass123456", "full_name": "A"}
+    client.post("/api/auth/register", json=payload)
+    response = client.post("/api/auth/register", json=payload)
+    assert response.status_code == 400
+    assert "already registered" in response.json()["detail"]
+
+
+def test_login_user(client):
+    client.post("/api/auth/register", json={
+        "email": "login@example.com", "password": "mypassword123", "full_name": "Login User"
+    })
+    response = client.post("/api/auth/login", json={
+        "email": "login@example.com", "password": "mypassword123"
+    })
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+
+def test_login_wrong_password(client):
+    client.post("/api/auth/register", json={
+        "email": "wp@example.com", "password": "correctpass123", "full_name": "WP"
+    })
+    response = client.post("/api/auth/login", json={
+        "email": "wp@example.com", "password": "wrongpassword"
+    })
+    assert response.status_code == 401
+
+
+def test_get_me(client):
+    reg = client.post("/api/auth/register", json={
+        "email": "me@example.com", "password": "pass123456", "full_name": "Me"
+    })
+    token = reg.json()["access_token"]
+    response = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json()["email"] == "me@example.com"
+
+
+def test_get_me_no_token(client):
+    response = client.get("/api/auth/me")
+    assert response.status_code == 401
