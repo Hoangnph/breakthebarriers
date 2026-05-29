@@ -638,6 +638,10 @@ def test_upload_with_auth_sets_user_id(client, db_session):
     doc = db_session.query(DBDocument).filter_by(id="auth_book").first()
     assert doc is not None
     assert doc.user_id == user_id
+    from backend.app.models_db import DBUser
+    user_obj = db_session.query(DBUser).filter_by(id=user_id).first()
+    db_session.refresh(user_obj)
+    assert user_obj.pages_used_this_month > 0
 
 
 def test_upload_without_auth_still_works(client):

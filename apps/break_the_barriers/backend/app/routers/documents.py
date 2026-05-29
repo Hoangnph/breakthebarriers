@@ -78,12 +78,14 @@ async def upload_document(
     if not (is_pdf or is_epub):
         raise HTTPException(status_code=400, detail="Only PDF or EPUB files are supported")
 
+    # Sanitize filename to prevent path traversal
+    safe_name = os.path.basename(file.filename)
+    if not safe_name or safe_name.startswith("."):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
     ext = ".epub" if is_epub else ".pdf"
-    doc_id = os.path.splitext(file.filename)[0].lower().replace(" ", "_")
-    file_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}{ext}")
+    doc_id = os.path.splitext(safe_name)[0].lower().replace(" ", "_")
     content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
 
     if is_epub:
         estimated_pages = _estimate_epub_chapters(content)
@@ -96,24 +98,35 @@ async def upload_document(
             except ValueError:
                 pass
 
-    # Quota check — only when authenticated
+    # Quota check before touching disk or DB — re-fetch with row lock for atomicity
     if current_user is not None:
-        if current_user.pages_used_this_month + estimated_pages > current_user.pages_limit:
+        locked_user = db.query(DBUser).filter(DBUser.id == current_user.id).with_for_update().first()
+        if locked_user and locked_user.pages_used_this_month + estimated_pages > locked_user.pages_limit:
             raise HTTPException(
                 status_code=402,
-                detail=f"Quota exceeded ({current_user.pages_used_this_month}/{current_user.pages_limit} pages used). Please upgrade your plan."
+                detail=f"Quota exceeded ({locked_user.pages_used_this_month}/{locked_user.pages_limit} pages used). Please upgrade your plan."
             )
+        current_user = locked_user  # use the freshly locked instance
 
-    # Auto-detect volume profile after upload
+    # Write file to disk only after quota check passes
+    file_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}{ext}")
+    with open(file_path, "wb") as f:
+        f.write(content)
+
     volume = VolumeDetector.detect(page_count=estimated_pages)
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
         doc = DBDocument(
-            id=doc_id, filename=file.filename, total_pages=estimated_pages, status="raw",
-            volume_tier=volume.tier, quality_tier=volume.recommended_quality,
+            id=doc_id,
+            filename=safe_name,
+            total_pages=estimated_pages,
+            status="raw",
+            volume_tier=volume.tier,
+            quality_tier=volume.recommended_quality,
             estimated_cost_usd=volume.estimated_cost_usd,
             estimated_duration_min=volume.estimated_duration_min,
+            user_id=current_user.id if current_user else None,
         )
         db.add(doc)
     else:
@@ -123,14 +136,15 @@ async def upload_document(
         doc.quality_tier = volume.recommended_quality
         doc.estimated_cost_usd = volume.estimated_cost_usd
         doc.estimated_duration_min = volume.estimated_duration_min
+        if current_user:
+            doc.user_id = current_user.id
+
+    # Increment quota in the same transaction
+    if current_user is not None:
+        current_user.pages_used_this_month += estimated_pages
+
     db.commit()
     db.refresh(doc)
-
-    # Link document to user and consume quota
-    if current_user is not None:
-        doc.user_id = current_user.id
-        current_user.pages_used_this_month += estimated_pages
-        db.commit()
 
     return DocumentMetadata(
         id=doc.id, filename=doc.filename, total_pages=doc.total_pages,
