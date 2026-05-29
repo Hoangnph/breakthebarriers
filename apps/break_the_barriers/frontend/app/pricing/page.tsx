@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Check, X, ArrowLeft } from "lucide-react"
 
@@ -41,7 +41,7 @@ const PLANS = [
   },
 ] as const
 
-export default function PricingPage() {
+function PricingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const quotaExceeded = searchParams.get("reason") === "quota"
@@ -149,5 +149,13 @@ export default function PricingPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>}>
+      <PricingContent />
+    </Suspense>
   )
 }
