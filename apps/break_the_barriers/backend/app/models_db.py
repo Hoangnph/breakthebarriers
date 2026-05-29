@@ -1,5 +1,5 @@
 from uuid import uuid4
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Float
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from backend.app.database import Base
@@ -14,15 +14,17 @@ class DBDocument(Base):
     status = Column(String, default="raw")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # Phase 1 additions
     volume_tier = Column(String, nullable=True)
     quality_tier = Column(String, default="high")
     estimated_cost_usd = Column(Float, nullable=True)
     estimated_duration_min = Column(Integer, nullable=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    is_public = Column(Boolean, default=False)
 
     pages = relationship("DBPage", back_populates="document", cascade="all, delete-orphan")
     translations = relationship("DBTranslation", back_populates="document", cascade="all, delete-orphan")
     jobs = relationship("DBJob", back_populates="document", cascade="all, delete-orphan")
+    user = relationship("DBUser", back_populates="documents")
 
 
 class DBPage(Base):
@@ -71,3 +73,34 @@ class DBJob(Base):
     completed_at = Column(DateTime, nullable=True)
 
     document = relationship("DBDocument", back_populates="jobs")
+
+
+class DBUser(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    email = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+    full_name = Column(String, default="")
+    plan = Column(String, default="free")
+    pages_used_this_month = Column(Integer, default=0)
+    pages_limit = Column(Integer, default=20)
+    pages_reset_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    documents = relationship("DBDocument", back_populates="user", lazy="dynamic")
+    subscriptions = relationship("DBSubscription", back_populates="user", cascade="all, delete-orphan")
+
+
+class DBSubscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    stripe_subscription_id = Column(String, unique=True, nullable=True)
+    status = Column(String, default="active")
+    current_period_end = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("DBUser", back_populates="subscriptions")
