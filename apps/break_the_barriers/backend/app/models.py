@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Dict, Optional
 
 class DocumentMetadata(BaseModel):
@@ -57,6 +57,13 @@ class UserRegister(BaseModel):
     password: str
     full_name: str = ""
 
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return v
+
 class UserLogin(BaseModel):
     email: str
     password: str
@@ -64,7 +71,7 @@ class UserLogin(BaseModel):
 class UserInfo(BaseModel):
     id: str
     email: str
-    full_name: str
+    full_name: str = ""
     plan: str
     pages_limit: int
     pages_used_this_month: int

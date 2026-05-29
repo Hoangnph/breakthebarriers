@@ -89,7 +89,7 @@ class DBUser(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    documents = relationship("DBDocument", back_populates="user", lazy="dynamic")
+    documents = relationship("DBDocument", back_populates="user", lazy="write_only")
     subscriptions = relationship("DBSubscription", back_populates="user", cascade="all, delete-orphan")
 
 
