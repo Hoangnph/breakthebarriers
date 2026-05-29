@@ -52,24 +52,44 @@ def list_document_pages(doc_id: str, db: Session = Depends(get_db)):
     ]
 
 
+def _estimate_epub_chapters(content: bytes) -> int:
+    try:
+        import zipfile, io
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            html_count = sum(
+                1 for name in zf.namelist()
+                if name.lower().endswith((".xhtml", ".html", ".htm"))
+                and "META-INF" not in name
+            )
+            return max(html_count, 1)
+    except Exception:
+        return 5
+
+
 @router.post("/api/docs/upload", response_model=DocumentMetadata)
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    is_epub = file.filename.lower().endswith(".epub")
+    is_pdf = file.filename.lower().endswith(".pdf")
+    if not (is_pdf or is_epub):
+        raise HTTPException(status_code=400, detail="Only PDF or EPUB files are supported")
 
+    ext = ".epub" if is_epub else ".pdf"
     doc_id = os.path.splitext(file.filename)[0].lower().replace(" ", "_")
-    pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
+    file_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}{ext}")
     content = await file.read()
-    with open(pdf_path, "wb") as f:
+    with open(file_path, "wb") as f:
         f.write(content)
 
-    matches = re.findall(rb"/Count\s+(\d+)", content)
-    estimated_pages = 10
-    if matches:
-        try:
-            estimated_pages = max(int(m) for m in matches)
-        except ValueError:
-            pass
+    if is_epub:
+        estimated_pages = _estimate_epub_chapters(content)
+    else:
+        matches = re.findall(rb"/Count\s+(\d+)", content)
+        estimated_pages = 10
+        if matches:
+            try:
+                estimated_pages = max(int(m) for m in matches)
+            except ValueError:
+                pass
 
     # Auto-detect volume profile after upload
     volume = VolumeDetector.detect(page_count=estimated_pages)

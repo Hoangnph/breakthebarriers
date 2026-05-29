@@ -29,7 +29,23 @@ def test_upload_document(client):
     files_invalid = {"file": ("test_doc.txt", b"plain text", "text/plain")}
     response_invalid = client.post("/api/docs/upload", files=files_invalid)
     assert response_invalid.status_code == 400
-    assert "Only PDF files are supported" in response_invalid.json()["detail"]
+    assert "PDF or EPUB" in response_invalid.json()["detail"]
+
+def test_upload_epub(client):
+    files = {"file": ("my_book.epub", b"PK\x03\x04mock epub content", "application/epub+zip")}
+    response = client.post("/api/docs/upload", files=files)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["filename"] == "my_book.epub"
+    assert data["status"] == "raw"
+
+
+def test_upload_rejects_non_pdf_epub(client):
+    files = {"file": ("notes.docx", b"PK mock docx", "application/vnd.openxmlformats")}
+    response = client.post("/api/docs/upload", files=files)
+    assert response.status_code == 400
+    assert "PDF or EPUB" in response.json()["detail"]
+
 
 def test_extract_document(client):
     # Success case
