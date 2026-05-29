@@ -11,7 +11,7 @@ from backend.app.database import get_db, get_background_db
 from backend.app.models import ExtractionResult
 from backend.app.models_db import DBDocument, DBPage, DBTranslation
 from backend.app.core import DATA_DIR, is_mock_run
-from backend.app.services.extractor import Extractor
+from backend.app.services.extractor import Extractor, DoclingExtractor
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -54,16 +54,26 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
     else:
         pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
         extracted_dir = os.path.join(DATA_DIR, "extracted_html", doc_id)
+
+        # Try Docling (semantic, responsive HTML) first; fall back to pdftohtml CLI
+        use_docling = False
+        html_files = []
         try:
-            html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
-        except Exception as e:
-            logger.error(f"pdftohtml CLI failed: {e}. Falling back to mock extraction.")
-            import sys as _sys
-            old = _sys.modules.copy()
-            _sys.modules["pytest"] = _sys.modules.get("pytest", "mock")
-            res = _perform_extraction(doc_id, db)
-            _sys.modules = old
-            return res
+            html_files = DoclingExtractor.extract_pdf_to_html(pdf_path, extracted_dir, doc_id)
+            use_docling = True
+            logger.info(f"DoclingExtractor produced {len(html_files)} pages for {doc_id}")
+        except Exception as docling_err:
+            logger.warning(f"DoclingExtractor failed ({docling_err}), falling back to pdftohtml")
+            try:
+                html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
+            except Exception as e:
+                logger.error(f"pdftohtml CLI also failed: {e}. Falling back to mock extraction.")
+                import sys as _sys
+                old = _sys.modules.copy()
+                _sys.modules["pytest"] = _sys.modules.get("pytest", "mock")
+                res = _perform_extraction(doc_id, db)
+                _sys.modules = old
+                return res
 
         if html_files:
             doc.total_pages = len(html_files)
@@ -72,15 +82,21 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
             page_num = i + 1
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 original_html = f.read()
-            sanitized_html = Extractor.sanitize_html(original_html)
-            soup = BeautifulSoup(sanitized_html, "html.parser")
-            for img in soup.find_all("img"):
-                src = img.get("src", "")
-                if src and not (src.startswith("http") or src.startswith("/")):
-                    img["src"] = f"/api/docs/{doc_id}/assets/{src}"
-            sanitized_html = str(soup)
-            spans = Extractor.extract_spans(sanitized_html)
-            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=sanitized_html, status="raw"))
+
+            if use_docling:
+                # Docling output is already clean semantic HTML — skip pdftohtml sanitization
+                final_html = original_html
+            else:
+                sanitized_html = Extractor.sanitize_html(original_html)
+                soup = BeautifulSoup(sanitized_html, "html.parser")
+                for img in soup.find_all("img"):
+                    src = img.get("src", "")
+                    if src and not (src.startswith("http") or src.startswith("/")):
+                        img["src"] = f"/api/docs/{doc_id}/assets/{src}"
+                final_html = str(soup)
+
+            spans = Extractor.extract_spans(final_html)
+            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html, status="raw"))
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
 

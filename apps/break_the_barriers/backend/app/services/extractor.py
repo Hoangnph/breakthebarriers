@@ -1,11 +1,57 @@
 import re
 import os
+import html as html_lib
 import subprocess
 import logging
+from collections import defaultdict
+from pathlib import Path
 from bs4 import BeautifulSoup
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
+
+_DOCLING_RESPONSIVE_CSS = """
+* { box-sizing: border-box; }
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.7;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    color: #333;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 1.4em;
+    margin-bottom: 0.4em;
+    line-height: 1.3;
+}
+p { margin: 0.6em 0; }
+ul, ol { padding-left: 1.6em; }
+li { margin: 0.3em 0; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    overflow-x: auto;
+    display: block;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+th { background: #f2f2f2; font-weight: bold; }
+pre {
+    background: #f6f8fa;
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+code { font-family: monospace; font-size: 0.9em; }
+figure { margin: 1.2em 0; text-align: center; }
+img { max-width: 100%; height: auto; }
+figcaption { color: #666; font-style: italic; font-size: 0.9em; }
+"""
 
 class Extractor:
     @staticmethod
@@ -100,34 +146,33 @@ class Extractor:
     @staticmethod
     def extract_spans(html_content: str) -> List[Dict[str, Any]]:
         """
-        Extracts all span elements with their IDs, text, and parsed coordinates (left, top).
+        Extracts all span elements with their IDs and text.
+        Coordinates (left, top) are included when present (pdftohtml output) but not required
+        (Docling semantic output has no absolute positioning).
         """
         soup = BeautifulSoup(html_content, "html.parser")
         spans_data = []
-        
+
         for span in soup.find_all("span"):
             span_id = span.get("id")
             if not span_id:
                 continue
-                
+
             text = span.get_text()
+            if not text.strip():
+                continue
+
             style = span.get("style", "")
-            
-            # Parse absolute coordinates using regex
             left_match = re.search(r'left:\s*([\d\.]+)px', style)
             top_match = re.search(r'top:\s*([\d\.]+)px', style)
-            
+
+            entry: Dict[str, Any] = {"id": span_id, "text": text}
             if left_match and top_match:
-                left = float(left_match.group(1))
-                top = float(top_match.group(1))
-                
-                spans_data.append({
-                    "id": span_id,
-                    "text": text,
-                    "top": top,
-                    "left": left
-                })
-                
+                entry["left"] = float(left_match.group(1))
+                entry["top"] = float(top_match.group(1))
+
+            spans_data.append(entry)
+
         return spans_data
 
     @staticmethod
@@ -210,3 +255,126 @@ class Extractor:
                 
         html_files.sort(key=get_page_num)
         return html_files
+
+
+class DoclingExtractor:
+    """PDF extractor using IBM Docling for semantic, responsive HTML output."""
+
+    _converter = None  # module-level singleton to avoid repeated model loading
+
+    @classmethod
+    def _get_converter(cls):
+        if cls._converter is None:
+            try:
+                from docling.document_converter import DocumentConverter, PdfFormatOption
+                from docling.datamodel.base_models import InputFormat
+                from docling.datamodel.pipeline_options import (
+                    PdfPipelineOptions, AcceleratorOptions, AcceleratorDevice
+                )
+                pipeline_options = PdfPipelineOptions()
+                # Use CPU explicitly — MPS on Apple Silicon doesn't support float64
+                pipeline_options.accelerator_options = AcceleratorOptions(
+                    num_threads=4, device=AcceleratorDevice.CPU
+                )
+                cls._converter = DocumentConverter(
+                    format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)}
+                )
+                logger.info("DoclingExtractor: converter initialised (CPU mode)")
+            except ImportError:
+                raise RuntimeError("docling is not installed. Run: pip install docling")
+        return cls._converter
+
+    @classmethod
+    def extract_pdf_to_html(cls, pdf_path: str, output_dir: str, doc_id: str) -> List[str]:
+        """
+        Convert a PDF to per-page semantic HTML files.
+        Returns a list of file paths in page order — same interface as
+        Extractor.extract_pdf_to_html_cli() so the router can use both interchangeably.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        converter = cls._get_converter()
+
+        logger.info(f"DoclingExtractor: converting {pdf_path}")
+        result = converter.convert(Path(pdf_path))
+        doc = result.document
+        logger.info(f"DoclingExtractor: converted {len(doc.pages)} pages")
+
+        # Group document items by page number
+        pages_items: Dict[int, list] = defaultdict(list)
+        for item, level in doc.iterate_items():
+            if hasattr(item, "prov") and item.prov:
+                pages_items[item.prov[0].page_no].append((item, level))
+
+        html_files = []
+        for page_no in sorted(pages_items.keys()):
+            page_html = cls._items_to_page_html(pages_items[page_no], page_no)
+            file_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.html"))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(page_html)
+            html_files.append(file_path)
+
+        return html_files
+
+    @staticmethod
+    def _items_to_page_html(items: list, page_no: int) -> str:
+        """
+        Render a list of (DocItem, level) pairs as a self-contained HTML page.
+        Every translatable text node is wrapped in <span id="sN"> so the
+        existing translator service can locate and replace text without changes.
+        """
+        span_counter = [0]
+
+        def sid() -> str:
+            span_counter[0] += 1
+            return f"s{span_counter[0]}"
+
+        def wrap(text: str) -> str:
+            return f'<span id="{sid()}">{html_lib.escape(text)}</span>'
+
+        body_parts: List[str] = []
+        open_list = False  # track whether we're inside a <ul>
+
+        for item, level in items:
+            text: str = getattr(item, "text", "") or ""
+            label: str = str(getattr(item, "label", "text"))
+
+            if label == "list_item":
+                if not open_list:
+                    body_parts.append("<ul>")
+                    open_list = True
+                body_parts.append(f"  <li>{wrap(text)}</li>")
+                continue
+
+            # Close any open list before emitting non-list element
+            if open_list:
+                body_parts.append("</ul>")
+                open_list = False
+
+            if not text and label not in ("picture",):
+                continue
+
+            if label == "section_header":
+                h = min(max(level + 1, 2), 6)
+                body_parts.append(f"<h{h}>{wrap(text)}</h{h}>")
+            elif label == "code":
+                body_parts.append(f"<pre><code>{html_lib.escape(text)}</code></pre>")
+            elif label == "picture":
+                body_parts.append(f'<figure><img src="" alt="Figure on page {page_no}"/></figure>')
+            elif label == "table":
+                # Docling may provide a structured table — fall back to pre for now
+                body_parts.append(f"<pre>{html_lib.escape(text)}</pre>")
+            else:
+                body_parts.append(f"<p>{wrap(text)}</p>")
+
+        if open_list:
+            body_parts.append("</ul>")
+
+        return (
+            f"<!DOCTYPE html>\n<html>\n<head>\n"
+            f'<meta charset="UTF-8">\n'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            f"<style>\n{_DOCLING_RESPONSIVE_CSS}\n</style>\n"
+            f"</head>\n<body>\n"
+            + "\n".join(body_parts)
+            + "\n</body>\n</html>"
+        )
