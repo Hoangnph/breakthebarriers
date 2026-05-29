@@ -12,6 +12,7 @@ from backend.app.models import ExtractionResult
 from backend.app.models_db import DBDocument, DBPage, DBTranslation
 from backend.app.core import DATA_DIR, is_mock_run
 from backend.app.services.extractor import Extractor, DoclingExtractor
+from backend.app.services.epub_parser import EpubParser
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -52,28 +53,34 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
     else:
+        epub_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.epub")
         pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
         extracted_dir = os.path.join(DATA_DIR, "extracted_html", doc_id)
 
-        # Try Docling (semantic, responsive HTML) first; fall back to pdftohtml CLI
-        use_docling = False
-        html_files = []
-        try:
-            html_files = DoclingExtractor.extract_pdf_to_html(pdf_path, extracted_dir, doc_id)
-            use_docling = True
-            logger.info(f"DoclingExtractor produced {len(html_files)} pages for {doc_id}")
-        except Exception as docling_err:
-            logger.warning(f"DoclingExtractor failed ({docling_err}), falling back to pdftohtml")
+        if os.path.exists(epub_path):
+            # EPUB path: EpubParser handles chapter extraction
+            html_files = EpubParser.extract_chapters_to_html(epub_path, extracted_dir, doc_id)
+            use_docling = True  # EPUB output is clean semantic HTML — skip sanitize_html
+        else:
+            # PDF path: try Docling first, fall back to pdftohtml CLI
+            use_docling = False
+            html_files = []
             try:
-                html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
-            except Exception as e:
-                logger.error(f"pdftohtml CLI also failed: {e}. Falling back to mock extraction.")
-                import sys as _sys
-                old = _sys.modules.copy()
-                _sys.modules["pytest"] = _sys.modules.get("pytest", "mock")
-                res = _perform_extraction(doc_id, db)
-                _sys.modules = old
-                return res
+                html_files = DoclingExtractor.extract_pdf_to_html(pdf_path, extracted_dir, doc_id)
+                use_docling = True
+                logger.info(f"DoclingExtractor produced {len(html_files)} pages for {doc_id}")
+            except Exception as docling_err:
+                logger.warning(f"DoclingExtractor failed ({docling_err}), falling back to pdftohtml")
+                try:
+                    html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
+                except Exception as e:
+                    logger.error(f"pdftohtml CLI also failed: {e}. Falling back to mock extraction.")
+                    import sys as _sys
+                    old = _sys.modules.copy()
+                    _sys.modules["pytest"] = _sys.modules.get("pytest", "mock")
+                    res = _perform_extraction(doc_id, db)
+                    _sys.modules = old
+                    return res
 
         if html_files:
             doc.total_pages = len(html_files)

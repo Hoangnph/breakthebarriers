@@ -47,6 +47,18 @@ def test_upload_rejects_non_pdf_epub(client):
     assert "PDF or EPUB" in response.json()["detail"]
 
 
+def test_extract_epub_document(client):
+    files = {"file": ("sample_book.epub", b"PK\x03\x04mock epub", "application/epub+zip")}
+    client.post("/api/docs/upload", files=files)
+
+    response = client.post("/api/docs/sample_book/extract")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == "sample_book"
+    assert data["pages_count"] > 0
+    assert "extracted_html_dir" in data
+
+
 def test_extract_document(client):
     # Success case
     response = client.post("/api/docs/clean_code/extract")

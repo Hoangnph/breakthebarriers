@@ -15,9 +15,11 @@ def is_mock_run(doc_id: str) -> bool:
     if "pytest" in sys.modules:
         return True
     pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
-    if not os.path.exists(pdf_path):
+    epub_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.epub")
+    if not os.path.exists(pdf_path) and not os.path.exists(epub_path):
         return True
-    if os.path.getsize(pdf_path) < 1000:
+    existing = pdf_path if os.path.exists(pdf_path) else epub_path
+    if os.path.getsize(existing) < 1000:
         return True
     return False
 
