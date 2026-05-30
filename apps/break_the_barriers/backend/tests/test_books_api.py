@@ -198,3 +198,26 @@ def test_private_book_pages_unauthorized(client, private_book):
 def test_private_book_page_content_unauthorized(client, private_book):
     res = client.get(f"/api/books/{private_book}/pages/1?lang=vi")
     assert res.status_code == 403
+
+
+def test_unpublish(client, auth_user, published_book):
+    _, headers = auth_user
+    res = client.delete(f"/api/books/{published_book}", headers=headers)
+    assert res.status_code == 200
+    res2 = client.get(f"/api/books/{published_book}")
+    assert res2.status_code == 404
+
+
+def test_unpublish_requires_owner(client, published_book, db_session):
+    other = DBUser(email="other@test.com", hashed_password=hash_password("secret1"))
+    db_session.add(other)
+    db_session.commit()
+    token = create_access_token(other.id, other.email, other.plan)
+    res = client.delete(f"/api/books/{published_book}",
+                        headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 403
+
+
+def test_unpublish_requires_auth(client, published_book):
+    res = client.delete(f"/api/books/{published_book}")
+    assert res.status_code == 401

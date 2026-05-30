@@ -192,3 +192,20 @@ def get_book_page_content(slug: str, page_num: int, lang: str = "vi",
         prev_page=prev_page,
         next_page=next_page,
     )
+
+
+@router.delete("/api/books/{slug}")
+def unpublish_book(slug: str, db: Session = Depends(get_db),
+                   current_user: DBUser = Depends(get_current_user)):
+    book = _load_book_or_404(slug, db)
+    if book.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your book")
+    # Remove uploaded cover file if any
+    if book.cover_path:
+        try:
+            os.remove(os.path.join(DATA_DIR, "covers", book.cover_path))
+        except OSError:
+            pass
+    db.delete(book)
+    db.commit()
+    return {"ok": True, "slug": slug}
