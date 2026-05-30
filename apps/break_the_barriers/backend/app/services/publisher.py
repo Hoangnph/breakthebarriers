@@ -21,7 +21,7 @@ def slug_from_filename(filename: str) -> str:
     slug = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
     if len(slug) < 3:
         slug = (slug + '-book').strip('-')
-    return slug[:80]
+    return slug[:80].strip('-')
 
 
 async def save_cover_file(file: UploadFile, doc_id: str, slug: str) -> str:

@@ -1,6 +1,5 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Dict, Optional
-from datetime import datetime
 
 class DocumentMetadata(BaseModel):
     id: str
