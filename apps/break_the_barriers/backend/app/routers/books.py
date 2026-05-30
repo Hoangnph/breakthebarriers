@@ -1,6 +1,6 @@
 import json
 import os
-import re as _re
+import re
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
@@ -106,8 +106,8 @@ async def publish_book(
 # ---------------------------------------------------------------------------
 
 def _strip_tags(html: str, limit: int = 100) -> str:
-    text = _re.sub(r"<[^>]+>", " ", html or "")
-    text = _re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"<[^>]+>", " ", html or "")
+    text = re.sub(r"\s+", " ", text).strip()
     return text[:limit]
 
 

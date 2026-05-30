@@ -94,9 +94,6 @@ def test_publish_requires_auth(client, translated_doc):
     assert res.status_code == 401
 
 
-import json as _json
-
-
 @pytest.fixture
 def published_book(client, auth_user, translated_doc):
     """Publish translated_doc and return its slug."""
@@ -191,3 +188,13 @@ def test_private_book_owner_can_read(client, auth_user, private_book):
     _, headers = auth_user
     res = client.get(f"/api/books/{private_book}", headers=headers)
     assert res.status_code == 200
+
+
+def test_private_book_pages_unauthorized(client, private_book):
+    res = client.get(f"/api/books/{private_book}/pages")
+    assert res.status_code == 403
+
+
+def test_private_book_page_content_unauthorized(client, private_book):
+    res = client.get(f"/api/books/{private_book}/pages/1?lang=vi")
+    assert res.status_code == 403
