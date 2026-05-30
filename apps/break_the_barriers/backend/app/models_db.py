@@ -104,3 +104,20 @@ class DBSubscription(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("DBUser", back_populates="subscriptions")
+
+
+class DBPublishedBook(Base):
+    __tablename__ = "published_books"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    document_id = Column(String, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, default="")
+    cover_url = Column(String, nullable=True)
+    cover_path = Column(String, nullable=True)
+    languages = Column(Text, default='["vi"]')  # JSON-encoded list, stored as Text for SQLite compat
+    is_public = Column(Boolean, default=True)
+    published_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
