@@ -1,11 +1,14 @@
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.app.database import engine, Base, get_db, SessionLocal
 from backend.app.models_db import DBDocument
 from backend.app.routers import documents, extraction, translation, compilation, volume, jobs
 from backend.app.routers import auth, books
+from backend.app.core import DATA_DIR
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,12 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import os as _os
-from fastapi.staticfiles import StaticFiles
-from backend.app.core import DATA_DIR as _DATA_DIR
-
-_covers_dir = _os.path.join(_DATA_DIR, "covers")
-_os.makedirs(_covers_dir, exist_ok=True)
+_covers_dir = os.path.join(DATA_DIR, "covers")
+os.makedirs(_covers_dir, exist_ok=True)
 app.mount("/covers", StaticFiles(directory=_covers_dir), name="covers")
 
 app.include_router(documents.router)

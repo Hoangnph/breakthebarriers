@@ -32,10 +32,13 @@ async def save_cover_file(file: UploadFile, doc_id: str, slug: str) -> str:
     content_type = file.content_type or ""
     if not content_type.startswith("image/"):
         raise ValueError("Cover must be an image")
+    ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    ext = os.path.splitext(file.filename or "")[-1].lower()
+    if ext not in ALLOWED_EXTS:
+        raise ValueError("Cover extension must be jpg, jpeg, png, gif, or webp")
     content = await file.read()
     if len(content) > MAX_COVER_SIZE:
         raise ValueError("Cover file too large (max 5MB)")
-    ext = os.path.splitext(file.filename or "")[-1].lower() or ".jpg"
     filename = f"{doc_id}_{slug}{ext}"
     os.makedirs(COVERS_DIR, exist_ok=True)
     with open(os.path.join(COVERS_DIR, filename), "wb") as f:

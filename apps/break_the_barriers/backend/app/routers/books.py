@@ -3,11 +3,11 @@ import os
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_user, get_optional_user
-from backend.app.models import BookInfo, BookPageInfo, BookPageContent
 from backend.app.models_db import DBDocument, DBPage, DBPublishedBook, DBUser
 from backend.app.services import publisher
 from backend.app.core import DATA_DIR
@@ -55,6 +55,9 @@ async def publish_book(
     if db.query(DBPublishedBook).filter(DBPublishedBook.slug == slug).first():
         raise HTTPException(status_code=409, detail="Slug already taken")
 
+    if cover_url and cover_file is not None and cover_file.filename:
+        raise HTTPException(status_code=422, detail="Provide either cover_url or cover_file, not both")
+
     try:
         langs = json.loads(languages)
         assert isinstance(langs, list) and langs
@@ -80,8 +83,12 @@ async def publish_book(
         is_public=is_public,
     )
     db.add(book)
-    db.commit()
-    db.refresh(book)
+    try:
+        db.commit()
+        db.refresh(book)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Slug already taken")
 
     cu = _cover_url(book)
     return {
