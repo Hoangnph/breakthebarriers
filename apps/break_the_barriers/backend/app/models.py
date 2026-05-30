@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Dict, Optional
+from datetime import datetime
 
 class DocumentMetadata(BaseModel):
     id: str
@@ -80,3 +81,38 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserInfo
+
+
+class PublishRequest(BaseModel):
+    slug: str
+    title: str
+    description: str = ""
+    languages: List[str] = ["vi"]
+    is_public: bool = True
+    cover_url: Optional[str] = None
+
+
+class BookInfo(BaseModel):
+    slug: str
+    title: str
+    description: str
+    cover_url: Optional[str]
+    languages: List[str]
+    is_public: bool
+    page_count: int
+    published_at: str
+    book_url: str
+
+
+class BookPageInfo(BaseModel):
+    page_number: int
+    preview: str
+
+
+class BookPageContent(BaseModel):
+    page_number: int
+    total_pages: int
+    lang: str
+    html: str
+    prev_page: Optional[int]
+    next_page: Optional[int]
