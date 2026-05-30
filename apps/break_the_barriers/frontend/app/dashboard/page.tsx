@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, Trash2, Eye, LogOut } from "lucide-react"
+import { Upload, Trash2, Eye, LogOut, Globe, X, Copy, Check } from "lucide-react"
 import { fetchAPI, ApiError } from "@/lib/api"
 import { getUser, logout, UserInfo } from "@/lib/auth"
 
@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
   const fileRef = useRef<HTMLInputElement>(null)
+  const [publishDoc, setPublishDoc] = useState<Doc | null>(null)
 
   useEffect(() => {
     setUser(getUser())
@@ -190,6 +191,15 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-end">
+                        {(doc.status === "translated" || doc.status === "compiled") && (
+                          <button
+                            onClick={() => setPublishDoc(doc)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Publish Web-Book"
+                          >
+                            <Globe size={15} />
+                          </button>
+                        )}
                         <button
                           onClick={() => router.push(`/books/${doc.id}`)}
                           className="text-indigo-600 hover:text-indigo-800"
@@ -212,6 +222,164 @@ export default function DashboardPage() {
             </table>
           )}
         </div>
+      </div>
+
+      {publishDoc && <PublishModal doc={publishDoc} onClose={() => setPublishDoc(null)} />}
+    </div>
+  )
+}
+
+function slugify(filename: string): string {
+  const name = filename.replace(/\.[^.]+$/, "")
+  let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  if (slug.length < 3) slug = (slug + "-book").replace(/^-+/, "")
+  return slug.slice(0, 80)
+}
+
+function PublishModal({ doc, onClose }: { doc: Doc; onClose: () => void }) {
+  const [slug, setSlug] = useState(slugify(doc.filename))
+  const [title, setTitle] = useState(doc.filename.replace(/\.[^.]+$/, ""))
+  const [description, setDescription] = useState("")
+  const [langVi, setLangVi] = useState(true)
+  const [langEn, setLangEn] = useState(false)
+  const [isPublic, setIsPublic] = useState(true)
+  const [coverTab, setCoverTab] = useState<"url" | "file">("url")
+  const [coverUrl, setCoverUrl] = useState("")
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+  const [resultUrl, setResultUrl] = useState("")
+  const [copied, setCopied] = useState(false)
+
+  const slugValid = /^[a-z0-9][a-z0-9-]{1,78}[a-z0-9]$/.test(slug)
+
+  async function handleSubmit() {
+    setError("")
+    if (!slugValid) { setError("Slug không hợp lệ (a-z, 0-9, gạch ngang, 3-80 ký tự)"); return }
+    const langs: string[] = []
+    if (langVi) langs.push("vi")
+    if (langEn) langs.push("en")
+    if (langs.length === 0) { setError("Chọn ít nhất 1 ngôn ngữ"); return }
+
+    const form = new FormData()
+    form.append("slug", slug)
+    form.append("title", title)
+    form.append("description", description)
+    form.append("languages", JSON.stringify(langs))
+    form.append("is_public", String(isPublic))
+    if (coverTab === "url" && coverUrl) form.append("cover_url", coverUrl)
+    if (coverTab === "file" && coverFile) form.append("cover_file", coverFile)
+
+    setSubmitting(true)
+    try {
+      const res = await fetchAPI<{ book_url: string }>(
+        `/api/docs/${doc.id}/publish`, { method: "POST", body: form }
+      )
+      setResultUrl(res.book_url)
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message)
+      else setError("Publish thất bại")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function copyLink() {
+    const full = window.location.origin + resultUrl
+    navigator.clipboard.writeText(full)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+         onClick={onClose}>
+      <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-4"
+           onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Globe size={18} className="text-indigo-600" /> Publish Web-Book
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+        </div>
+
+        {resultUrl ? (
+          <div className="space-y-3">
+            <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3">
+              ✓ Đã publish! Link công khai:
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-2 text-indigo-600 truncate">
+                {typeof window !== "undefined" ? window.location.origin + resultUrl : resultUrl}
+              </code>
+              <button onClick={copyLink}
+                      className="text-gray-500 hover:text-indigo-600 p-2"
+                      title="Copy">
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+            <a href={resultUrl} target="_blank" rel="noreferrer"
+               className="block text-center text-sm bg-indigo-600 text-white rounded-lg py-2 hover:bg-indigo-700">
+              Mở Web-Book →
+            </a>
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase">URL slug</label>
+              <input value={slug} onChange={(e) => setSlug(e.target.value)}
+                     className={`w-full mt-1 border rounded-lg px-3 py-2 text-sm font-mono ${slugValid ? "border-gray-300" : "border-red-400"}`} />
+              <p className="text-xs text-gray-400 mt-1">/read/{slug || "..."}</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase">Tiêu đề</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)}
+                     className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase">Mô tả</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+                        rows={2}
+                        className="w-full mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-1 text-sm">
+                <input type="checkbox" checked={langVi} onChange={(e) => setLangVi(e.target.checked)} /> 🇻🇳 VI
+              </label>
+              <label className="flex items-center gap-1 text-sm">
+                <input type="checkbox" checked={langEn} onChange={(e) => setLangEn(e.target.checked)} /> 🇺🇸 EN
+              </label>
+              <label className="flex items-center gap-1 text-sm ml-auto">
+                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} /> 🌐 Public
+              </label>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase">Ảnh bìa</label>
+              <div className="flex gap-2 mt-1 mb-2">
+                <button onClick={() => setCoverTab("url")}
+                        className={`text-xs px-3 py-1 rounded-full ${coverTab === "url" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>Nhập URL</button>
+                <button onClick={() => setCoverTab("file")}
+                        className={`text-xs px-3 py-1 rounded-full ${coverTab === "file" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>Upload file</button>
+              </div>
+              {coverTab === "url" ? (
+                <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)}
+                       placeholder="https://..."
+                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              ) : (
+                <input type="file" accept="image/*"
+                       onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+                       className="w-full text-sm" />
+              )}
+            </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button onClick={handleSubmit} disabled={submitting}
+                    className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">
+              {submitting ? "Đang publish..." : "Publish →"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
