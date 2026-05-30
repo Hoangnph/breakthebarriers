@@ -96,7 +96,7 @@ class BookInfo(BaseModel):
     slug: str
     title: str
     description: str
-    cover_url: Optional[str]
+    cover_url: Optional[str] = None
     languages: List[str]
     is_public: bool
     page_count: int
@@ -114,5 +114,5 @@ class BookPageContent(BaseModel):
     total_pages: int
     lang: str
     html: str
-    prev_page: Optional[int]
-    next_page: Optional[int]
+    prev_page: Optional[int] = None
+    next_page: Optional[int] = None
