@@ -92,3 +92,102 @@ def test_publish_requires_auth(client, translated_doc):
     res = client.post("/api/docs/doc-trans/publish",
                       data={"slug": "noauth", "title": "T", "languages": '["vi"]'})
     assert res.status_code == 401
+
+
+import json as _json
+
+
+@pytest.fixture
+def published_book(client, auth_user, translated_doc):
+    """Publish translated_doc and return its slug."""
+    _, headers = auth_user
+    client.post("/api/docs/doc-trans/publish",
+                data={"slug": "pub-book", "title": "Pub Book",
+                      "description": "A description",
+                      "languages": '["vi","en"]', "is_public": "true"},
+                headers=headers)
+    return "pub-book"
+
+
+@pytest.fixture
+def private_book(client, auth_user, db_session):
+    """Publish a private book owned by auth_user."""
+    user, headers = auth_user
+    doc = DBDocument(id="doc-priv", filename="Priv.pdf", total_pages=1,
+                     status="translated", user_id=user.id)
+    db_session.add(doc)
+    db_session.add(DBPage(document_id="doc-priv", page_num=1,
+                          original_html="<p>secret</p>", translated_html="<p>bí mật</p>",
+                          status="translated"))
+    db_session.commit()
+    client.post("/api/docs/doc-priv/publish",
+                data={"slug": "priv-book", "title": "Priv", "languages": '["vi"]',
+                      "is_public": "false"},
+                headers=headers)
+    return "priv-book"
+
+
+def test_get_public_book(client, published_book):
+    res = client.get(f"/api/books/{published_book}")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["title"] == "Pub Book"
+    assert body["page_count"] == 2
+    assert body["languages"] == ["vi", "en"]
+    assert body["book_url"] == "/read/pub-book"
+
+
+def test_get_book_404(client):
+    res = client.get("/api/books/does-not-exist")
+    assert res.status_code == 404
+
+
+def test_get_book_pages(client, published_book):
+    res = client.get(f"/api/books/{published_book}/pages")
+    assert res.status_code == 200
+    pages = res.json()
+    assert len(pages) == 2
+    assert pages[0]["page_number"] == 1
+    assert "preview" in pages[0]
+
+
+def test_get_page_content_vi(client, published_book):
+    res = client.get(f"/api/books/{published_book}/pages/1?lang=vi")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["lang"] == "vi"
+    assert "Xin chào" in body["html"]
+    assert body["prev_page"] is None
+    assert body["next_page"] == 2
+    assert body["total_pages"] == 2
+
+
+def test_get_page_content_en(client, published_book):
+    res = client.get(f"/api/books/{published_book}/pages/2?lang=en")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["lang"] == "en"
+    assert "World" in body["html"]
+    assert body["prev_page"] == 1
+    assert body["next_page"] is None
+
+
+def test_get_page_lang_not_published(client, published_book):
+    res = client.get(f"/api/books/{published_book}/pages/1?lang=zh")
+    assert res.status_code == 400
+
+
+def test_get_page_out_of_range(client, published_book):
+    res = client.get(f"/api/books/{published_book}/pages/99?lang=vi")
+    assert res.status_code == 404
+
+
+def test_private_book_unauthorized(client, private_book):
+    res = client.get(f"/api/books/{private_book}")
+    assert res.status_code == 403
+
+
+def test_private_book_owner_can_read(client, auth_user, private_book):
+    _, headers = auth_user
+    res = client.get(f"/api/books/{private_book}", headers=headers)
+    assert res.status_code == 200

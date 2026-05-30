@@ -1,5 +1,6 @@
 import json
 import os
+import re as _re
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_user, get_optional_user
+from backend.app.models import BookInfo, BookPageInfo, BookPageContent
 from backend.app.models_db import DBDocument, DBPage, DBPublishedBook, DBUser
 from backend.app.services import publisher
 from backend.app.core import DATA_DIR
@@ -97,3 +99,96 @@ async def publish_book(
         "title": book.title,
         "cover_url": cu,
     }
+
+
+# ---------------------------------------------------------------------------
+# Public reader endpoints
+# ---------------------------------------------------------------------------
+
+def _strip_tags(html: str, limit: int = 100) -> str:
+    text = _re.sub(r"<[^>]+>", " ", html or "")
+    text = _re.sub(r"\s+", " ", text).strip()
+    return text[:limit]
+
+
+def _load_book_or_404(slug: str, db: Session) -> DBPublishedBook:
+    book = db.query(DBPublishedBook).filter(DBPublishedBook.slug == slug).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book
+
+
+def _check_visibility(book: DBPublishedBook, user: Optional[DBUser]):
+    """Private books readable only by owner."""
+    if not book.is_public:
+        if user is None or user.id != book.user_id:
+            raise HTTPException(status_code=403, detail="This book is private")
+
+
+@router.get("/api/books/{slug}", response_model=BookInfo)
+def get_book(slug: str, db: Session = Depends(get_db),
+             user: Optional[DBUser] = Depends(get_optional_user)):
+    book = _load_book_or_404(slug, db)
+    _check_visibility(book, user)
+    page_count = db.query(DBPage).filter(DBPage.document_id == book.document_id).count()
+    return BookInfo(
+        slug=book.slug,
+        title=book.title,
+        description=book.description or "",
+        cover_url=_cover_url(book),
+        languages=json.loads(book.languages),
+        is_public=book.is_public,
+        page_count=page_count,
+        published_at=book.published_at.isoformat(),
+        book_url=_book_url(book.slug),
+    )
+
+
+@router.get("/api/books/{slug}/pages", response_model=List[BookPageInfo])
+def get_book_pages(slug: str, db: Session = Depends(get_db),
+                   user: Optional[DBUser] = Depends(get_optional_user)):
+    book = _load_book_or_404(slug, db)
+    _check_visibility(book, user)
+    pages = (db.query(DBPage)
+             .filter(DBPage.document_id == book.document_id)
+             .order_by(DBPage.page_num).all())
+    return [BookPageInfo(page_number=p.page_num, preview=_strip_tags(p.original_html))
+            for p in pages]
+
+
+@router.get("/api/books/{slug}/pages/{page_num}", response_model=BookPageContent)
+def get_book_page_content(slug: str, page_num: int, lang: str = "vi",
+                          db: Session = Depends(get_db),
+                          user: Optional[DBUser] = Depends(get_optional_user)):
+    book = _load_book_or_404(slug, db)
+    _check_visibility(book, user)
+    if lang not in json.loads(book.languages):
+        raise HTTPException(status_code=400, detail=f"Language '{lang}' not published for this book")
+
+    pages = (db.query(DBPage)
+             .filter(DBPage.document_id == book.document_id)
+             .order_by(DBPage.page_num).all())
+    total = len(pages)
+    page = next((p for p in pages if p.page_num == page_num), None)
+    if page is None:
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    if lang == "en":
+        html = page.original_html or ""
+    else:
+        # vi or any non-en: prefer translated, fall back to original
+        html = page.translated_html or page.original_html or ""
+
+    nums = [p.page_num for p in pages]
+    idx = nums.index(page_num)
+    prev_page = nums[idx - 1] if idx > 0 else None
+    next_page = nums[idx + 1] if idx < total - 1 else None
+
+    return BookPageContent(
+        page_number=page_num,
+        total_pages=total,
+        lang=lang,
+        html=html,
+        prev_page=prev_page,
+        next_page=next_page,
+    )
