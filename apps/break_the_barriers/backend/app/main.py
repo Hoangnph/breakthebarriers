@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.database import engine, Base, get_db, SessionLocal
 from backend.app.models_db import DBDocument
 from backend.app.routers import documents, extraction, translation, compilation, volume, jobs
-from backend.app.routers import auth
+from backend.app.routers import auth, books
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,6 +23,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import os as _os
+from fastapi.staticfiles import StaticFiles
+from backend.app.core import DATA_DIR as _DATA_DIR
+
+_covers_dir = _os.path.join(_DATA_DIR, "covers")
+_os.makedirs(_covers_dir, exist_ok=True)
+app.mount("/covers", StaticFiles(directory=_covers_dir), name="covers")
+
 app.include_router(documents.router)
 app.include_router(extraction.router)
 app.include_router(translation.router)
@@ -30,6 +38,7 @@ app.include_router(compilation.router)
 app.include_router(volume.router)
 app.include_router(jobs.router)
 app.include_router(auth.router)
+app.include_router(books.router)
 
 
 @app.on_event("startup")
