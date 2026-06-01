@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Play, RotateCcw, CheckCircle, Circle, Loader } from "lucide-react"
+import { ArrowLeft, Play, RotateCcw, CheckCircle, Circle, Loader, FileText } from "lucide-react"
 import { fetchAPI } from "@/lib/api"
 
 interface Doc {
@@ -204,6 +204,14 @@ export default function BookDetailPage() {
             <button onClick={handleResume}
               className="flex items-center gap-2 border border-indigo-600 text-indigo-600 px-4 py-2 rounded text-sm hover:bg-indigo-50">
               <RotateCcw size={14} /> Resume
+            </button>
+          )}
+          {doc.status !== "raw" && (
+            <button
+              onClick={() => router.push(`/books/${id}/preview`)}
+              className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded text-sm hover:bg-gray-50"
+            >
+              <FileText size={14} /> Xem nội dung
             </button>
           )}
         </div>
