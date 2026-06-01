@@ -48,7 +48,12 @@ class TranslatorV2:
     @staticmethod
     def tm_store(source_text: str, target_lang: str, translated: str,
                  db: Session, quality: float = 1.0) -> None:
-        """Store or update a translation in the translation memory."""
+        """Store or update a translation in the translation memory.
+
+        Concurrency-safe: on a unique-violation race (another transaction inserted
+        the same source_hash), rolls back and treats it as a no-op — the other
+        transaction's value is equally valid.
+        """
         from backend.app.models_db import DBTranslationMemory
         h = TranslatorV2._tm_hash(source_text, target_lang)
         row = db.query(DBTranslationMemory).filter(DBTranslationMemory.source_hash == h).first()
@@ -61,7 +66,10 @@ class TranslatorV2:
                 source_hash=h, source_text=source_text, target_lang=target_lang,
                 translated=translated, quality=quality,
             ))
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
 
     # ── Document Context Extraction ───────────────────────────────────────
 
@@ -240,7 +248,7 @@ class TranslatorV2:
                         translations.update(parts)
             else:
                 batch_result = TranslatorV2._gemini_batch_translate(
-                    blocks_to_translate, target_lang, context, glossary
+                    blocks_to_translate, target_lang, context, glossary, quality
                 )
                 if batch_result is None:
                     # Full fallback to V1 for this page
@@ -309,6 +317,7 @@ class TranslatorV2:
         target_lang: str,
         context: dict,
         glossary: List[dict],
+        quality: str = "balanced",
     ) -> Optional[tuple]:
         """
         Single Gemini call for a list of text blocks.
@@ -343,8 +352,10 @@ class TranslatorV2:
                 "1. Preserve ALL [s:span_id] placeholders in exact positions\n"
                 "2. Follow glossary strictly\n"
                 "3. Return ONLY valid JSON matching schema below\n"
-                "4. If a block is already in the target language, return it unchanged\n\n"
-                f"Input:\n{input_json}\n\n"
+                "4. If a block is already in the target language, return it unchanged\n"
+                + ("5. Prioritize maximum accuracy and natural fluency; double-check terminology against the glossary\n\n"
+                   if quality == "high" else "\n")
+                + f"Input:\n{input_json}\n\n"
                 'Output schema: {"translations":[{"id":"b0","text":"..."},...]}'
             )
 

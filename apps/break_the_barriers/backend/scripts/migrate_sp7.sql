@@ -4,7 +4,7 @@
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_metadata TEXT DEFAULT '{}';
 
 ALTER TABLE pages ADD COLUMN IF NOT EXISTS needs_review        BOOLEAN DEFAULT FALSE;
-ALTER TABLE pages ADD COLUMN IF NOT EXISTS review_reason       VARCHAR;
+ALTER TABLE pages ADD COLUMN IF NOT EXISTS review_reason       TEXT;
 ALTER TABLE pages ADD COLUMN IF NOT EXISTS translation_quality FLOAT;
 
 CREATE TABLE IF NOT EXISTS document_glossaries (

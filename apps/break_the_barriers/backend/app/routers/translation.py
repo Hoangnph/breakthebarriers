@@ -269,8 +269,12 @@ async def translate_all_pages(
 
         def run_v2_translation():
             import asyncio
+            import logging as _logging
+            _log = _logging.getLogger(__name__)
+
             async def _run():
                 sem = asyncio.Semaphore(3)
+
                 async def translate_one(pnum):
                     async with sem:
                         loop = asyncio.get_event_loop()
@@ -282,10 +286,43 @@ async def translate_all_pages(
                                 context=context, glossary=glossary,
                                 db=bg_db, quality=quality,
                             ))
+                        except Exception as e:
+                            _log.error(f"V2 translate failed for {doc_id} p{pnum}: {e}")
+                            try:
+                                from backend.app.models_db import DBPage
+                                pg = bg_db.query(DBPage).filter(
+                                    DBPage.document_id == doc_id, DBPage.page_num == pnum
+                                ).first()
+                                if pg:
+                                    pg.status = "failed"
+                                    bg_db.commit()
+                            except Exception:
+                                bg_db.rollback()
                         finally:
                             bg_db.close()
-                await asyncio.gather(*[translate_one(p) for p in page_nums])
-            asyncio.run(_run())
+
+                await asyncio.gather(*[translate_one(p) for p in page_nums], return_exceptions=True)
+
+                # Safety net: mark any page left in "translating" as "failed"
+                cleanup_db = get_background_db()
+                try:
+                    from backend.app.models_db import DBPage
+                    stuck = cleanup_db.query(DBPage).filter(
+                        DBPage.document_id == doc_id, DBPage.status == "translating"
+                    ).all()
+                    for pg in stuck:
+                        pg.status = "failed"
+                    if stuck:
+                        cleanup_db.commit()
+                except Exception:
+                    cleanup_db.rollback()
+                finally:
+                    cleanup_db.close()
+
+            try:
+                asyncio.run(_run())
+            except Exception as e:
+                _log.error(f"V2 translation orchestrator failed for {doc_id}: {e}")
 
         # Mark pages as translating
         for p in pages:
