@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Break The Barriers — Báo cáo tiến độ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-inner">
+        <div>
+          <h1 class="site-title">Break The Barriers</h1>
+          <p class="site-subtitle">AI-powered Bilingual Book Translation Platform</p>
+        </div>
+        <div class="header-meta">
+          <span class="badge badge-green">● Live</span>
+          <span class="last-updated">Cập nhật: <span id="report-date"></span></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main">
+
+    <!-- KPI Strip -->
+    <section class="kpi-strip" aria-label="Tổng quan">
+      <div class="kpi-card">
+        <span class="kpi-value" data-count="4">0</span>
+        <span class="kpi-label">Sub-Projects hoàn thành</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value" data-count="107">0</span>
+        <span class="kpi-label">Backend tests pass</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value" data-count="9">0</span>
+        <span class="kpi-label">Frontend pages</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value" data-count="30">0</span>
+        <span class="kpi-label">Tasks hoàn thành</span>
+      </div>
+    </section>
+
+    <!-- Architecture Overview -->
+    <section class="section">
+      <h2 class="section-title">Kiến trúc hệ thống</h2>
+      <div class="arch-grid">
+        <div class="arch-block arch-frontend">
+          <div class="arch-label">Frontend — Next.js 14</div>
+          <ul class="arch-list">
+            <li><span class="route">/</span> Redirect → Dashboard</li>
+            <li><span class="route">/dashboard</span> Upload &amp; manage docs</li>
+            <li><span class="route">/books/[id]</span> Translation progress</li>
+            <li><span class="route">/library</span> Public book catalog ✨</li>
+            <li><span class="route">/read/[slug]</span> Book landing page ✨</li>
+            <li><span class="route">/read/[slug]/[page]</span> Chapter reader ✨</li>
+            <li><span class="route">/login · /register</span> Auth</li>
+            <li><span class="route">/pricing</span> Plans</li>
+          </ul>
+        </div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-block arch-backend">
+          <div class="arch-label">Backend — FastAPI</div>
+          <ul class="arch-list">
+            <li><span class="method post">POST</span> /api/auth/*</li>
+            <li><span class="method post">POST</span> /api/docs/upload</li>
+            <li><span class="method get">GET</span> /api/docs/:id/extract</li>
+            <li><span class="method post">POST</span> /api/docs/:id/translate</li>
+            <li><span class="method post">POST</span> /api/docs/:id/publish ✨</li>
+            <li><span class="method get">GET</span> /api/books ✨</li>
+            <li><span class="method get">GET</span> /api/books/:slug ✨</li>
+            <li><span class="method get">GET</span> /api/books/:slug/pages/* ✨</li>
+            <li><span class="method delete">DELETE</span> /api/books/:slug ✨</li>
+          </ul>
+        </div>
+        <div class="arch-arrow">⇄</div>
+        <div class="arch-block arch-db">
+          <div class="arch-label">Database — PostgreSQL</div>
+          <ul class="arch-list">
+            <li>📄 documents</li>
+            <li>📃 pages</li>
+            <li>🔤 translations</li>
+            <li>👤 users</li>
+            <li>📚 published_books ✨</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sub-projects -->
+    <section class="section">
+      <h2 class="section-title">Sub-Projects</h2>
+      <div class="sp-list">
+
+        <!-- SP1 -->
+        <div class="sp-card sp-done">
+          <div class="sp-header">
+            <div>
+              <span class="sp-tag">SP1</span>
+              <span class="sp-name">Core Completion</span>
+            </div>
+            <span class="status-badge done">✓ Done</span>
+          </div>
+          <p class="sp-desc">Hoàn thiện pipeline PDF → Extract HTML → AI Translation (Gemini) → Compile. Background task queue, job status tracking, volume tiers.</p>
+          <div class="sp-meta">
+            <span class="chip">FastAPI</span>
+            <span class="chip">SQLAlchemy</span>
+            <span class="chip">Gemini API</span>
+            <span class="chip">Background Tasks</span>
+          </div>
+          <div class="commit-list">
+            <div class="commit-row">
+              <span class="commit-sha">SP1 branch</span>
+              <span class="commit-msg">PDF extraction, translation, compilation pipeline</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SP2 -->
+        <div class="sp-card sp-done">
+          <div class="sp-header">
+            <div>
+              <span class="sp-tag">SP2</span>
+              <span class="sp-name">SaaS Platform</span>
+            </div>
+            <span class="status-badge done">✓ Done</span>
+          </div>
+          <p class="sp-desc">Auth (JWT), billing/pricing tiers, multi-tenant isolation, Next.js 14 frontend với dashboard đầy đủ, middleware bảo vệ route.</p>
+          <div class="sp-meta">
+            <span class="chip">JWT Auth</span>
+            <span class="chip">Next.js 14</span>
+            <span class="chip">Tailwind CSS</span>
+            <span class="chip">Middleware</span>
+          </div>
+          <div class="commit-list">
+            <div class="commit-row">
+              <span class="commit-sha">SP2 branch</span>
+              <span class="commit-msg">Auth, dashboard, pricing, multi-tenant</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SP3 -->
+        <div class="sp-card sp-done">
+          <div class="sp-header">
+            <div>
+              <span class="sp-tag">SP3</span>
+              <span class="sp-name">Web-Book Publisher</span>
+            </div>
+            <span class="status-badge done">✓ Done</span>
+          </div>
+          <p class="sp-desc">Publish tài liệu đã dịch thành Web-Book public. Slug tùy chỉnh, cover image (URL + upload), language toggle VI/EN, SEO metadata, reader page.</p>
+          <div class="sp-meta">
+            <span class="chip">published_books table</span>
+            <span class="chip">Publisher service</span>
+            <span class="chip">SSR SEO</span>
+            <span class="chip">100 tests</span>
+          </div>
+          <div class="commit-list">
+            <div class="commit-row">
+              <span class="commit-sha">4a700dd</span>
+              <span class="commit-msg">feat(SP3): add DBPublishedBook model</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">d5da5aa</span>
+              <span class="commit-msg">feat(SP3): add publish endpoint + covers static mount</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">be8f00c</span>
+              <span class="commit-msg">feat(SP3): add public reader endpoints</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">50a70f5</span>
+              <span class="commit-msg">feat(SP3): add unpublish (DELETE) endpoint</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">f319d1d</span>
+              <span class="commit-msg">feat(SP3): add publish modal to dashboard</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">2705705</span>
+              <span class="commit-msg">feat(SP3): add reader layout + book landing page with SEO</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">17af972</span>
+              <span class="commit-msg">feat(SP3): add chapter reader page with language toggle</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">12acf1a</span>
+              <span class="commit-msg">chore(SP3): integration verification — 100 tests pass</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SP4 -->
+        <div class="sp-card sp-done">
+          <div class="sp-header">
+            <div>
+              <span class="sp-tag">SP4</span>
+              <span class="sp-name">Public Book Catalog</span>
+            </div>
+            <span class="status-badge done">✓ Done</span>
+          </div>
+          <p class="sp-desc">Trang /library công khai hiển thị tất cả web-book đã publish. Tìm kiếm theo tiêu đề, lọc ngôn ngữ, phân trang. N+1 query đã được tối ưu. Cover URL sanitized chống CSS injection.</p>
+          <div class="sp-meta">
+            <span class="chip">GET /api/books</span>
+            <span class="chip">Server Component</span>
+            <span class="chip">Pagination</span>
+            <span class="chip">107 tests</span>
+          </div>
+          <div class="commit-list">
+            <div class="commit-row">
+              <span class="commit-sha">c964e89</span>
+              <span class="commit-msg">feat(SP4): add GET /api/books list endpoint with search and lang filter</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">6532260</span>
+              <span class="commit-msg">fix(SP4): pagination bounds, N+1 page_count, tighten test assertion</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">e145066</span>
+              <span class="commit-msg">feat(SP4): add /library public book catalog page</span>
+            </div>
+            <div class="commit-row">
+              <span class="commit-sha">1f68829</span>
+              <span class="commit-msg">fix(SP4): URL-encode pagination links, sanitize cover_url</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Test Coverage -->
+    <section class="section">
+      <h2 class="section-title">Test Coverage</h2>
+      <div class="coverage-grid">
+        <div class="coverage-module">
+          <div class="coverage-header">
+            <span class="coverage-name">Auth &amp; Documents</span>
+            <span class="coverage-count">~73 tests</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <p class="coverage-note">Upload, extraction, translation, compilation, auth flows</p>
+        </div>
+        <div class="coverage-module">
+          <div class="coverage-header">
+            <span class="coverage-name">Publisher service</span>
+            <span class="coverage-count">6 tests</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <p class="coverage-note">slug validation, filename→slug, cover file save &amp; reject</p>
+        </div>
+        <div class="coverage-module">
+          <div class="coverage-header">
+            <span class="coverage-name">Books API (SP3+SP4)</span>
+            <span class="coverage-count">28 tests</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <p class="coverage-note">publish, reader endpoints, private visibility, unpublish, list/search/filter</p>
+        </div>
+        <div class="coverage-module total">
+          <div class="coverage-header">
+            <span class="coverage-name">Total</span>
+            <span class="coverage-count">107 passed ✓</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill progress-total" style="width:100%"></div></div>
+          <p class="coverage-note">0 failures · 6 deprecation warnings (pre-existing)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flow Diagram -->
+    <section class="section">
+      <h2 class="section-title">Luồng hoạt động</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-icon">📤</div>
+          <div class="flow-label">Upload PDF</div>
+          <div class="flow-sub">dashboard</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🔍</div>
+          <div class="flow-label">Extract HTML</div>
+          <div class="flow-sub">pdftohtml</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🤖</div>
+          <div class="flow-label">AI Translate</div>
+          <div class="flow-sub">Gemini API</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🌐</div>
+          <div class="flow-label">Publish</div>
+          <div class="flow-sub">/api/docs/:id/publish</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight">
+          <div class="flow-icon">📚</div>
+          <div class="flow-label">Library</div>
+          <div class="flow-sub">/library</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step highlight">
+          <div class="flow-icon">📖</div>
+          <div class="flow-label">Reader</div>
+          <div class="flow-sub">/read/[slug]/[page]</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next Steps -->
+    <section class="section">
+      <h2 class="section-title">Hướng phát triển tiếp theo</h2>
+      <div class="next-grid">
+        <div class="next-card">
+          <span class="next-tag">UX</span>
+          <h3>Reader improvements</h3>
+          <p>Thanh tiến độ đọc, bookmark, font size toggle, fullscreen mode.</p>
+        </div>
+        <div class="next-card">
+          <span class="next-tag">Analytics</span>
+          <h3>Book Analytics</h3>
+          <p>Thống kê lượt đọc, top pages, referrer tracking cho publisher.</p>
+        </div>
+        <div class="next-card">
+          <span class="next-tag">Editor</span>
+          <h3>Edit Published Book</h3>
+          <p>Sửa title, cover, description sau khi publish (PUT /api/books/:slug).</p>
+        </div>
+        <div class="next-card">
+          <span class="next-tag">Nav</span>
+          <h3>Global Navigation</h3>
+          <p>Thêm link "Thư viện" vào header/layout để user dễ khám phá.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>Break The Barriers © 2026</span>
+      <span>Branch: <code>main</code> · Backend: port 8000 · Frontend: port 3000</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
