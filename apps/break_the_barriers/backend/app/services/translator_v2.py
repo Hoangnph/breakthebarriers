@@ -12,7 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 class TranslatorV2:
-    MODEL = "gemini-2.5-flash"
+    # Model used for context extraction + glossary build (1 call/doc, decides
+    # terminology consistency for the whole book) — always the strong anchor model.
+    ANCHOR_MODEL = "gemini-3.5-flash"
+    # Batch page translation model, routed by quality tier (runs per page).
+    BATCH_MODELS = {
+        "fast":     "gemini-3.1-flash-lite",
+        "balanced": "gemini-3.1-flash-lite",
+        "high":     "gemini-3.5-flash",
+    }
+    MODEL = ANCHOR_MODEL  # backward-compat alias
     TM_QUALITY_THRESHOLD = 0.8
 
     LANG_NAMES = {
@@ -115,7 +124,7 @@ class TranslatorV2:
                 '"key_terms":["up to 15 domain-specific terms"]}'
             )
             resp = client.models.generate_content(
-                model=TranslatorV2.MODEL,
+                model=TranslatorV2.ANCHOR_MODEL,
                 contents=prompt,
                 config={"response_mime_type": "application/json"},
             )
@@ -162,7 +171,7 @@ class TranslatorV2:
                 'Schema: [{"source": "term", "target": "translation"}, ...]'
             )
             resp = client.models.generate_content(
-                model=TranslatorV2.MODEL,
+                model=TranslatorV2.ANCHOR_MODEL,
                 contents=prompt,
                 config={"response_mime_type": "application/json"},
             )
@@ -312,6 +321,11 @@ class TranslatorV2:
         return {"status": "translated", "page_num": page_num}
 
     @staticmethod
+    def _resolve_batch_model(quality: str) -> str:
+        """Map a quality tier to its batch-translation model (default: balanced)."""
+        return TranslatorV2.BATCH_MODELS.get(quality, TranslatorV2.BATCH_MODELS["balanced"])
+
+    @staticmethod
     def _gemini_batch_translate(
         blocks: List[dict],
         target_lang: str,
@@ -360,7 +374,7 @@ class TranslatorV2:
             )
 
             resp = client.models.generate_content(
-                model=TranslatorV2.MODEL,
+                model=TranslatorV2._resolve_batch_model(quality),
                 contents=prompt,
                 config={"response_mime_type": "application/json"},
             )

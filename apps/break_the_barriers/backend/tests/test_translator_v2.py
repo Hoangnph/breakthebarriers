@@ -186,3 +186,20 @@ def test_translate_all_use_v2(client, db_session):
         "target_lang": "vi", "use_v2": True
     })
     assert res.status_code in (200, 202)
+
+
+def test_resolve_batch_model():
+    """Model routing: fast/balanced→flash-lite, high→3.5-flash, invalid→balanced default."""
+    from backend.app.services.translator_v2 import TranslatorV2
+    assert TranslatorV2._resolve_batch_model("fast") == "gemini-3.1-flash-lite"
+    assert TranslatorV2._resolve_batch_model("balanced") == "gemini-3.1-flash-lite"
+    assert TranslatorV2._resolve_batch_model("high") == "gemini-3.5-flash"
+    # Invalid tier falls back to balanced
+    assert TranslatorV2._resolve_batch_model("nonsense") == "gemini-3.1-flash-lite"
+
+
+def test_anchor_model_is_strong():
+    """Context + glossary use the strong anchor model regardless of tier."""
+    from backend.app.services.translator_v2 import TranslatorV2
+    assert TranslatorV2.ANCHOR_MODEL == "gemini-3.5-flash"
+    assert TranslatorV2.MODEL == TranslatorV2.ANCHOR_MODEL  # backward-compat alias
