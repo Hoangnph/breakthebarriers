@@ -88,6 +88,11 @@ export default async function LibraryPage({
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-8">
         <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-800">
+              ← Dashboard
+            </Link>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-1">Thư viện sách</h1>
           <p className="text-gray-500 text-sm mb-6">
             {data.total} web-book song ngữ được cộng đồng xuất bản
