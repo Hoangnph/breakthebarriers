@@ -43,6 +43,7 @@ export default function BookDetailPage() {
   const [doc, setDoc] = useState<Doc | null>(null)
   const [progress, setProgress] = useState<ProgressEvent | null>(null)
   const [streaming, setStreaming] = useState(false)
+  const [extracting, setExtracting] = useState(false)
   const [error, setError] = useState("")
   const esRef = useRef<EventSource | null>(null)
 
@@ -62,11 +63,14 @@ export default function BookDetailPage() {
 
   async function handleExtract() {
     setError("")
+    setExtracting(true)
     try {
       await fetchAPI(`/api/docs/${id}/extract`, { method: "POST" })
       await loadDoc()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Extract thất bại")
+    } finally {
+      setExtracting(false)
     }
   }
 
@@ -145,12 +149,19 @@ export default function BookDetailPage() {
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Pipeline</h2>
           <div className="flex items-center">
             {PIPELINE_STEPS.map((step, i) => {
-              const done = i < currentStep
-              const active = i === currentStep
+              // current step (and below) = done; spinner only when genuinely in-flight
+              const done = i <= currentStep
+              const isExtractStep = i === 1
+              const isTranslateStep = i === 2
+              const spinning = (isExtractStep && extracting) || (isTranslateStep && streaming)
               return (
                 <div key={step} className="flex items-center flex-1 last:flex-none">
-                  <div className={`flex flex-col items-center gap-1 ${active ? "text-indigo-600" : done ? "text-green-600" : "text-gray-300"}`}>
-                    {done ? <CheckCircle size={20} /> : active ? <Loader size={20} className="animate-spin" /> : <Circle size={20} />}
+                  <div className={`flex flex-col items-center gap-1 ${spinning ? "text-indigo-600" : done ? "text-green-600" : "text-gray-300"}`}>
+                    {spinning
+                      ? <Loader size={20} className="animate-spin" />
+                      : done
+                        ? <CheckCircle size={20} />
+                        : <Circle size={20} />}
                     <span className="text-xs font-medium">{STEP_LABEL[step]}</span>
                   </div>
                   {i < PIPELINE_STEPS.length - 1 && (
