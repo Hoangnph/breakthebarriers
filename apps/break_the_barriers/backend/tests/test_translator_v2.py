@@ -41,9 +41,6 @@ def test_pydantic_glossary_models():
     assert resp.domain == "classical_philosophy"
 
 
-from unittest.mock import patch, MagicMock
-
-
 def test_extract_context_returns_mock_in_test():
     """In pytest environment, extract_context returns deterministic mock."""
     from backend.app.services.translator_v2 import TranslatorV2
@@ -59,7 +56,7 @@ def test_build_glossary_returns_list_in_test():
     from backend.app.services.translator_v2 import TranslatorV2
     context = {"title": "Test", "domain": "general", "style": "formal_academic", "key_terms": []}
     entries = TranslatorV2.build_glossary_from_context("doc1", "vi", context)
-    assert isinstance(entries, list)
+    assert entries == []
 
 
 def test_tm_store_and_lookup(db_session):

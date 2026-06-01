@@ -3,7 +3,7 @@ import sys
 import json
 import hashlib
 import logging
-from typing import List, Dict, Optional
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -28,15 +28,20 @@ class TranslatorV2:
 
     @staticmethod
     def tm_lookup(source_text: str, target_lang: str, db: Session,
-                  quality_threshold: float = 0.8) -> Optional[str]:
+                  quality_threshold: float = None) -> Optional[str]:
         """Return cached translation if quality >= threshold, else None."""
+        if quality_threshold is None:
+            quality_threshold = TranslatorV2.TM_QUALITY_THRESHOLD
         from backend.app.models_db import DBTranslationMemory
         h = TranslatorV2._tm_hash(source_text, target_lang)
         row = db.query(DBTranslationMemory).filter(DBTranslationMemory.source_hash == h).first()
         if row and row.quality >= quality_threshold:
             row.hit_count += 1
             row.last_used = datetime.now(timezone.utc)
-            db.commit()
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
             return row.translated
         return None
 
@@ -109,6 +114,8 @@ class TranslatorV2:
             result = json.loads(resp.text)
             result.setdefault("author", None)
             result.setdefault("key_terms", [])
+            result.setdefault("domain", "general")
+            result.setdefault("style", "formal_academic")
             return result
         except Exception as e:
             logger.error(f"Context extraction failed: {e}")
