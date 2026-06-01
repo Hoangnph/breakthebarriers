@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.app.database import engine, Base, get_db, SessionLocal
 from backend.app.models_db import DBDocument
 from backend.app.routers import documents, extraction, translation, compilation, volume, jobs
-from backend.app.routers import auth, books
+from backend.app.routers import auth, books, glossary
 from backend.app.core import DATA_DIR
 
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +38,7 @@ app.include_router(volume.router)
 app.include_router(jobs.router)
 app.include_router(auth.router)
 app.include_router(books.router)
+app.include_router(glossary.router)
 
 
 @app.on_event("startup")
