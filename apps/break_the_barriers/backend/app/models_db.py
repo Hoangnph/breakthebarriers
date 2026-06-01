@@ -20,6 +20,7 @@ class DBDocument(Base):
     estimated_duration_min = Column(Integer, nullable=True)
     user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     is_public = Column(Boolean, default=False)
+    ai_metadata = Column(Text, default='{}')  # JSON string: {title, author, domain, style}
 
     pages = relationship("DBPage", back_populates="document", cascade="all, delete-orphan")
     translations = relationship("DBTranslation", back_populates="document", cascade="all, delete-orphan")
@@ -37,6 +38,9 @@ class DBPage(Base):
     translated_html = Column(Text, nullable=True)
     status = Column(String, default="raw")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    needs_review        = Column(Boolean, default=False)
+    review_reason       = Column(Text, nullable=True)
+    translation_quality = Column(Float, nullable=True)
 
     document = relationship("DBDocument", back_populates="pages")
 
@@ -121,3 +125,27 @@ class DBPublishedBook(Base):
     is_public = Column(Boolean, default=True)
     published_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DBDocumentGlossary(Base):
+    __tablename__ = "document_glossaries"
+
+    id          = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    document_id = Column(String, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    source_term = Column(Text, nullable=False)
+    target_term = Column(Text, nullable=False)
+    target_lang = Column(String(10), nullable=False)
+    is_manual   = Column(Boolean, default=False)
+    created_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DBTranslationMemory(Base):
+    __tablename__ = "translation_memory"
+
+    source_hash = Column(String(64), primary_key=True)  # sha256(source_text + "|" + target_lang)
+    source_text = Column(Text, nullable=False)
+    target_lang = Column(String(10), nullable=False)
+    translated  = Column(Text, nullable=False)
+    quality     = Column(Float, default=1.0)
+    hit_count   = Column(Integer, default=0)
+    last_used   = Column(DateTime, default=lambda: datetime.now(timezone.utc))
