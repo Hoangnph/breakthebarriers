@@ -5,11 +5,13 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+import json as _json
 from backend.app.database import get_db, get_background_db
-from backend.app.models import TranslationRequest, TranslationItem, TranslationUpdate, TranslateAllRequest
-from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBJob
+from backend.app.models import TranslationRequest, TranslationItem, TranslationUpdate, TranslateAllRequest, ExtractContextResponse
+from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBJob, DBDocumentGlossary
 from backend.app.services.extractor import Extractor
 from backend.app.services.translator import Translator
+from backend.app.services.translator_v2 import TranslatorV2
 from backend.app.routers.compilation import _perform_compilation
 
 logger = logging.getLogger(__name__)
@@ -184,6 +186,47 @@ async def _dispatch_all_jobs_background(
     await dispatch_all_translation_jobs(jobs_data, doc_id, target_lang, quality, tier)
 
 
+@router.post("/api/docs/{doc_id}/extract-context", response_model=ExtractContextResponse)
+def extract_context(doc_id: str, payload: dict = None, db: Session = Depends(get_db)):
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    target_lang = (payload or {}).get("target_lang", "vi")
+
+    pages = db.query(DBPage).filter(DBPage.document_id == doc_id).order_by(DBPage.page_num).limit(3).all()
+    sample_html = [p.original_html or "" for p in pages]
+
+    context = TranslatorV2.extract_document_context(doc_id, sample_html)
+    doc.ai_metadata = _json.dumps(context)
+
+    glossary_entries = TranslatorV2.build_glossary_from_context(doc_id, target_lang, context)
+    for entry in glossary_entries:
+        existing = db.query(DBDocumentGlossary).filter(
+            DBDocumentGlossary.document_id == doc_id,
+            DBDocumentGlossary.source_term == entry["source"],
+            DBDocumentGlossary.target_lang == target_lang,
+        ).first()
+        if not existing:
+            db.add(DBDocumentGlossary(
+                document_id=doc_id,
+                source_term=entry["source"],
+                target_term=entry["target"],
+                target_lang=target_lang,
+                is_manual=False,
+            ))
+    db.commit()
+
+    return ExtractContextResponse(
+        doc_id=doc_id,
+        title=context.get("title", doc.filename),
+        author=context.get("author"),
+        domain=context.get("domain", "general"),
+        style=context.get("style", "formal_academic"),
+        key_terms=context.get("key_terms", []),
+    )
+
+
 @router.post("/api/docs/{doc_id}/translate-all")
 async def translate_all_pages(
     doc_id: str,
@@ -207,6 +250,55 @@ async def translate_all_pages(
 
     tier = doc.volume_tier or "M"
     quality = payload.quality_tier or doc.quality_tier or "high"
+
+    # V2 pipeline: batch translation
+    if getattr(payload, "use_v2", True):
+        context_raw = doc.ai_metadata or "{}"
+        try:
+            context = _json.loads(context_raw)
+        except Exception:
+            context = {"title": doc.filename, "domain": "general", "style": "formal_academic"}
+
+        glossary_rows = db.query(DBDocumentGlossary).filter(
+            DBDocumentGlossary.document_id == doc_id,
+            DBDocumentGlossary.target_lang == payload.target_lang,
+        ).all()
+        glossary = [{"source": g.source_term, "target": g.target_term} for g in glossary_rows]
+
+        page_nums = [p.page_num for p in pages]
+
+        def run_v2_translation():
+            import asyncio
+            async def _run():
+                sem = asyncio.Semaphore(3)
+                async def translate_one(pnum):
+                    async with sem:
+                        loop = asyncio.get_event_loop()
+                        bg_db = get_background_db()
+                        try:
+                            await loop.run_in_executor(None, lambda: TranslatorV2.translate_page_batch(
+                                doc_id=doc_id, page_num=pnum,
+                                target_lang=payload.target_lang,
+                                context=context, glossary=glossary,
+                                db=bg_db, quality=quality,
+                            ))
+                        finally:
+                            bg_db.close()
+                await asyncio.gather(*[translate_one(p) for p in page_nums])
+            asyncio.run(_run())
+
+        # Mark pages as translating
+        for p in pages:
+            p.status = "translating"
+        db.commit()
+
+        background_tasks.add_task(run_v2_translation)
+        return {
+            "status": "started_v2",
+            "doc_id": doc_id,
+            "total_pages": len(page_nums),
+            "quality_tier": quality,
+        }
 
     # Create a DBJob record per page before dispatching
     created_jobs = []

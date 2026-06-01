@@ -270,7 +270,7 @@ def test_translate_all_creates_jobs(client):
 
     response = client.post(
         "/api/docs/clean_code/translate-all",
-        json={"target_lang": "vi", "quality_tier": "high"}
+        json={"target_lang": "vi", "quality_tier": "high", "use_v2": False}
     )
     assert response.status_code == 200
     data = response.json()
@@ -289,7 +289,7 @@ def test_translate_all_doc_not_found(client):
 
 def test_translate_all_jobs_visible_in_list(client):
     client.post("/api/docs/clean_code/extract")
-    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi", "use_v2": False})
 
     response = client.get("/api/docs/clean_code/jobs")
     assert response.status_code == 200
@@ -302,7 +302,7 @@ def test_get_job_status(client):
     client.post("/api/docs/clean_code/extract")
     translate_resp = client.post(
         "/api/docs/clean_code/translate-all",
-        json={"target_lang": "vi"}
+        json={"target_lang": "vi", "use_v2": False}
     )
     job_ids = translate_resp.json()["job_ids"]
     assert len(job_ids) > 0
@@ -330,7 +330,7 @@ def test_list_document_jobs_empty(client):
 
 def test_list_document_jobs_after_translate_all(client):
     client.post("/api/docs/clean_code/extract")
-    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi", "use_v2": False})
 
     response = client.get("/api/docs/clean_code/jobs")
     assert response.status_code == 200
@@ -343,7 +343,7 @@ def test_list_document_jobs_after_translate_all(client):
 
 def test_list_document_jobs_filter_by_status(client):
     client.post("/api/docs/clean_code/extract")
-    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+    client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi", "use_v2": False})
 
     # All jobs start as pending (or may be done if background ran sync in test)
     response = client.get("/api/docs/clean_code/jobs")
@@ -410,7 +410,7 @@ def test_translate_all_sm_does_not_call_celery(client, monkeypatch, db_session):
     )
 
     client.post("/api/docs/clean_code/extract")
-    resp = client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi"})
+    resp = client.post("/api/docs/clean_code/translate-all", json={"target_lang": "vi", "use_v2": False})
 
     assert resp.status_code == 200
     assert resp.json()["volume_tier"] == "S"
@@ -459,7 +459,7 @@ def test_translate_all_lxl_calls_celery(client, monkeypatch, db_session):
     # Extract pages (mock creates pages for total_pages=10)
     c.post("/api/docs/xl_book/extract")
 
-    resp = c.post("/api/docs/xl_book/translate-all", json={"target_lang": "vi", "quality_tier": "fast"})
+    resp = c.post("/api/docs/xl_book/translate-all", json={"target_lang": "vi", "quality_tier": "fast", "use_v2": False})
     app.dependency_overrides.clear()
 
     assert resp.status_code == 200

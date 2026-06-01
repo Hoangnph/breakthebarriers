@@ -51,6 +51,7 @@ class VolumeProfileResponse(BaseModel):
 class TranslateAllRequest(BaseModel):
     target_lang: str = "vi"
     quality_tier: Optional[str] = None
+    use_v2: bool = True
 
 class UserRegister(BaseModel):
     email: str

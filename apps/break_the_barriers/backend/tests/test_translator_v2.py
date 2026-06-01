@@ -144,3 +144,45 @@ def test_gemini_batch_translate_no_key_returns_none():
     finally:
         if old is not None:
             os.environ["GEMINI_API_KEY"] = old
+
+
+def test_extract_context_endpoint(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    doc = DBDocument(id="ctx-doc", filename="ctx.pdf", total_pages=2, status="extracted")
+    db_session.add(doc)
+    for i in range(1, 3):
+        db_session.add(DBPage(
+            document_id="ctx-doc", page_num=i, status="raw",
+            original_html=f"<p>Sample text page {i}</p>"
+        ))
+    db_session.commit()
+
+    res = client.post("/api/docs/ctx-doc/extract-context", json={"target_lang": "vi"})
+    assert res.status_code == 200
+    body = res.json()
+    assert "title" in body
+    assert "domain" in body
+
+
+def test_extract_context_404(client):
+    res = client.post("/api/docs/no-such-doc/extract-context", json={"target_lang": "vi"})
+    assert res.status_code == 404
+
+
+def test_translate_all_use_v2(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    doc = DBDocument(id="v2all-doc", filename="all.pdf", total_pages=1, status="extracted")
+    db_session.add(doc)
+    db_session.add(DBPage(
+        document_id="v2all-doc", page_num=1, status="raw",
+        original_html='<html><body><span id="s1" style="top:10;left:10">Hello</span></body></html>'
+    ))
+    db_session.add(DBTranslation(
+        document_id="v2all-doc", page_num=1, span_id="s1", original_text="Hello"
+    ))
+    db_session.commit()
+
+    res = client.post("/api/docs/v2all-doc/translate-all", json={
+        "target_lang": "vi", "use_v2": True
+    })
+    assert res.status_code in (200, 202)
