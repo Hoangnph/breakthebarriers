@@ -230,7 +230,7 @@ class TranslatorV2:
                 # Mock: use V1 mock for each block
                 for block in blocks_to_translate:
                     translated = Translator.translate_text_agentic(
-                        block["text"], target_lang=target_lang, quality="fast"
+                        block["text"], target_lang=target_lang, quality=quality
                     )
                     TranslatorV2.tm_store(block["text"], target_lang, translated, db)
                     if len(block["span_ids"]) == 1:
@@ -258,7 +258,11 @@ class TranslatorV2:
                     page.needs_review = True
                     page.review_reason = "batch_failed_v1_fallback"
                 else:
-                    for block, translated in zip(blocks_to_translate, batch_result):
+                    batch_translations, has_missing = batch_result
+                    if has_missing:
+                        page.needs_review = True
+                        page.review_reason = "batch_missing_blocks"
+                    for block, translated in zip(blocks_to_translate, batch_translations):
                         TranslatorV2.tm_store(block["text"], target_lang, translated, db)
                         if len(block["span_ids"]) == 1:
                             translations[block["span_ids"][0]] = translated
@@ -283,7 +287,12 @@ class TranslatorV2:
         ).all()
         trans_dict = {t.span_id: t.translated_text for t in all_t if t.translated_text}
         if trans_dict:
-            page.translated_html = Compiler.inject_translation(page.original_html, trans_dict)
+            try:
+                page.translated_html = Compiler.inject_translation(page.original_html, trans_dict)
+            except Exception as e:
+                logger.error(f"Compiler injection failed for {doc_id} p{page_num}: {e}")
+                page.needs_review = True
+                page.review_reason = "compile_failed"
 
         page.status = "translated"
         doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
@@ -300,10 +309,11 @@ class TranslatorV2:
         target_lang: str,
         context: dict,
         glossary: List[dict],
-    ) -> Optional[List[str]]:
+    ) -> Optional[tuple]:
         """
         Single Gemini call for a list of text blocks.
-        Returns list of translated strings (same order as input), or None on failure.
+        Returns (list of translated strings same order as input, has_missing bool),
+        or None on failure.
         """
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
@@ -345,7 +355,16 @@ class TranslatorV2:
             )
             data = json.loads(resp.text)
             translated_map = {item["id"]: item["text"] for item in data["translations"]}
-            return [translated_map.get(f"b{i}", blocks[i]["text"]) for i in range(len(blocks))]
+            result = []
+            has_missing = False
+            for i in range(len(blocks)):
+                key = f"b{i}"
+                if key in translated_map:
+                    result.append(translated_map[key])
+                else:
+                    result.append(blocks[i]["text"])
+                    has_missing = True
+            return (result, has_missing)
 
         except Exception as e:
             logger.error(f"Gemini batch translate failed: {e}")

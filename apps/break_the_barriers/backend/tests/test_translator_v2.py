@@ -128,3 +128,19 @@ def test_translate_page_batch_uses_tm(db_session):
     assert result["status"] == "translated"
     t = db_session.query(DBTranslation).filter_by(document_id="v2tm", span_id="s1").first()
     assert t.translated_text == "Xin chào Thế giới"
+
+
+def test_gemini_batch_translate_no_key_returns_none():
+    """_gemini_batch_translate returns None when no API key."""
+    import os
+    from backend.app.services.translator_v2 import TranslatorV2
+    old = os.environ.pop("GEMINI_API_KEY", None)
+    try:
+        result = TranslatorV2._gemini_batch_translate(
+            [{"text": "Hello", "span_ids": ["s1"]}], "vi",
+            {"title": "T", "domain": "general", "style": "formal_academic"}, []
+        )
+        assert result is None
+    finally:
+        if old is not None:
+            os.environ["GEMINI_API_KEY"] = old
