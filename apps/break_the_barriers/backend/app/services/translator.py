@@ -77,7 +77,7 @@ class Translator:
             from google import genai as google_genai
 
             client = google_genai.Client(api_key=api_key)
-            MODEL = "gemini-2.0-flash"
+            MODEL = "gemini-2.5-flash"
 
             lang_names = {
                 "vi": "Vietnamese", "en": "English", "zh": "Chinese",
