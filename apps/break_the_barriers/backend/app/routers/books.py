@@ -3,7 +3,7 @@ import os
 import re
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, Query
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -130,8 +130,8 @@ def _check_visibility(book: DBPublishedBook, user: Optional[DBUser]):
 def list_books(
     q: Optional[str] = None,
     lang: Optional[str] = None,
-    page: int = 1,
-    per_page: int = 12,
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=12, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     query = db.query(DBPublishedBook).filter(DBPublishedBook.is_public == True)  # noqa: E712
@@ -147,11 +147,21 @@ def list_books(
                 .limit(per_page)
                 .all())
 
+    # Single query for all page counts — avoids N+1
+    doc_ids = [b.document_id for b in books_db]
+    page_counts: dict = {}
+    if doc_ids:
+        rows = (
+            db.query(DBPage.document_id, func.count(DBPage.id).label("cnt"))
+            .filter(DBPage.document_id.in_(doc_ids))
+            .group_by(DBPage.document_id)
+            .all()
+        )
+        page_counts = {row.document_id: row.cnt for row in rows}
+
     result = []
     for book in books_db:
-        page_count = db.query(func.count(DBPage.id)).filter(
-            DBPage.document_id == book.document_id
-        ).scalar() or 0
+        page_count = page_counts.get(book.document_id, 0)
         result.append(BookInfo(
             slug=book.slug,
             title=book.title,

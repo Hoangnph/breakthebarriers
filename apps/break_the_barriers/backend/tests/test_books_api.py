@@ -274,6 +274,6 @@ def test_list_books_pagination(client, published_book):
     res = client.get("/api/books?per_page=1&page=1")
     assert res.status_code == 200
     body = res.json()
-    assert len(body["books"]) <= 1
+    assert len(body["books"]) == 1
     assert body["per_page"] == 1
     assert body["page"] == 1
