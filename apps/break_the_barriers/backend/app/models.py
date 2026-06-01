@@ -122,3 +122,37 @@ class BookListResponse(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+class GlossaryEntry(BaseModel):
+    id: str
+    document_id: str
+    source_term: str
+    target_term: str
+    target_lang: str
+    is_manual: bool = False
+
+
+class GlossaryCreateRequest(BaseModel):
+    source_term: str
+    target_term: str
+    target_lang: str = "vi"
+    is_manual: bool = True
+
+
+class GlossaryUpdateRequest(BaseModel):
+    target_term: str
+
+
+class GlossaryListResponse(BaseModel):
+    entries: List[GlossaryEntry]
+    total: int
+
+
+class ExtractContextResponse(BaseModel):
+    doc_id: str
+    title: str
+    author: Optional[str] = None
+    domain: str
+    style: str
+    key_terms: List[str]
