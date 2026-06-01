@@ -69,8 +69,8 @@ export default function PreviewPage() {
   }, [id, router])
 
   // Fetch HTML when page or lang changes (not needed for split)
-  const fetchHtml = useCallback(async (page: number, l: Lang) => {
-    if (layout === "split") return
+  const fetchHtml = useCallback(async (page: number, l: Lang, currentLayout: Layout) => {
+    if (currentLayout === "split") return
     setLoading(true)
     setError("")
     try {
@@ -82,18 +82,17 @@ export default function PreviewPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, layout])
+  }, [id])
 
   useEffect(() => {
     if (pages.length === 0) return
-    fetchHtml(currentPage, lang)
-    window.scrollTo(0, 0)
+    fetchHtml(currentPage, lang, layout)
   }, [currentPage, lang, fetchHtml, pages.length])
 
   // Re-fetch when switching away from split
   useEffect(() => {
-    if (layout !== "split" && pages.length > 0) fetchHtml(currentPage, lang)
-  }, [layout]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (layout !== "split" && pages.length > 0) fetchHtml(currentPage, lang, layout)
+  }, [layout, currentPage, lang, fetchHtml, pages.length])
 
   function changeLayout(l: Layout) {
     setLayout(l)
@@ -171,7 +170,7 @@ export default function PreviewPage() {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div key={currentPage} className="flex-1 min-h-0 overflow-hidden">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
         {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}
