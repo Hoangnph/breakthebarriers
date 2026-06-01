@@ -4,12 +4,13 @@ import re
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_user, get_optional_user
-from backend.app.models import BookInfo, BookPageInfo, BookPageContent
+from backend.app.models import BookInfo, BookListResponse, BookPageInfo, BookPageContent
 from backend.app.models_db import DBDocument, DBPage, DBPublishedBook, DBUser
 from backend.app.services import publisher
 from backend.app.core import DATA_DIR
@@ -123,6 +124,46 @@ def _check_visibility(book: DBPublishedBook, user: Optional[DBUser]):
     if not book.is_public:
         if user is None or user.id != book.user_id:
             raise HTTPException(status_code=403, detail="This book is private")
+
+
+@router.get("/api/books", response_model=BookListResponse)
+def list_books(
+    q: Optional[str] = None,
+    lang: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 12,
+    db: Session = Depends(get_db),
+):
+    query = db.query(DBPublishedBook).filter(DBPublishedBook.is_public == True)  # noqa: E712
+    if q:
+        query = query.filter(DBPublishedBook.title.ilike(f"%{q}%"))
+    if lang:
+        # languages is JSON text like '["vi","en"]' — LIKE containment works for SQLite + PostgreSQL
+        query = query.filter(DBPublishedBook.languages.contains(f'"{lang}"'))
+    total = query.count()
+    books_db = (query
+                .order_by(DBPublishedBook.published_at.desc())
+                .offset((page - 1) * per_page)
+                .limit(per_page)
+                .all())
+
+    result = []
+    for book in books_db:
+        page_count = db.query(func.count(DBPage.id)).filter(
+            DBPage.document_id == book.document_id
+        ).scalar() or 0
+        result.append(BookInfo(
+            slug=book.slug,
+            title=book.title,
+            description=book.description or "",
+            cover_url=_cover_url(book),
+            languages=json.loads(book.languages),
+            is_public=book.is_public,
+            page_count=page_count,
+            published_at=book.published_at.isoformat(),
+            book_url=_book_url(book.slug),
+        ))
+    return BookListResponse(books=result, total=total, page=page, per_page=per_page)
 
 
 @router.get("/api/books/{slug}", response_model=BookInfo)

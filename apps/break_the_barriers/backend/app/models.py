@@ -115,3 +115,10 @@ class BookPageContent(BaseModel):
     html: str
     prev_page: Optional[int] = None
     next_page: Optional[int] = None
+
+
+class BookListResponse(BaseModel):
+    books: List[BookInfo]
+    total: int
+    page: int
+    per_page: int

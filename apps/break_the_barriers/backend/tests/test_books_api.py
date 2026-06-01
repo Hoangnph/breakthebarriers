@@ -221,3 +221,59 @@ def test_unpublish_requires_owner(client, published_book, db_session):
 def test_unpublish_requires_auth(client, published_book):
     res = client.delete(f"/api/books/{published_book}")
     assert res.status_code == 401
+
+
+def test_list_books_returns_public(client, published_book):
+    res = client.get("/api/books")
+    assert res.status_code == 200
+    body = res.json()
+    assert "books" in body and "total" in body
+    assert body["total"] >= 1
+    slugs = [b["slug"] for b in body["books"]]
+    assert published_book in slugs
+
+
+def test_list_books_excludes_private(client, published_book, private_book):
+    res = client.get("/api/books")
+    assert res.status_code == 200
+    slugs = [b["slug"] for b in res.json()["books"]]
+    assert private_book not in slugs
+
+
+def test_list_books_search_match(client, published_book):
+    res = client.get("/api/books?q=Pub")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["total"] >= 1
+    assert any(b["slug"] == published_book for b in body["books"])
+
+
+def test_list_books_search_no_match(client, published_book):
+    res = client.get("/api/books?q=zzznomatch")
+    assert res.status_code == 200
+    assert res.json()["total"] == 0
+    assert res.json()["books"] == []
+
+
+def test_list_books_lang_filter(client, published_book):
+    # published_book has languages=["vi","en"]
+    res = client.get("/api/books?lang=vi")
+    assert res.status_code == 200
+    assert any(b["slug"] == published_book for b in res.json()["books"])
+
+
+def test_list_books_lang_filter_excludes(client, published_book):
+    # No book with lang=zh should be in results
+    res = client.get("/api/books?lang=zh")
+    assert res.status_code == 200
+    slugs = [b["slug"] for b in res.json()["books"]]
+    assert published_book not in slugs
+
+
+def test_list_books_pagination(client, published_book):
+    res = client.get("/api/books?per_page=1&page=1")
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["books"]) <= 1
+    assert body["per_page"] == 1
+    assert body["page"] == 1
