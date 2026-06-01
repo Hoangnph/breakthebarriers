@@ -49,8 +49,10 @@ function gradientFor(slug: string): string {
   return `linear-gradient(135deg, hsl(${h1},65%,55%), hsl(${h2},65%,45%))`
 }
 
-function resolveCover(coverUrl: string): string {
-  return coverUrl.startsWith("http") ? coverUrl : `${API_URL}${coverUrl}`
+function resolveCover(coverUrl: string): string | null {
+  if (coverUrl.startsWith("https://") || coverUrl.startsWith("http://")) return coverUrl
+  if (coverUrl.startsWith("/")) return `${API_URL}${coverUrl}`
+  return null
 }
 
 const LANG_LABEL: Record<string, string> = { vi: "🇻🇳 VI", en: "🇺🇸 EN" }
@@ -60,6 +62,14 @@ const LANG_OPTIONS = [
   { value: "vi", label: "🇻🇳 Tiếng Việt" },
   { value: "en", label: "🇺🇸 English" },
 ]
+
+function pageHref(q: string, lang: string, p: number): string {
+  const params = new URLSearchParams()
+  if (q) params.set("q", q)
+  if (lang) params.set("lang", lang)
+  params.set("page", String(p))
+  return `/library?${params}`
+}
 
 export default async function LibraryPage({
   searchParams,
@@ -124,15 +134,12 @@ export default async function LibraryPage({
                   {/* Cover */}
                   <div
                     className="h-36 flex items-end p-3"
-                    style={
-                      book.cover_url
-                        ? {
-                            backgroundImage: `url(${resolveCover(book.cover_url)})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
+                    style={(() => {
+                      const cover = book.cover_url ? resolveCover(book.cover_url) : null
+                      return cover
+                        ? { backgroundImage: `url(${cover})`, backgroundSize: "cover", backgroundPosition: "center" }
                         : { background: gradientFor(book.slug) }
-                    }
+                    })()}
                   >
                     <div className="flex gap-1 flex-wrap">
                       {book.languages.map((l) => (
@@ -167,7 +174,7 @@ export default async function LibraryPage({
           <div className="flex justify-center gap-3 mt-10">
             {page > 1 && (
               <Link
-                href={`/library?q=${q}&lang=${lang}&page=${page - 1}`}
+                href={pageHref(q, lang, page - 1)}
                 className="text-sm text-indigo-600 hover:underline"
               >
                 ← Trang trước
@@ -178,7 +185,7 @@ export default async function LibraryPage({
             </span>
             {page < totalPages && (
               <Link
-                href={`/library?q=${q}&lang=${lang}&page=${page + 1}`}
+                href={pageHref(q, lang, page + 1)}
                 className="text-sm text-indigo-600 hover:underline"
               >
                 Trang sau →
