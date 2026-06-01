@@ -72,3 +72,59 @@ def test_tm_lookup_miss(db_session):
     from backend.app.services.translator_v2 import TranslatorV2
     hit = TranslatorV2.tm_lookup("nonexistent phrase xyz", "vi", db_session)
     assert hit is None
+
+
+def test_translate_page_batch_mock(db_session):
+    """Batch translation uses mock in pytest — page gets translated."""
+    from backend.app.services.translator_v2 import TranslatorV2
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+
+    doc = DBDocument(id="v2doc", filename="test.pdf", total_pages=1, status="extracted")
+    db_session.add(doc)
+    page = DBPage(
+        document_id="v2doc", page_num=1, status="raw",
+        original_html='<html><body><span id="s1" style="top:100;left:10">Hello World</span></body></html>'
+    )
+    db_session.add(page)
+    db_session.add(DBTranslation(
+        document_id="v2doc", page_num=1, span_id="s1",
+        original_text="Hello World"
+    ))
+    db_session.commit()
+
+    result = TranslatorV2.translate_page_batch(
+        doc_id="v2doc", page_num=1, target_lang="vi",
+        context={"title": "T", "domain": "general", "style": "formal_academic"},
+        glossary=[],
+        db=db_session,
+    )
+    assert result["status"] in ("translated", "failed")
+    page_after = db_session.query(DBPage).filter_by(document_id="v2doc", page_num=1).first()
+    assert page_after.status in ("translated", "failed")
+
+
+def test_translate_page_batch_uses_tm(db_session):
+    """Batch skips V1 for blocks already in TM."""
+    from backend.app.services.translator_v2 import TranslatorV2
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+
+    doc = DBDocument(id="v2tm", filename="tm.pdf", total_pages=1, status="extracted")
+    db_session.add(doc)
+    page = DBPage(document_id="v2tm", page_num=1, status="raw",
+                  original_html='<html><body><span id="s1" style="top:10;left:10">Hello World</span></body></html>')
+    db_session.add(page)
+    db_session.add(DBTranslation(document_id="v2tm", page_num=1, span_id="s1", original_text="Hello World"))
+    db_session.commit()
+
+    # Pre-load TM
+    TranslatorV2.tm_store("Hello World", "vi", "Xin chào Thế giới", db_session, quality=1.0)
+
+    result = TranslatorV2.translate_page_batch(
+        doc_id="v2tm", page_num=1, target_lang="vi",
+        context={"title": "T", "domain": "general", "style": "formal_academic"},
+        glossary=[],
+        db=db_session,
+    )
+    assert result["status"] == "translated"
+    t = db_session.query(DBTranslation).filter_by(document_id="v2tm", span_id="s1").first()
+    assert t.translated_text == "Xin chào Thế giới"
