@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, Maximize, type LucideIcon } from "lucide-react"
+import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
 import LayoutReader, { type PageInfo } from "./LayoutReader"
 import LayoutSidebar from "./LayoutSidebar"
@@ -87,6 +87,31 @@ export default function PreviewPage() {
   const zoomOut = () => setZoom((z) => Math.max(0.25, +(z - 0.25).toFixed(2)))
   const zoomFit = () => setZoom(1)
 
+  // Keyboard: +/-/0 zoom, ←/→ page nav. Also handles keys forwarded from the
+  // page iframes (via postMessage) so shortcuts work even when the iframe is focused.
+  useEffect(() => {
+    function handle(key: string) {
+      if (key === "+" || key === "=") setZoom((z) => Math.min(5, +(z + 0.25).toFixed(2)))
+      else if (key === "-" || key === "_") setZoom((z) => Math.max(0.25, +(z - 0.25).toFixed(2)))
+      else if (key === "0") setZoom(1)
+      else if (key === "ArrowRight" || key === "ArrowLeft") {
+        const i = pages.findIndex((p) => p.page_num === currentPage)
+        if (key === "ArrowRight" && i >= 0 && i < pages.length - 1) setCurrentPage(pages[i + 1].page_num)
+        if (key === "ArrowLeft" && i > 0) setCurrentPage(pages[i - 1].page_num)
+      }
+    }
+    function onKey(e: KeyboardEvent) { handle(e.key) }
+    function onMsg(e: MessageEvent) {
+      if (e.data?.type === "btb-key" && typeof e.data.key === "string") handle(e.data.key)
+    }
+    window.addEventListener("keydown", onKey)
+    window.addEventListener("message", onMsg)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("message", onMsg)
+    }
+  }, [pages, currentPage])
+
   const currentPageInfo = pages.find((p) => p.page_num === currentPage)
   const canTranslated = currentPageInfo?.has_translated ?? false
 
@@ -142,35 +167,31 @@ export default function PreviewPage() {
           })}
         </div>
 
+        {/* Zoom controls */}
+        <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+          <button onClick={zoomOut} title="Thu nhỏ (-)"
+                  className="px-2 py-1.5 text-gray-500 hover:bg-gray-50">
+            <ZoomOut size={15} />
+          </button>
+          <button onClick={zoomFit} title="Vừa màn hình (0)"
+                  className="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 border-x border-gray-200 min-w-[3.25rem]">
+            {Math.round(zoom * 100)}%
+          </button>
+          <button onClick={zoomIn} title="Phóng to (+)"
+                  className="px-2 py-1.5 text-gray-500 hover:bg-gray-50">
+            <ZoomIn size={15} />
+          </button>
+        </div>
+
         <span className="text-xs text-gray-400 flex-shrink-0">
           {currentPage}/{doc.total_pages}
         </span>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-hidden relative">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
         {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}
-
-        {/* Floating zoom controls */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-0.5 rounded-lg bg-white/95 shadow-lg border border-gray-200 px-1 py-1 backdrop-blur">
-          <button onClick={zoomOut} title="Thu nhỏ"
-                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100">
-            <ZoomOut size={16} />
-          </button>
-          <button onClick={zoomFit} title="Vừa màn hình"
-                  className="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded min-w-[3rem]">
-            {Math.round(zoom * 100)}%
-          </button>
-          <button onClick={zoomIn} title="Phóng to"
-                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100">
-            <ZoomIn size={16} />
-          </button>
-          <button onClick={zoomFit} title="Reset vừa màn hình"
-                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100 border-l border-gray-200 ml-0.5">
-            <Maximize size={15} />
-          </button>
-        </div>
       </div>
     </div>
   )

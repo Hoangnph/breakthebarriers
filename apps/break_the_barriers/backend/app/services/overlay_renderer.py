@@ -7,12 +7,15 @@ _HEX_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 _OVERLAY_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
-body {
-    background: #525659;
-    overflow: auto;
+body { background: #525659; }
+.ov-scroll { position: absolute; inset: 0; overflow: auto; }
+.ov-fit {
+    min-width: 100%;
+    min-height: 100%;
     display: flex;
-    align-items: safe center;
-    justify-content: safe center;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
 }
 .ov-canvas { position: relative; flex: 0 0 auto; }
 .ov-page {
@@ -114,10 +117,13 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
         "window.addEventListener('message',function(e){var d=e.data||{};"
         "if(d.type!=='btb-zoom')return;"
         "if(typeof d.zoom==='number')userZoom=Math.max(0.25,Math.min(5,d.zoom));"
-        "else if(d.action==='in')userZoom=Math.min(5,userZoom+0.25);"
-        "else if(d.action==='out')userZoom=Math.max(0.25,userZoom-0.25);"
-        "else if(d.action==='reset')userZoom=1;"
         "apply();});"
+        # Forward navigation/zoom keystrokes to the parent (single source of truth),
+        # so keyboard works even when focus is inside this iframe.
+        "var KEYS=['+','=','-','_','0','ArrowLeft','ArrowRight'];"
+        "window.addEventListener('keydown',function(ev){"
+        "if(KEYS.indexOf(ev.key)===-1)return;ev.preventDefault();"
+        "try{window.parent.postMessage({type:'btb-key',key:ev.key},'*');}catch(e){}});"
         "if(document.readyState!=='loading')apply();"
         "else window.addEventListener('DOMContentLoaded',apply);"
         "window.addEventListener('load',apply);"
@@ -127,8 +133,8 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
         '<!DOCTYPE html><html><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         f"<style>{_OVERLAY_CSS}</style></head><body>"
-        f'<div class="ov-canvas">'
+        f'<div class="ov-scroll"><div class="ov-fit"><div class="ov-canvas">'
         f'<div class="ov-page" style="width:{pw:.2f}px;height:{ph:.2f}px">'
         f'{img_tag}{"".join(parts)}</div>'
-        f"</div>{fit_script}</body></html>"
+        f"</div></div></div>{fit_script}</body></html>"
     )
