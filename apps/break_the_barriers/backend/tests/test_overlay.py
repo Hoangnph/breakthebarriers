@@ -1,4 +1,5 @@
 import json
+import pytest
 
 
 def test_dbpage_has_layout_json_column(db_session):
@@ -119,3 +120,30 @@ def test_pages_endpoint_falls_back_without_layout(client, db_session):
     db_session.commit()
     assert "orig-en" in client.get("/api/docs/noov/pages/1?lang=en").json()["html"]
     assert "dich-vi" in client.get("/api/docs/noov/pages/1?lang=vi").json()["html"]
+
+
+import os
+
+_PDF = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
+       "assets", "books", "2024-wttc-introduction-to-ai.pdf"))
+
+
+@pytest.mark.skipif(not os.path.exists(_PDF), reason="sample PDF not available")
+def test_extract_produces_raster_and_layout(tmp_path):
+    import json
+    from backend.app.services.extractor import DoclingExtractor
+
+    out = str(tmp_path / "out")
+    files = DoclingExtractor.extract_pdf_to_html(_PDF, out, "wttc_it")
+    assert files, "no html pages produced"
+
+    # ít nhất 1 trang có ảnh raster + layout blocks
+    layouts = [f for f in os.listdir(out) if f.endswith(".layout.json")]
+    assert layouts, "no layout sidecars written"
+    pngs = [f for f in os.listdir(out) if f.endswith(".png")]
+    assert pngs, "no page raster images written"
+
+    sample = json.load(open(os.path.join(out, layouts[0]), encoding="utf-8"))
+    assert sample["page_w"] and sample["page_h"]
+    if sample["image"]:
+        assert os.path.exists(os.path.join(out, sample["image"]))

@@ -202,3 +202,18 @@ Mỗi phase ra sản phẩm chạy được, test xanh độc lập.
 - ✅ Mỗi trang luôn có đường hiển thị (raster, overlay, hoặc flow fallback) — không trang trắng.
 - ✅ span_id đồng bộ giữa extractor và translations (ràng buộc đã nêu rõ).
 - ✅ Scope gọn cho 1 plan, chia 3 phase độc lập.
+
+---
+
+## Implementation Notes
+
+- Page raster do Docling render (`generate_page_images=True`, `images_scale=2.0`),
+  KHÔNG dùng pdftoppm (binary không có trên máy). Cùng một pass extract.
+- Per-page raster được guard try/except: 1 trang lỗi raster sẽ degrade về flow
+  HTML (image=null, blocks=[]) mà không abort cả lần extract.
+- Overflow xử lý bằng auto-fit font + vertical growth (`overflow: visible`,
+  không clip). Cờ `needs_review`-on-overflow tự động được hoãn (cần ghép độ
+  dài bản dịch với hộp ở thời điểm dịch; ngoài scope GET phục vụ trang).
+- Masking chữ gốc dùng màu sampling phẳng (validate hex, fallback #ffffff) —
+  chữ trên ảnh/gradient có thể thành "miếng vá" nhẹ (giới hạn đã biết).
+- `render_overlay_html` escape text + image src, validate bg color (defense-in-depth).
