@@ -104,8 +104,15 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
                         img["src"] = f"/api/docs/{doc_id}/assets/{src}"
                 final_html = str(soup)
 
+            layout_json = None
+            layout_path = file_path[:-5] + ".layout.json"  # ".html" -> ".layout.json"
+            if os.path.exists(layout_path):
+                with open(layout_path, "r", encoding="utf-8") as lf:
+                    layout_json = lf.read()
+
             spans = Extractor.extract_spans(final_html)
-            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html, status="raw"))
+            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html,
+                          status="raw", layout_json=layout_json))
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
 

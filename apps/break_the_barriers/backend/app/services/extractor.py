@@ -1,5 +1,6 @@
 import re
 import os
+import json
 import html as html_lib
 import subprocess
 import logging
@@ -7,6 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any, Optional
+from backend.app.services.page_image import save_page_image, sample_bg_color
 
 logger = logging.getLogger(__name__)
 
@@ -272,6 +274,8 @@ class DoclingExtractor:
                     PdfPipelineOptions, AcceleratorOptions, AcceleratorDevice
                 )
                 pipeline_options = PdfPipelineOptions()
+                pipeline_options.generate_page_images = True
+                pipeline_options.images_scale = 2.0
                 # Use CPU explicitly — MPS on Apple Silicon doesn't support float64
                 pipeline_options.accelerator_options = AcceleratorOptions(
                     num_threads=4, device=AcceleratorDevice.CPU
@@ -307,32 +311,70 @@ class DoclingExtractor:
 
         html_files = []
         for page_no in sorted(pages_items.keys()):
-            page_html = cls._items_to_page_html(pages_items[page_no], page_no)
+            page_item = doc.pages.get(page_no)
+            page_size = page_item.size if page_item else None
+            page_html, blocks = cls._items_to_page_html(pages_items[page_no], page_no, page_size)
+
             file_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.html"))
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(page_html)
             html_files.append(file_path)
 
+            # Render the page raster + build the positioned layout sidecar.
+            image_name = None
+            pil_img = page_item.image.pil_image if (page_item and page_item.image) else None
+            if pil_img is not None and page_size is not None:
+                image_name = save_page_image(pil_img, output_dir, doc_id, page_no)
+                img_path = os.path.join(output_dir, image_name)
+                scale_x = pil_img.width / page_size.width
+                scale_y = pil_img.height / page_size.height
+                for blk in blocks:
+                    l, t, w, h = blk["bbox"]
+                    bbox_px = (l * scale_x, t * scale_y, (l + w) * scale_x, (t + h) * scale_y)
+                    blk["bg"] = sample_bg_color(img_path, bbox_px)
+
+            layout = {
+                "page_w": page_size.width if page_size else None,
+                "page_h": page_size.height if page_size else None,
+                "image": image_name,
+                "blocks": blocks if image_name else [],
+            }
+            layout_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.layout.json"))
+            with open(layout_path, "w", encoding="utf-8") as f:
+                json.dump(layout, f)
+
         return html_files
 
     @staticmethod
-    def _items_to_page_html(items: list, page_no: int) -> str:
+    def _items_to_page_html(items: list, page_no: int, page_size=None):
         """
-        Render a list of (DocItem, level) pairs as a self-contained HTML page.
-        Every translatable text node is wrapped in <span id="sN"> so the
-        existing translator service can locate and replace text without changes.
+        Render (DocItem, level) pairs as a self-contained HTML page AND return a
+        parallel list of positioned text blocks {span_id, bbox:[l,t,w,h] top-left
+        points} so the overlay renderer can place translated text over the raster.
         """
+        from docling_core.types.doc import CoordOrigin
+
         span_counter = [0]
+        blocks: List[dict] = []
+        page_h = getattr(page_size, "height", None)
 
-        def sid() -> str:
+        def record_block(sid: str, item) -> None:
+            prov = getattr(item, "prov", None)
+            if not prov or page_h is None:
+                return
+            bb = prov[0].bbox
+            tl = bb if bb.coord_origin == CoordOrigin.TOPLEFT else bb.to_top_left_origin(page_height=page_h)
+            blocks.append({"span_id": sid, "bbox": [tl.l, tl.t, tl.r - tl.l, tl.b - tl.t]})
+
+        def wrap(text: str, item=None) -> str:
             span_counter[0] += 1
-            return f"s{span_counter[0]}"
-
-        def wrap(text: str) -> str:
-            return f'<span id="{sid()}">{html_lib.escape(text)}</span>'
+            sid = f"s{span_counter[0]}"
+            if item is not None:
+                record_block(sid, item)
+            return f'<span id="{sid}">{html_lib.escape(text)}</span>'
 
         body_parts: List[str] = []
-        open_list = False  # track whether we're inside a <ul>
+        open_list = False
 
         for item, level in items:
             text: str = getattr(item, "text", "") or ""
@@ -342,10 +384,9 @@ class DoclingExtractor:
                 if not open_list:
                     body_parts.append("<ul>")
                     open_list = True
-                body_parts.append(f"  <li>{wrap(text)}</li>")
+                body_parts.append(f"  <li>{wrap(text, item)}</li>")
                 continue
 
-            # Close any open list before emitting non-list element
             if open_list:
                 body_parts.append("</ul>")
                 open_list = False
@@ -355,7 +396,7 @@ class DoclingExtractor:
 
             if label == "section_header":
                 h = min(max(level + 1, 2), 6)
-                body_parts.append(f"<h{h}>{wrap(text)}</h{h}>")
+                body_parts.append(f"<h{h}>{wrap(text, item)}</h{h}>")
             elif label == "code":
                 body_parts.append(f"<pre><code>{html_lib.escape(text)}</code></pre>")
             elif label == "picture":
@@ -363,12 +404,12 @@ class DoclingExtractor:
             elif label == "table":
                 body_parts.append(DoclingExtractor._table_text_to_html(text))
             else:
-                body_parts.append(f"<p>{wrap(text)}</p>")
+                body_parts.append(f"<p>{wrap(text, item)}</p>")
 
         if open_list:
             body_parts.append("</ul>")
 
-        return (
+        html = (
             f"<!DOCTYPE html>\n<html>\n<head>\n"
             f'<meta charset="UTF-8">\n'
             f'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
@@ -377,6 +418,7 @@ class DoclingExtractor:
             + "\n".join(body_parts)
             + "\n</body>\n</html>"
         )
+        return html, blocks
 
     @staticmethod
     def _table_text_to_html(text: str) -> str:
