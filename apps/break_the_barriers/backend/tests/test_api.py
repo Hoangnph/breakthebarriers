@@ -692,3 +692,34 @@ def test_quota_exceeded(client, db_session):
                        headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 402
     assert "Quota" in resp.json()["detail"]
+
+
+def test_translate_page_v2_sync(client):
+    # V2 single-page (default use_v2=True) returns a translated result synchronously.
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "translated"
+    assert data["page_num"] == 1
+
+
+def test_translate_page_v2_async_marks_translating(client, db_session):
+    from backend.app.models_db import DBPage
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate?async_mode=true",
+                       json={"page_num": 2, "target_lang": "vi", "use_v2": True})
+    assert resp.status_code == 202
+    assert resp.json()["status"] == "translating"
+    page = db_session.query(DBPage).filter(
+        DBPage.document_id == "clean_code", DBPage.page_num == 2).first()
+    assert page.status in ("translated", "translating")
+
+
+def test_translate_page_v1_still_supported(client):
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi", "use_v2": False})
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "translated"

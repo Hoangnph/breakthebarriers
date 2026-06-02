@@ -18,6 +18,52 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _load_context_and_glossary(doc, target_lang: str, db: Session):
+    """Load V2 document context (ai_metadata JSON) + glossary entries for a target lang."""
+    try:
+        context = _json.loads(doc.ai_metadata or "{}")
+    except Exception:
+        context = {"title": doc.filename, "domain": "general", "style": "formal_academic"}
+    rows = db.query(DBDocumentGlossary).filter(
+        DBDocumentGlossary.document_id == doc.id,
+        DBDocumentGlossary.target_lang == target_lang,
+    ).all()
+    glossary = [{"source": g.source_term, "target": g.target_term} for g in rows]
+    return context, glossary
+
+
+def _perform_v2_page(doc_id: str, page_num: int, target_lang: str,
+                     context: dict, glossary: list, db: Session, quality: str) -> dict:
+    """Translate a single page with TranslatorV2. Returns {status, page_num}."""
+    return TranslatorV2.translate_page_batch(
+        doc_id=doc_id, page_num=page_num, target_lang=target_lang,
+        context=context, glossary=glossary, db=db, quality=quality,
+    )
+
+
+def run_v2_single_page(doc_id: str, page_num: int, target_lang: str, quality: str):
+    """Background V2 single-page translation with its own DB session."""
+    db = get_background_db()
+    try:
+        doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+        if not doc:
+            return
+        context, glossary = _load_context_and_glossary(doc, target_lang, db)
+        _perform_v2_page(doc_id, page_num, target_lang, context, glossary, db, quality)
+    except Exception as e:
+        logger.error(f"V2 single-page translate failed for {doc_id} p{page_num}: {e}")
+        try:
+            pg = db.query(DBPage).filter(
+                DBPage.document_id == doc_id, DBPage.page_num == page_num).first()
+            if pg:
+                pg.status = "failed"
+                db.commit()
+        except Exception:
+            db.rollback()
+    finally:
+        db.close()
+
+
 def _perform_translation(doc_id: str, page_num: int, target_lang: str, db: Session, quality: str = "high") -> dict:
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
@@ -91,11 +137,32 @@ def translate_page(
         raise HTTPException(status_code=404, detail="Page not found")
     quality = getattr(payload, "quality_tier", "high") or "high"
 
+    use_v2 = getattr(payload, "use_v2", True)
+
+    if use_v2:
+        if async_mode:
+            page.status = "translating"
+            db.commit()
+            if background_tasks:
+                background_tasks.add_task(run_v2_single_page, doc_id, payload.page_num,
+                                          payload.target_lang, quality)
+            else:
+                run_v2_single_page(doc_id, payload.page_num, payload.target_lang, quality)
+            return JSONResponse(status_code=202, content={
+                "status": "translating", "doc_id": doc_id,
+                "page_num": payload.page_num, "message": "Translation started in background"
+            })
+        context, glossary = _load_context_and_glossary(doc, payload.target_lang, db)
+        return _perform_v2_page(doc_id, payload.page_num, payload.target_lang,
+                                context, glossary, db, quality)
+
+    # V1 fallback (use_v2=False)
     if async_mode:
         page.status = "translating"
         db.commit()
         if background_tasks:
-            background_tasks.add_task(run_background_translate, doc_id, payload.page_num, payload.target_lang, quality)
+            background_tasks.add_task(run_background_translate, doc_id, payload.page_num,
+                                      payload.target_lang, quality)
         else:
             run_background_translate(doc_id, payload.page_num, payload.target_lang, quality)
         return JSONResponse(status_code=202, content={

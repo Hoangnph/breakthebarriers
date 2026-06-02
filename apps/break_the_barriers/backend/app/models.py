@@ -17,6 +17,7 @@ class TranslationRequest(BaseModel):
     page_num: int
     target_lang: str = "vi"
     quality_tier: str = "high"
+    use_v2: bool = True
 
 class CompilationRequest(BaseModel):
     page_num: int
