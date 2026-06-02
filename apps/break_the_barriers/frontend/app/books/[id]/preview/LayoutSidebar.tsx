@@ -43,7 +43,7 @@ export default function LayoutSidebar({
                   role="button"
                   tabIndex={0}
                   onClick={(e) => { e.stopPropagation(); onTranslate(p.page_num) }}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onTranslate(p.page_num) } }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onTranslate(p.page_num) } }}
                   className="text-[11px] px-1.5 py-0.5 rounded border border-indigo-200 text-indigo-600 hover:bg-indigo-100"
                 >
                   {p.has_translated ? "Dịch lại" : "Dịch"}
