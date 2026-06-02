@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
@@ -37,6 +37,36 @@ export default function PreviewPage() {
   const [layout, setLayout] = useState<Layout>("reader")
   const [lang, setLang] = useState<Lang>("en")
   const [zoom, setZoom] = useState(1)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  async function reloadPages() {
+    try {
+      const rows = await fetchAPI<PageInfo[]>(`/api/docs/${id}/pages`)
+      setPages(rows)
+      const anyTranslating = rows.some((r) => r.status === "translating")
+      if (anyTranslating && !pollRef.current) pollRef.current = setInterval(reloadPages, 3000)
+      else if (!anyTranslating && pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    } catch (e) {
+      console.warn("reloadPages failed", e)
+    }
+  }
+
+  async function translatePage(pageNum: number) {
+    const target = localStorage.getItem("btb_translate_lang") || "vi"
+    setPages((rows) => rows.map((r) => r.page_num === pageNum ? { ...r, status: "translating" } : r))
+    try {
+      await fetchAPI(`/api/docs/${id}/translate?async_mode=true`, {
+        method: "POST",
+        body: JSON.stringify({ page_num: pageNum, target_lang: target, use_v2: true }),
+      })
+    } catch {
+      setPages((rows) => rows.map((r) => r.page_num === pageNum ? { ...r, status: "failed" } : r))
+      return
+    }
+    if (!pollRef.current) pollRef.current = setInterval(reloadPages, 3000)
+  }
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
 
   // Restore preferences from localStorage
   useEffect(() => {
@@ -190,7 +220,7 @@ export default function PreviewPage() {
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
-        {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
+        {layout === "sidebar" && <LayoutSidebar {...contentProps} onTranslate={translatePage} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}
       </div>
     </div>
