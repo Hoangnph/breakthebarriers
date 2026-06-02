@@ -48,3 +48,33 @@ def test_items_to_page_html_returns_html_and_blocks():
     assert blocks[0]["span_id"] == "s1"
     # top-left origin: [left, top, width, height]
     assert blocks[0]["bbox"] == [72.0, 40.0, 200.0, 24.0]
+
+
+def test_render_overlay_html_positions_translated_text():
+    from backend.app.services.overlay_renderer import render_overlay_html
+    layout = {"page_w": 1000.0, "page_h": 2000.0, "image": "page-1.png",
+              "blocks": [{"span_id": "s1", "bbox": [100.0, 200.0, 300.0, 50.0], "bg": "#ffffff"}]}
+    html = render_overlay_html(layout, {"s1": "Xin chào"}, "/api/docs/d1/assets")
+
+    assert 'src="/api/docs/d1/assets/page-1.png"' in html
+    assert "Xin chào" in html
+    assert "left:10.000%" in html   # 100/1000
+    assert "top:10.000%" in html    # 200/2000
+    assert "width:30.000%" in html  # 300/1000
+
+
+def test_render_overlay_empty_translations_is_raster_only():
+    from backend.app.services.overlay_renderer import render_overlay_html
+    layout = {"page_w": 1000.0, "page_h": 2000.0, "image": "page-1.png",
+              "blocks": [{"span_id": "s1", "bbox": [100.0, 200.0, 300.0, 50.0], "bg": "#ffffff"}]}
+    html = render_overlay_html(layout, {}, "/api/docs/d1/assets")
+    assert 'src="/api/docs/d1/assets/page-1.png"' in html
+    assert "ov-text" not in html  # không có hộp text khi không có bản dịch
+
+
+def test_render_overlay_escapes_html():
+    from backend.app.services.overlay_renderer import render_overlay_html
+    layout = {"page_w": 100.0, "page_h": 100.0, "image": "p.png",
+              "blocks": [{"span_id": "s1", "bbox": [0, 0, 100, 20], "bg": "#fff"}]}
+    html = render_overlay_html(layout, {"s1": "<b>x</b>"}, "/base")
+    assert "&lt;b&gt;x&lt;/b&gt;" in html
