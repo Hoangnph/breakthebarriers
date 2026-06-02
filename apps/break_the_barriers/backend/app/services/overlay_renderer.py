@@ -1,5 +1,8 @@
 import html as html_lib
 import math
+import re
+
+_HEX_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 
 _OVERLAY_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,11 +59,16 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
         text = (translations or {}).get(sid)
         if not text:
             continue
-        l, t, w, h = blk["bbox"]
+        bbox = blk.get("bbox")
+        if not bbox or len(bbox) != 4:
+            continue
+        l, t, w, h = bbox
         left = l / pw * 100.0
         top = t / ph * 100.0
         width = w / pw * 100.0
         bg = blk.get("bg", "#ffffff")
+        if not isinstance(bg, str) or not _HEX_RE.match(bg):
+            bg = "#ffffff"
         fs = _fit_font_size(text, w, h)
         parts.append(
             f'<div class="ov-text" style="left:{left:.3f}%;top:{top:.3f}%;'
@@ -68,7 +76,8 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
             f'font-size:{fs:.1f}px;">{html_lib.escape(text)}</div>'
         )
 
-    img_tag = f'<img class="ov-bg" src="{image_url_base}/{image}" alt="page"/>' if image else ""
+    img_src = html_lib.escape(f"{image_url_base}/{image}", quote=True) if image else ""
+    img_tag = f'<img class="ov-bg" src="{img_src}" alt="page"/>' if image else ""
     css = _OVERLAY_CSS if parts else "* { box-sizing: border-box; margin: 0; padding: 0; } .ov-page { position: relative; width: 100%; max-width: 900px; margin: 0 auto; } .ov-bg { display: block; width: 100%; height: auto; }"
     return (
         '<!DOCTYPE html><html><head><meta charset="utf-8">'

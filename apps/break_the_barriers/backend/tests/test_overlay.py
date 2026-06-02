@@ -78,3 +78,13 @@ def test_render_overlay_escapes_html():
               "blocks": [{"span_id": "s1", "bbox": [0, 0, 100, 20], "bg": "#fff"}]}
     html = render_overlay_html(layout, {"s1": "<b>x</b>"}, "/base")
     assert "&lt;b&gt;x&lt;/b&gt;" in html
+
+
+def test_render_overlay_sanitizes_malicious_bg():
+    from backend.app.services.overlay_renderer import render_overlay_html
+    layout = {"page_w": 100.0, "page_h": 100.0, "image": "p.png",
+              "blocks": [{"span_id": "s1", "bbox": [0, 0, 100, 20],
+                          "bg": '"; onclick="alert(1)'}]}
+    html = render_overlay_html(layout, {"s1": "hi"}, "/base")
+    assert 'onclick' not in html          # malicious bg neutralized
+    assert "background:#ffffff" in html   # fell back to white
