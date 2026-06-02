@@ -370,7 +370,10 @@ class DoclingExtractor:
                 return
             bb = prov[0].bbox
             tl = bb if bb.coord_origin == CoordOrigin.TOPLEFT else bb.to_top_left_origin(page_height=page_h)
-            blocks.append({"span_id": sid, "bbox": [tl.l, tl.t, tl.r - tl.l, tl.b - tl.t]})
+            # to_top_left_origin gives tl.t < tl.b for valid boxes; use min()/abs()
+            # defensively so an unexpected coord ordering can't yield a negative height.
+            top = min(tl.t, tl.b)
+            blocks.append({"span_id": sid, "bbox": [tl.l, top, tl.r - tl.l, abs(tl.b - tl.t)]})
 
         def wrap(text: str, item=None) -> str:
             span_counter[0] += 1

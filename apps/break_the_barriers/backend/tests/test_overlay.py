@@ -147,3 +147,24 @@ def test_extract_produces_raster_and_layout(tmp_path):
     assert sample["page_w"] and sample["page_h"]
     if sample["image"]:
         assert os.path.exists(os.path.join(out, sample["image"]))
+
+
+def test_items_to_page_html_bottomleft_bbox_positive_height():
+    from types import SimpleNamespace
+    from docling_core.types.doc import BoundingBox, CoordOrigin
+    from backend.app.services.extractor import DoclingExtractor
+
+    # BOTTOMLEFT: t (top edge) has the HIGHER y; b (bottom edge) lower y.
+    bbox = BoundingBox(l=72.0, t=800.0, r=272.0, b=776.0, coord_origin=CoordOrigin.BOTTOMLEFT)
+    item = SimpleNamespace(text="Hello", label="text",
+                           prov=[SimpleNamespace(bbox=bbox, page_no=1)])
+    page_size = SimpleNamespace(width=595.0, height=842.0)
+
+    _html, blocks = DoclingExtractor._items_to_page_html([(item, 0)], 1, page_size)
+
+    assert len(blocks) == 1
+    l, t, w, h = blocks[0]["bbox"]
+    # 842 - 800 = 42 (top), 842 - 776 = 66 (bottom) -> top=42, height=24
+    assert t == 42.0
+    assert h == 24.0          # positive height
+    assert w == 200.0
