@@ -263,16 +263,20 @@ def get_page_content(
         else:
             html = page.original_html
     else:
-        translations = db.query(DBTranslation).filter(
-            DBTranslation.document_id == doc_id,
-            DBTranslation.page_num == page_num
-        ).all()
         if layout:
+            translations = db.query(DBTranslation).filter(
+                DBTranslation.document_id == doc_id,
+                DBTranslation.page_num == page_num
+            ).all()
             trans_dict = {t.span_id: (t.translated_text or "") for t in translations}
             html = render_overlay_html(layout, trans_dict, image_base)
         elif page.translated_html:
             html = page.translated_html
         else:
+            translations = db.query(DBTranslation).filter(
+                DBTranslation.document_id == doc_id,
+                DBTranslation.page_num == page_num
+            ).all()
             trans_dict = {}
             for t in translations:
                 trans_dict[t.span_id] = t.translated_text or Translator.translate_text_agentic(t.original_text)
