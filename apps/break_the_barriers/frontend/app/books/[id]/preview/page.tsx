@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, type LucideIcon } from "lucide-react"
+import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, Maximize, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
 import LayoutReader, { type PageInfo } from "./LayoutReader"
 import LayoutSidebar from "./LayoutSidebar"
@@ -36,6 +36,7 @@ export default function PreviewPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [layout, setLayout] = useState<Layout>("reader")
   const [lang, setLang] = useState<Lang>("en")
+  const [zoom, setZoom] = useState(1)
 
   // Restore preferences from localStorage
   useEffect(() => {
@@ -75,6 +76,17 @@ export default function PreviewPage() {
     localStorage.setItem(LANG_KEY, l)
   }
 
+  // Broadcast the current zoom to every page iframe whenever it changes.
+  useEffect(() => {
+    document.querySelectorAll("iframe").forEach((f) =>
+      f.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")
+    )
+  }, [zoom])
+
+  const zoomIn = () => setZoom((z) => Math.min(5, +(z + 0.25).toFixed(2)))
+  const zoomOut = () => setZoom((z) => Math.max(0.25, +(z - 0.25).toFixed(2)))
+  const zoomFit = () => setZoom(1)
+
   const currentPageInfo = pages.find((p) => p.page_num === currentPage)
   const canTranslated = currentPageInfo?.has_translated ?? false
 
@@ -86,8 +98,8 @@ export default function PreviewPage() {
     )
   }
 
-  const contentProps = { docId: id, apiUrl: API_URL, pages, currentPage, lang, onPageChange: setCurrentPage }
-  const splitProps = { docId: id, pages, currentPage, apiUrl: API_URL, onPageChange: setCurrentPage }
+  const contentProps = { docId: id, apiUrl: API_URL, pages, currentPage, lang, zoom, onPageChange: setCurrentPage }
+  const splitProps = { docId: id, pages, currentPage, apiUrl: API_URL, zoom, onPageChange: setCurrentPage }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -135,10 +147,30 @@ export default function PreviewPage() {
         </span>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden relative">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
         {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}
+
+        {/* Floating zoom controls */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-0.5 rounded-lg bg-white/95 shadow-lg border border-gray-200 px-1 py-1 backdrop-blur">
+          <button onClick={zoomOut} title="Thu nhỏ"
+                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100">
+            <ZoomOut size={16} />
+          </button>
+          <button onClick={zoomFit} title="Vừa màn hình"
+                  className="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded min-w-[3rem]">
+            {Math.round(zoom * 100)}%
+          </button>
+          <button onClick={zoomIn} title="Phóng to"
+                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100">
+            <ZoomIn size={16} />
+          </button>
+          <button onClick={zoomFit} title="Reset vừa màn hình"
+                  className="p-1.5 rounded text-gray-600 hover:bg-gray-100 border-l border-gray-200 ml-0.5">
+            <Maximize size={15} />
+          </button>
+        </div>
       </div>
     </div>
   )

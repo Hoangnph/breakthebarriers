@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import type { ContentLayoutProps } from "./LayoutReader"
 
 export default function LayoutSidebar({
-  docId, apiUrl, pages, currentPage, lang, onPageChange,
+  docId, apiUrl, pages, currentPage, lang, zoom, onPageChange,
 }: ContentLayoutProps) {
   const activeRef = useRef<HTMLButtonElement | null>(null)
 
@@ -50,6 +50,7 @@ export default function LayoutSidebar({
           className="w-full h-full border-none block"
           title={`Trang ${currentPage}`}
           sandbox="allow-same-origin allow-scripts"
+          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       </main>
     </div>

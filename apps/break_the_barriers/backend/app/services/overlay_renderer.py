@@ -7,10 +7,18 @@ _HEX_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 _OVERLAY_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
-body { background: #525659; overflow: hidden; display: grid; place-items: center; }
+body {
+    background: #525659;
+    overflow: auto;
+    display: flex;
+    align-items: safe center;
+    justify-content: safe center;
+}
+.ov-canvas { position: relative; flex: 0 0 auto; }
 .ov-page {
-    position: relative;
-    transform-origin: center center;
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: top left;
     background: #fff;
     box-shadow: 0 2px 14px rgba(0,0,0,.45);
     visibility: hidden;
@@ -87,25 +95,40 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
     img_src = html_lib.escape(f"{image_url_base}/{image}", quote=True) if image else ""
     img_tag = f'<img class="ov-bg" src="{img_src}" alt="page"/>' if image else ""
 
-    # The page keeps its natural point-space size; a uniform transform:scale fits it
-    # to the viewport so img + positioned text + font sizes all scale together.
+    # The page keeps its natural point-space size; a uniform transform:scale renders it.
+    # scale = fitScale * userZoom — fit fills the viewport; userZoom (driven by the parent
+    # via postMessage) zooms in/out. The .ov-canvas reserves the scaled footprint so the
+    # body can scroll when zoomed beyond the viewport. img + text + font scale together.
     fit_script = (
         "<script>(function(){"
-        "function fit(){var p=document.querySelector('.ov-page');if(!p)return;"
-        f"var PW={pw:.2f},PH={ph:.2f},pad=24;"
-        "var s=Math.min((window.innerWidth-pad)/PW,(window.innerHeight-pad)/PH);"
-        "p.style.transform='scale('+s+')';p.style.visibility='visible';}"
-        "window.addEventListener('resize',fit);"
-        "if(document.readyState!=='loading')fit();"
-        "else window.addEventListener('DOMContentLoaded',fit);"
-        "window.addEventListener('load',fit);"
+        f"var PW={pw:.2f},PH={ph:.2f},pad=24,userZoom=1;"
+        "function apply(){"
+        "var page=document.querySelector('.ov-page'),canvas=document.querySelector('.ov-canvas');"
+        "if(!page||!canvas)return;"
+        "var fit=Math.min((window.innerWidth-pad)/PW,(window.innerHeight-pad)/PH);"
+        "var s=fit*userZoom;"
+        "page.style.transform='scale('+s+')';"
+        "canvas.style.width=(PW*s)+'px';canvas.style.height=(PH*s)+'px';"
+        "page.style.visibility='visible';}"
+        "window.addEventListener('resize',apply);"
+        "window.addEventListener('message',function(e){var d=e.data||{};"
+        "if(d.type!=='btb-zoom')return;"
+        "if(typeof d.zoom==='number')userZoom=Math.max(0.25,Math.min(5,d.zoom));"
+        "else if(d.action==='in')userZoom=Math.min(5,userZoom+0.25);"
+        "else if(d.action==='out')userZoom=Math.max(0.25,userZoom-0.25);"
+        "else if(d.action==='reset')userZoom=1;"
+        "apply();});"
+        "if(document.readyState!=='loading')apply();"
+        "else window.addEventListener('DOMContentLoaded',apply);"
+        "window.addEventListener('load',apply);"
         "})();</script>"
     )
     return (
         '<!DOCTYPE html><html><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         f"<style>{_OVERLAY_CSS}</style></head><body>"
+        f'<div class="ov-canvas">'
         f'<div class="ov-page" style="width:{pw:.2f}px;height:{ph:.2f}px">'
         f'{img_tag}{"".join(parts)}</div>'
-        f"{fit_script}</body></html>"
+        f"</div>{fit_script}</body></html>"
     )

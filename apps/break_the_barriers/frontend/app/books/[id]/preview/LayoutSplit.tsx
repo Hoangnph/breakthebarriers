@@ -6,12 +6,13 @@ export interface SplitLayoutProps {
   pages: PageInfo[]
   currentPage: number
   apiUrl: string
+  zoom: number
   onPageChange: (page: number) => void
 }
 
 function IframePane({
-  label, src, hasContent,
-}: { label: string; src: string; hasContent: boolean }) {
+  label, src, hasContent, zoom,
+}: { label: string; src: string; hasContent: boolean; zoom: number }) {
   return (
     <div className="flex-1 flex flex-col min-w-0 border-r last:border-r-0 border-gray-200">
       <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -23,6 +24,7 @@ function IframePane({
           className="flex-1 w-full border-none bg-white"
           title={label}
           sandbox="allow-same-origin allow-scripts"
+          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
@@ -34,7 +36,7 @@ function IframePane({
 }
 
 export default function LayoutSplit({
-  docId, pages, currentPage, apiUrl, onPageChange,
+  docId, pages, currentPage, apiUrl, zoom, onPageChange,
 }: SplitLayoutProps) {
   const idx = pages.findIndex((p) => p.page_num === currentPage)
   const currentPageInfo = pages[idx]
@@ -52,11 +54,13 @@ export default function LayoutSplit({
           label="Original"
           src={srcOriginal}
           hasContent={currentPageInfo?.has_original ?? false}
+          zoom={zoom}
         />
         <IframePane
           label="Translated"
           src={srcTranslated}
           hasContent={currentPageInfo?.has_translated ?? false}
+          zoom={zoom}
         />
       </div>
 

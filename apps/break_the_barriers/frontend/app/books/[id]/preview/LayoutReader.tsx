@@ -13,11 +13,12 @@ export interface ContentLayoutProps {
   pages: PageInfo[]
   currentPage: number
   lang: "en" | "vi"
+  zoom: number
   onPageChange: (page: number) => void
 }
 
 export default function LayoutReader({
-  docId, apiUrl, pages, currentPage, lang, onPageChange,
+  docId, apiUrl, pages, currentPage, lang, zoom, onPageChange,
 }: ContentLayoutProps) {
   const idx = pages.findIndex((p) => p.page_num === currentPage)
   const prev = idx > 0 ? pages[idx - 1].page_num : null
@@ -33,6 +34,7 @@ export default function LayoutReader({
           className="w-full h-full border-none block"
           title={`Trang ${currentPage}`}
           sandbox="allow-same-origin allow-scripts"
+          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       </main>
 
