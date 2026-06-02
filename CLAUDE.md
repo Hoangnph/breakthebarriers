@@ -19,7 +19,7 @@ Tóm tắt nhanh:
 ```bash
 # Terminal 1 — Backend (port 8000)
 cd apps/break_the_barriers/backend
-../.venv/bin/uvicorn app.main:app --reload --port 8000
+.venv/bin/uvicorn app.main:app --reload --port 8000
 
 # Terminal 2 — Frontend (port 8001)
 cd apps/break_the_barriers
@@ -109,7 +109,7 @@ Agent_Skill_Creator/
 
 ```bash
 cd apps/break_the_barriers/backend
-../.venv/bin/pytest tests/ -v
+.venv/bin/pytest tests/ -v
 ```
 
 Tests dùng SQLite in-memory — không ảnh hưởng DB production.

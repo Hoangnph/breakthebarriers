@@ -23,8 +23,10 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    db.query(DBPage).filter(DBPage.document_id == doc_id).delete()
-    db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).delete()
+    # synchronize_session=False avoids an extra SELECT to sync the identity map;
+    # these rows are being deleted and immediately re-inserted from scratch.
+    db.query(DBPage).filter(DBPage.document_id == doc_id).delete(synchronize_session=False)
+    db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).delete(synchronize_session=False)
 
     if is_mock_run(doc_id):
         for page_num in range(1, doc.total_pages + 1):
@@ -134,12 +136,23 @@ def extract_document(
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db)
 ):
-    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    # Lock the document row so concurrent extract calls serialize on it.
+    # with_for_update is a no-op on SQLite (tests) but locks the row on PostgreSQL.
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).with_for_update().first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    # Idempotency guard: reject a second extract while one is already running.
+    # Without this, two concurrent calls each delete-then-insert pages in their
+    # own transaction and both commit, producing duplicate pages.
+    if doc.status == "extracting":
+        raise HTTPException(status_code=409, detail="Extraction already in progress for this document")
+
+    # Claim the job atomically: mark "extracting" and release the row lock on commit.
+    doc.status = "extracting"
+    db.commit()
+
     if async_mode:
-        doc.status = "extracting"
-        db.commit()
         if background_tasks:
             background_tasks.add_task(run_background_extract, doc_id)
         else:

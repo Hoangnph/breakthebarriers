@@ -248,6 +248,11 @@ async def translate_all_pages(
     if not pages:
         return {"status": "nothing_to_do", "doc_id": doc_id, "total_pages": 0, "job_ids": []}
 
+    # Idempotency guard: reject a second translate-all while one is still running,
+    # so concurrent calls don't double-dispatch the same pages.
+    if any(p.status == "translating" for p in pages):
+        raise HTTPException(status_code=409, detail="Translation already in progress for this document")
+
     tier = doc.volume_tier or "M"
     quality = payload.quality_tier or doc.quality_tier or "high"
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Dict, Optional
 
 class DocumentMetadata(BaseModel):
@@ -30,8 +30,7 @@ class TranslationItem(BaseModel):
     translated_text: Optional[str] = None
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TranslationUpdate(BaseModel):
     translated_text: str
