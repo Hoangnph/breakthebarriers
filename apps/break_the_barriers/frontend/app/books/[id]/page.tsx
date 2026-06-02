@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Play, RotateCcw, CheckCircle, Circle, Loader, FileText } from "lucide-react"
 import { fetchAPI } from "@/lib/api"
+import { TRANSLATE_LANG_KEY } from "@/lib/constants"
 
 interface Doc {
   id: string
@@ -34,7 +35,6 @@ const LANGS = [
   { code: "de", label: "🇩🇪 Deutsch" },
 ] as const
 
-const TRANSLATE_LANG_KEY = "btb_translate_lang"
 
 interface PageRow {
   page_num: number
@@ -68,6 +68,7 @@ export default function BookDetailPage() {
   const [targetLang, setTargetLang] = useState("vi")
   const [pageRows, setPageRows] = useState<PageRow[]>([])
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollFailRef = useRef(0)
 
   useEffect(() => {
     loadDoc()
@@ -148,6 +149,7 @@ export default function BookDetailPage() {
   async function loadPages() {
     try {
       const rows = await fetchAPI<PageRow[]>(`/api/docs/${id}/pages`)
+      pollFailRef.current = 0
       setPageRows(rows)
       const anyTranslating = rows.some((r) => r.status === "translating")
       if (anyTranslating && !pollRef.current) {
@@ -157,7 +159,12 @@ export default function BookDetailPage() {
         pollRef.current = null
       }
     } catch (e) {
-      console.warn("loadPages failed", e)  // best-effort; polling continues
+      console.warn("loadPages failed", e)  // best-effort
+      pollFailRef.current += 1
+      if (pollFailRef.current >= 5 && pollRef.current) {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      }
     }
   }
 

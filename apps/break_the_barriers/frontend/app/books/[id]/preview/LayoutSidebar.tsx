@@ -5,7 +5,7 @@ export default function LayoutSidebar({
   docId, apiUrl, pages, currentPage, lang, zoom, onPageChange,
   onTranslate,
 }: ContentLayoutProps & { onTranslate?: (pageNum: number) => void }) {
-  const activeRef = useRef<HTMLButtonElement | null>(null)
+  const activeRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
@@ -26,30 +26,29 @@ export default function LayoutSidebar({
         {pages.map((p) => {
           const active = p.page_num === currentPage
           return (
-            <button
+            <div
               key={p.page_num}
               ref={active ? activeRef : null}
-              onClick={() => onPageChange(p.page_num)}
-              className={`w-full text-left px-4 py-2.5 text-sm flex justify-between items-center gap-2 hover:bg-gray-50 border-b border-gray-100 ${
+              className={`px-4 py-2.5 text-sm flex justify-between items-center gap-2 border-b border-gray-100 ${
                 active ? "bg-indigo-50 text-indigo-700 font-semibold border-l-2 border-l-indigo-500" : "text-gray-700"
               }`}
             >
-              <span className="flex-1">Trang {p.page_num}</span>
+              <button onClick={() => onPageChange(p.page_num)}
+                      className="flex-1 text-left hover:underline">
+                Trang {p.page_num}
+              </button>
               <span className={`text-xs ${p.has_translated ? "text-green-600" : p.status === "translating" ? "text-blue-600" : "text-gray-400"}`}>
                 {p.status === "translating" ? "●" : statusIcon(p)}
               </span>
               {onTranslate && p.status !== "translating" && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => { e.stopPropagation(); onTranslate(p.page_num) }}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onTranslate(p.page_num) } }}
+                <button
+                  onClick={() => onTranslate(p.page_num)}
                   className="text-[11px] px-1.5 py-0.5 rounded border border-indigo-200 text-indigo-600 hover:bg-indigo-100"
                 >
                   {p.has_translated ? "Dịch lại" : "Dịch"}
-                </span>
+                </button>
               )}
-            </button>
+            </div>
           )
         })}
       </aside>

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
+import { TRANSLATE_LANG_KEY } from "@/lib/constants"
 import LayoutReader, { type PageInfo } from "./LayoutReader"
 import LayoutSidebar from "./LayoutSidebar"
 import LayoutSplit from "./LayoutSplit"
@@ -38,21 +39,25 @@ export default function PreviewPage() {
   const [lang, setLang] = useState<Lang>("en")
   const [zoom, setZoom] = useState(1)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollFailRef = useRef(0)
 
   async function reloadPages() {
     try {
       const rows = await fetchAPI<PageInfo[]>(`/api/docs/${id}/pages`)
+      pollFailRef.current = 0
       setPages(rows)
       const anyTranslating = rows.some((r) => r.status === "translating")
       if (anyTranslating && !pollRef.current) pollRef.current = setInterval(reloadPages, 3000)
       else if (!anyTranslating && pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     } catch (e) {
       console.warn("reloadPages failed", e)
+      pollFailRef.current += 1
+      if (pollFailRef.current >= 5 && pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }
   }
 
   async function translatePage(pageNum: number) {
-    const target = localStorage.getItem("btb_translate_lang") || "vi"
+    const target = localStorage.getItem(TRANSLATE_LANG_KEY) || "vi"
     setPages((rows) => rows.map((r) => r.page_num === pageNum ? { ...r, status: "translating" } : r))
     try {
       await fetchAPI(`/api/docs/${id}/translate?async_mode=true`, {

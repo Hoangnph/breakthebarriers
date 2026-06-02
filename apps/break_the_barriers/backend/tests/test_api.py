@@ -723,3 +723,15 @@ def test_translate_page_v1_still_supported(client):
                        json={"page_num": 1, "target_lang": "vi", "use_v2": False})
     assert resp.status_code == 200
     assert resp.json()["status"] == "translated"
+
+
+def test_translate_page_rejects_already_translating(client, db_session):
+    from backend.app.models_db import DBPage
+    client.post("/api/docs/clean_code/extract")
+    page = db_session.query(DBPage).filter(
+        DBPage.document_id == "clean_code", DBPage.page_num == 1).first()
+    page.status = "translating"
+    db_session.commit()
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi"})
+    assert resp.status_code == 409

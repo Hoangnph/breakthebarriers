@@ -135,6 +135,10 @@ def translate_page(
     page = db.query(DBPage).filter(DBPage.document_id == doc_id, DBPage.page_num == payload.page_num).first()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
+    # Idempotency guard: reject if this page is already being translated (e.g. a
+    # translate-all run in flight) so we don't double-dispatch / double-charge.
+    if page.status == "translating":
+        raise HTTPException(status_code=409, detail="Page is already being translated")
     quality = getattr(payload, "quality_tier", "high") or "high"
 
     use_v2 = getattr(payload, "use_v2", True)
