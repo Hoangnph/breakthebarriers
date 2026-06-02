@@ -156,8 +156,8 @@ export default function BookDetailPage() {
         clearInterval(pollRef.current)
         pollRef.current = null
       }
-    } catch {
-      // best-effort
+    } catch (e) {
+      console.warn("loadPages failed", e)  // best-effort; polling continues
     }
   }
 
@@ -182,12 +182,11 @@ export default function BookDetailPage() {
     localStorage.setItem(TRANSLATE_LANG_KEY, code)
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (doc && doc.status !== "raw") loadPages()
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null } }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc?.status])
+  }, [doc?.status, id])
 
   if (!doc) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
