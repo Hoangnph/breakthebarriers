@@ -6,8 +6,16 @@ _HEX_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
 
 _OVERLAY_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
-.ov-page { position: relative; width: 100%; max-width: 900px; margin: 0 auto; }
-.ov-bg { display: block; width: 100%; height: auto; }
+html, body { height: 100%; }
+body { background: #525659; overflow: hidden; display: grid; place-items: center; }
+.ov-page {
+    position: relative;
+    transform-origin: center center;
+    background: #fff;
+    box-shadow: 0 2px 14px rgba(0,0,0,.45);
+    visibility: hidden;
+}
+.ov-bg { display: block; width: 100%; height: 100%; }
 .ov-text {
     position: absolute;
     line-height: 1.15;
@@ -78,11 +86,26 @@ def render_overlay_html(layout: dict, translations: dict, image_url_base: str) -
 
     img_src = html_lib.escape(f"{image_url_base}/{image}", quote=True) if image else ""
     img_tag = f'<img class="ov-bg" src="{img_src}" alt="page"/>' if image else ""
-    css = _OVERLAY_CSS if parts else "* { box-sizing: border-box; margin: 0; padding: 0; } .ov-page { position: relative; width: 100%; max-width: 900px; margin: 0 auto; } .ov-bg { display: block; width: 100%; height: auto; }"
+
+    # The page keeps its natural point-space size; a uniform transform:scale fits it
+    # to the viewport so img + positioned text + font sizes all scale together.
+    fit_script = (
+        "<script>(function(){"
+        "function fit(){var p=document.querySelector('.ov-page');if(!p)return;"
+        f"var PW={pw:.2f},PH={ph:.2f},pad=24;"
+        "var s=Math.min((window.innerWidth-pad)/PW,(window.innerHeight-pad)/PH);"
+        "p.style.transform='scale('+s+')';p.style.visibility='visible';}"
+        "window.addEventListener('resize',fit);"
+        "if(document.readyState!=='loading')fit();"
+        "else window.addEventListener('DOMContentLoaded',fit);"
+        "window.addEventListener('load',fit);"
+        "})();</script>"
+    )
     return (
         '<!DOCTYPE html><html><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
-        f"<style>{css}</style></head><body>"
-        f'<div class="ov-page">{img_tag}{"".join(parts)}</div>'
-        "</body></html>"
+        f"<style>{_OVERLAY_CSS}</style></head><body>"
+        f'<div class="ov-page" style="width:{pw:.2f}px;height:{ph:.2f}px">'
+        f'{img_tag}{"".join(parts)}</div>'
+        f"{fit_script}</body></html>"
     )

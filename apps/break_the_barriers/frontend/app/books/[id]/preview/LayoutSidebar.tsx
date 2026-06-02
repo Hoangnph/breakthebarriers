@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import type { ContentLayoutProps } from "./LayoutReader"
 
 export default function LayoutSidebar({
-  pages, currentPage, html, loading, onPageChange,
+  docId, apiUrl, pages, currentPage, lang, onPageChange,
 }: ContentLayoutProps) {
   const activeRef = useRef<HTMLButtonElement | null>(null)
 
@@ -15,6 +15,8 @@ export default function LayoutSidebar({
     if (p.has_original) return "○"
     return "—"
   }
+
+  const src = `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true`
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -40,22 +42,15 @@ export default function LayoutSidebar({
         })}
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-8">
-          {loading ? (
-            <div className="space-y-3 animate-pulse">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-4 bg-gray-200 rounded" style={{ width: `${70 + (i % 3) * 10}%` }} />
-              ))}
-            </div>
-          ) : html ? (
-            <article className="prose max-w-none text-sm"
-                     dangerouslySetInnerHTML={{ __html: html }} />
-          ) : (
-            <p className="text-gray-400 text-sm text-center py-20">Không có nội dung.</p>
-          )}
-        </div>
+      {/* Main content — full-height iframe that auto-fits the page */}
+      <main className="flex-1 min-h-0 bg-[#525659]">
+        <iframe
+          key={`${currentPage}-${lang}`}
+          src={src}
+          className="w-full h-full border-none block"
+          title={`Trang ${currentPage}`}
+          sandbox="allow-same-origin allow-scripts"
+        />
       </main>
     </div>
   )

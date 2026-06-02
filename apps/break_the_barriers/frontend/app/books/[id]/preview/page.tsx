@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
@@ -36,9 +36,6 @@ export default function PreviewPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [layout, setLayout] = useState<Layout>("reader")
   const [lang, setLang] = useState<Lang>("en")
-  const [html, setHtml] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   // Restore preferences from localStorage
   useEffect(() => {
@@ -68,32 +65,6 @@ export default function PreviewPage() {
     init()
   }, [id, router])
 
-  // Fetch HTML when page or lang changes (not needed for split)
-  const fetchHtml = useCallback(async (page: number, l: Lang, currentLayout: Layout) => {
-    if (currentLayout === "split") return
-    setLoading(true)
-    setError("")
-    try {
-      const data = await fetchAPI<{ html: string }>(`/api/docs/${id}/pages/${page}?lang=${l}`)
-      setHtml(data.html ?? "")
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Không tải được nội dung")
-      setHtml("")
-    } finally {
-      setLoading(false)
-    }
-  }, [id])
-
-  useEffect(() => {
-    if (pages.length === 0) return
-    fetchHtml(currentPage, lang, layout)
-  }, [currentPage, lang, fetchHtml, pages.length])
-
-  // Re-fetch when switching away from split
-  useEffect(() => {
-    if (layout !== "split" && pages.length > 0) fetchHtml(currentPage, lang, layout)
-  }, [layout, currentPage, lang, fetchHtml, pages.length])
-
   function changeLayout(l: Layout) {
     setLayout(l)
     localStorage.setItem(LAYOUT_KEY, l)
@@ -115,7 +86,7 @@ export default function PreviewPage() {
     )
   }
 
-  const contentProps = { pages, currentPage, html, loading, onPageChange: setCurrentPage }
+  const contentProps = { docId: id, apiUrl: API_URL, pages, currentPage, lang, onPageChange: setCurrentPage }
   const splitProps = { docId: id, pages, currentPage, apiUrl: API_URL, onPageChange: setCurrentPage }
 
   return (
@@ -164,13 +135,7 @@ export default function PreviewPage() {
         </span>
       </header>
 
-      {error && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <div key={currentPage} className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
         {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}

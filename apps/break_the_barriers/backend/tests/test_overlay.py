@@ -70,7 +70,7 @@ def test_render_overlay_empty_translations_is_raster_only():
               "blocks": [{"span_id": "s1", "bbox": [100.0, 200.0, 300.0, 50.0], "bg": "#ffffff"}]}
     html = render_overlay_html(layout, {}, "/api/docs/d1/assets")
     assert 'src="/api/docs/d1/assets/page-1.png"' in html
-    assert "ov-text" not in html  # không có hộp text khi không có bản dịch
+    assert 'class="ov-text"' not in html  # không có hộp text khi không có bản dịch
 
 
 def test_render_overlay_escapes_html():
