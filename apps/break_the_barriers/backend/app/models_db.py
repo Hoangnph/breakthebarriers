@@ -41,6 +41,7 @@ class DBPage(Base):
     needs_review        = Column(Boolean, default=False)
     review_reason       = Column(Text, nullable=True)
     translation_quality = Column(Float, nullable=True)
+    layout_json         = Column(Text, nullable=True)
 
     document = relationship("DBDocument", back_populates="pages")
 
