@@ -321,17 +321,23 @@ class DoclingExtractor:
             html_files.append(file_path)
 
             # Render the page raster + build the positioned layout sidecar.
+            # Guarded per-page: a raster failure degrades THIS page to flow HTML
+            # (image=None, blocks=[]) without aborting the whole extraction run.
             image_name = None
-            pil_img = page_item.image.pil_image if (page_item and page_item.image) else None
+            pil_img = getattr(page_item.image, "pil_image", None) if (page_item and page_item.image) else None
             if pil_img is not None and page_size is not None:
-                image_name = save_page_image(pil_img, output_dir, doc_id, page_no)
-                img_path = os.path.join(output_dir, image_name)
-                scale_x = pil_img.width / page_size.width
-                scale_y = pil_img.height / page_size.height
-                for blk in blocks:
-                    l, t, w, h = blk["bbox"]
-                    bbox_px = (l * scale_x, t * scale_y, (l + w) * scale_x, (t + h) * scale_y)
-                    blk["bg"] = sample_bg_color(img_path, bbox_px)
+                try:
+                    image_name = save_page_image(pil_img, output_dir, doc_id, page_no)
+                    img_path = os.path.join(output_dir, image_name)
+                    scale_x = pil_img.width / page_size.width
+                    scale_y = pil_img.height / page_size.height
+                    for blk in blocks:
+                        l, t, w, h = blk["bbox"]
+                        bbox_px = (l * scale_x, t * scale_y, (l + w) * scale_x, (t + h) * scale_y)
+                        blk["bg"] = sample_bg_color(img_path, bbox_px)
+                except Exception as raster_err:
+                    logger.warning(f"Page {page_no} raster failed, degrading to flow HTML: {raster_err}")
+                    image_name = None
 
             layout = {
                 "page_w": page_size.width if page_size else None,
