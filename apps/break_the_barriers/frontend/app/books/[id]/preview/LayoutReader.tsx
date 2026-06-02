@@ -26,7 +26,7 @@ export default function LayoutReader({
   const src = `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true`
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col flex-1 min-h-0">
       <main className="flex-1 min-h-0 bg-[#525659]">
         <iframe
           key={`${currentPage}-${lang}`}
