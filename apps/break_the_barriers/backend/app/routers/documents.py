@@ -3,7 +3,7 @@ import re
 import shutil
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Query, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Query, HTTPException, Depends, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -229,6 +229,7 @@ def get_document_asset(doc_id: str, filename: str):
 @router.get("/api/docs/{doc_id}/pages/{page_num}")
 def get_page_content(
     doc_id: str, page_num: int,
+    request: Request,
     lang: str = Query("en", pattern="^(en|vi)$"),
     raw: bool = Query(False),
     db: Session = Depends(get_db)
@@ -255,7 +256,9 @@ def get_page_content(
                 layout = parsed
         except Exception:
             layout = None
-    image_base = f"/api/docs/{doc_id}/assets"
+    # Absolute URL to the backend so the raster <img> resolves against the API host,
+    # not the frontend origin (the HTML is injected via dangerouslySetInnerHTML there).
+    image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
 
     if lang == "en":
         if layout:
