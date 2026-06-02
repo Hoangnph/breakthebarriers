@@ -244,16 +244,35 @@ def get_page_content(
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
 
+    import json as _json
+    from backend.app.services.overlay_renderer import render_overlay_html
+
+    layout = None
+    if page.layout_json:
+        try:
+            parsed = _json.loads(page.layout_json)
+            if parsed.get("image"):
+                layout = parsed
+        except Exception:
+            layout = None
+    image_base = f"/api/docs/{doc_id}/assets"
+
     if lang == "en":
-        html = page.original_html
+        if layout:
+            html = render_overlay_html(layout, {}, image_base)   # raster gốc, không overlay
+        else:
+            html = page.original_html
     else:
-        if page.translated_html:
+        translations = db.query(DBTranslation).filter(
+            DBTranslation.document_id == doc_id,
+            DBTranslation.page_num == page_num
+        ).all()
+        if layout:
+            trans_dict = {t.span_id: (t.translated_text or "") for t in translations}
+            html = render_overlay_html(layout, trans_dict, image_base)
+        elif page.translated_html:
             html = page.translated_html
         else:
-            translations = db.query(DBTranslation).filter(
-                DBTranslation.document_id == doc_id,
-                DBTranslation.page_num == page_num
-            ).all()
             trans_dict = {}
             for t in translations:
                 trans_dict[t.span_id] = t.translated_text or Translator.translate_text_agentic(t.original_text)

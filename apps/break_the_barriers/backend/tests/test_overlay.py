@@ -88,3 +88,34 @@ def test_render_overlay_sanitizes_malicious_bg():
     html = render_overlay_html(layout, {"s1": "hi"}, "/base")
     assert 'onclick' not in html          # malicious bg neutralized
     assert "background:#ffffff" in html   # fell back to white
+
+
+def test_pages_endpoint_uses_overlay_when_layout_present(client, db_session):
+    import json
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    db_session.add(DBDocument(id="ovapi", filename="x.pdf", total_pages=1, status="translated"))
+    layout = {"page_w": 1000.0, "page_h": 2000.0, "image": "page-1.png",
+              "blocks": [{"span_id": "s1", "bbox": [100.0, 200.0, 300.0, 50.0], "bg": "#ffffff"}]}
+    db_session.add(DBPage(document_id="ovapi", page_num=1, original_html="<p>orig</p>",
+                          status="translated", layout_json=json.dumps(layout)))
+    db_session.add(DBTranslation(document_id="ovapi", page_num=1, span_id="s1",
+                                 original_text="Hello", translated_text="Xin chào"))
+    db_session.commit()
+
+    vi = client.get("/api/docs/ovapi/pages/1?lang=vi").json()
+    assert "Xin chào" in vi["html"]
+    assert "page-1.png" in vi["html"]
+
+    en = client.get("/api/docs/ovapi/pages/1?lang=en").json()
+    assert "page-1.png" in en["html"]      # raster gốc
+    assert "Xin chào" not in en["html"]     # không overlay text khi lang=en
+
+
+def test_pages_endpoint_falls_back_without_layout(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    db_session.add(DBDocument(id="noov", filename="x.pdf", total_pages=1, status="extracted"))
+    db_session.add(DBPage(document_id="noov", page_num=1, original_html="<p>orig-en</p>",
+                          translated_html="<p>dich-vi</p>", status="translated", layout_json=None))
+    db_session.commit()
+    assert "orig-en" in client.get("/api/docs/noov/pages/1?lang=en").json()["html"]
+    assert "dich-vi" in client.get("/api/docs/noov/pages/1?lang=vi").json()["html"]
