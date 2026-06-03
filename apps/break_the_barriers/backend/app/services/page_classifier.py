@@ -11,10 +11,15 @@ def _area(boxes: List[List[float]]) -> float:
 def classify_kind(page_w: float, page_h: float,
                   block_boxes: List[List[float]], figure_boxes: List[List[float]],
                   *, image_dominant_ratio: float = 0.55,
-                  text_min_ratio: float = 0.06) -> str:
+                  text_min_ratio: float = 0.06,
+                  bg_is_photo: bool = False) -> str:
     page_area = max(page_w * page_h, 1.0)
     text_ratio = _area(block_boxes) / page_area
     fig_ratio = _area(figure_boxes) / page_area
+
+    # A photo-like full-bleed background must keep its raster: route image/mixed.
+    if bg_is_photo:
+        return "mixed" if text_ratio >= text_min_ratio else "image"
 
     if not block_boxes and not figure_boxes:
         return "mixed"

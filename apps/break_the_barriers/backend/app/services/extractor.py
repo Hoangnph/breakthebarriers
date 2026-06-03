@@ -379,8 +379,16 @@ class DoclingExtractor:
             ]
             pw = page_size.width if page_size else 1.0
             ph = page_size.height if page_size else 1.0
+            bg_is_photo = False
+            if image_name and pil_img is not None and page_size is not None:
+                from backend.app.services.page_image import is_photo_background
+                _sx = pil_img.width / page_size.width
+                _sy = pil_img.height / page_size.height
+                bg_is_photo = is_photo_background(
+                    os.path.join(output_dir, image_name), pw, ph,
+                    [b["bbox"] for b in blocks], [f.bbox for f in figures], _sx, _sy)
             kind = classify_kind(pw, ph, [b["bbox"] for b in blocks],
-                                 [f.bbox for f in figures])
+                                 [f.bbox for f in figures], bg_is_photo=bg_is_photo)
             bg_color = blocks[0].get("bg", "#ffffff") if blocks else "#ffffff"
             model = PageModel(
                 page_w=pw, page_h=ph, kind=kind,
