@@ -93,6 +93,7 @@ class DBUser(Base):
     pages_limit = Column(Integer, default=20)
     pages_reset_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     documents = relationship("DBDocument", back_populates="user", lazy="write_only")
