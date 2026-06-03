@@ -4,6 +4,7 @@ import json
 import html as html_lib
 import subprocess
 import logging
+import dataclasses
 from collections import defaultdict
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -313,7 +314,36 @@ class DoclingExtractor:
         for page_no in sorted(pages_items.keys()):
             page_item = doc.pages.get(page_no)
             page_size = page_item.size if page_item else None
-            page_html, blocks, fig_boxes = cls._items_to_page_html(pages_items[page_no], page_no, page_size)
+            # Always derive docling figure boxes + a fallback text build.
+            _docling_html, _docling_blocks, fig_boxes = cls._items_to_page_html(
+                pages_items[page_no], page_no, page_size)
+
+            # PyMuPDF is the primary text source (complete coverage). Build the
+            # docling item list (label + bbox top-left points) for role tagging.
+            from backend.app.services.pdf_text_extractor import extract_text_blocks
+            from backend.app.services.semantic_tagger import tag_blocks
+            from docling_core.types.doc import CoordOrigin
+
+            _page_h_pt = getattr(page_size, "height", None)
+            _docling_items = []
+            if _page_h_pt is not None:
+                for _item, _lvl in pages_items[page_no]:
+                    _prov = getattr(_item, "prov", None)
+                    if not _prov:
+                        continue
+                    _bb = _prov[0].bbox
+                    _tl = _bb if _bb.coord_origin == CoordOrigin.TOPLEFT else _bb.to_top_left_origin(page_height=_page_h_pt)
+                    _docling_items.append({
+                        "label": str(getattr(_item, "label", "text")),
+                        "bbox": [_tl.l, min(_tl.t, _tl.b), _tl.r - _tl.l, abs(_tl.b - _tl.t)],
+                    })
+
+            _pm_blocks = extract_text_blocks(str(pdf_path), page_no)
+            if _pm_blocks:
+                _tagged = tag_blocks(_pm_blocks, _docling_items)
+                page_html, blocks = cls._blocks_to_page_html(_tagged, page_no)
+            else:
+                page_html, blocks = _docling_html, _docling_blocks
 
             file_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.html"))
             with open(file_path, "w", encoding="utf-8") as f:
@@ -347,7 +377,11 @@ class DoclingExtractor:
             }
             layout_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.layout.json"))
             with open(layout_path, "w", encoding="utf-8") as f:
-                json.dump(layout, f)
+                def _dc_default(o):
+                    if dataclasses.is_dataclass(o) and not isinstance(o, type):
+                        return dataclasses.asdict(o)
+                    raise TypeError(f"Not serializable: {type(o)}")
+                json.dump(layout, f, default=_dc_default)
 
             # ── PageModel (SP-A): typography + figures + classification ──
             from backend.app.services.page_model import PageModel, Block, Figure
@@ -355,11 +389,14 @@ class DoclingExtractor:
             from backend.app.services.figure_extractor import crop_figure
             from backend.app.services.page_classifier import classify_kind
 
+            # PyMuPDF path already carries per-block font; only run the
+            # bbox-matching font extractor for the docling fallback path.
             fonts = {}
-            try:
-                fonts = extract_page_fonts(str(pdf_path), page_no, blocks)
-            except Exception as e:
-                logger.warning(f"Font extraction failed p{page_no}: {e}")
+            if blocks and not blocks[0].get("font"):
+                try:
+                    fonts = extract_page_fonts(str(pdf_path), page_no, blocks)
+                except Exception as e:
+                    logger.warning(f"Font extraction failed p{page_no}: {e}")
 
             figures = []
             if pil_img is not None and page_size is not None and fig_boxes:
@@ -373,8 +410,8 @@ class DoclingExtractor:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
 
             model_blocks = [
-                Block(span_id=b["span_id"], role="body", bbox=b["bbox"],
-                      text="", font=fonts.get(b["span_id"]))
+                Block(span_id=b["span_id"], role=b.get("role", "body"), bbox=b["bbox"],
+                      text="", font=b.get("font") or fonts.get(b["span_id"]))
                 for b in blocks
             ]
             pw = page_size.width if page_size else 1.0
