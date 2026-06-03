@@ -101,7 +101,8 @@ async def upload_document(
     # Quota check before touching disk or DB — re-fetch with row lock for atomicity
     if current_user is not None:
         locked_user = db.query(DBUser).filter(DBUser.id == current_user.id).with_for_update().first()
-        if locked_user and locked_user.pages_used_this_month + estimated_pages > locked_user.pages_limit:
+        if (locked_user and not locked_user.is_admin
+                and locked_user.pages_used_this_month + estimated_pages > locked_user.pages_limit):
             raise HTTPException(
                 status_code=402,
                 detail=f"Quota exceeded ({locked_user.pages_used_this_month}/{locked_user.pages_limit} pages used). Please upgrade your plan."
@@ -139,8 +140,8 @@ async def upload_document(
         if current_user:
             doc.user_id = current_user.id
 
-    # Increment quota in the same transaction
-    if current_user is not None:
+    # Increment quota in the same transaction (admins are not metered)
+    if current_user is not None and not current_user.is_admin:
         current_user.pages_used_this_month += estimated_pages
 
     db.commit()
