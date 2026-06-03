@@ -245,6 +245,27 @@ def get_page_content(
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
 
+    # Prefer the rich PageModel when present (SP-A). Falls back to layout_json below.
+    if page.model_json:
+        try:
+            from backend.app.services.page_model import PageModel
+            from backend.app.services.page_renderer import render_page
+            pm = PageModel.from_json(page.model_json)
+            image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
+            rows = db.query(DBTranslation).filter(
+                DBTranslation.document_id == doc_id,
+                DBTranslation.page_num == page_num).all()
+            if lang == "en":
+                trans_dict = {t.span_id: (t.original_text or "") for t in rows}
+            else:
+                trans_dict = {t.span_id: (t.translated_text or "") for t in rows}
+            return HTMLResponse(render_page(pm, trans_dict, image_base))
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"PageModel render failed for {doc_id} p{page_num}, falling back: {e}")
+            # fall through to the legacy layout_json path
+
     import json as _json
     from backend.app.services.overlay_renderer import render_overlay_html
 
