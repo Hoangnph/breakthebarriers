@@ -36,6 +36,7 @@ body { background: #525659; }
            box-shadow: 0 2px 14px rgba(0,0,0,.45); overflow: hidden;
            visibility: hidden; }
 .tl-fig { position: absolute; display: block; }
+.tl-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .tl-text { position: absolute; line-height: 1.2; overflow: hidden;
            word-break: break-word; }
 """
@@ -51,6 +52,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     bg = (model.background or {}).get("color") or "#ffffff"
 
     parts = []
+    image_name = (model.background or {}).get("image")
+    if image_name:
+        bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
+        parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')
     # Figures first (z-order below text).
     for fig in model.figures:
         l, t, w, h = fig.bbox
@@ -74,12 +79,19 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         align = (f.align if f else "left")
         base = (f.size if f and f.size else max(8.0, h * 0.8))
         size = fit_font_size(text, w, h, max_size=base, min_size=6.0)
+        box = blk.box or None
+        box_css = ""
+        if box and box.get("fill"):
+            if box.get("mode") == "scrim":
+                box_css = f"background:{box['fill']};padding:0 2px;"
+            else:
+                box_css = f"background:{box['fill']};"
         parts.append(
             f'<div class="tl-text" data-fit="1" '
             f'style="left:{_pct(l, pw):.3f}%;top:{_pct(t, ph):.3f}%;'
             f'width:{_pct(w, pw):.3f}%;'
             f'font-family:{family};font-size:{size:.1f}px;font-weight:{weight};'
-            f'font-style:{italic};color:{color};text-align:{align};">'
+            f'font-style:{italic};color:{color};text-align:{align};{box_css}">'
             f'{html_lib.escape(text)}</div>'
         )
 
