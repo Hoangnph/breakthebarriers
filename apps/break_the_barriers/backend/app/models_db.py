@@ -42,6 +42,7 @@ class DBPage(Base):
     review_reason       = Column(Text, nullable=True)
     translation_quality = Column(Float, nullable=True)
     layout_json         = Column(Text, nullable=True)
+    model_json          = Column(Text, nullable=True)   # PageModel JSON (SP-A)
 
     document = relationship("DBDocument", back_populates="pages")
 
