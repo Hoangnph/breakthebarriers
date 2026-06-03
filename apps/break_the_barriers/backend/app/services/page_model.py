@@ -23,6 +23,7 @@ class Block:
     bbox: List[float]      # [l, t, w, h] top-left points
     text: str
     font: Optional[FontSpec]
+    box: Optional[Dict[str, Any]] = None   # {"mode":"fill"|"scrim","fill":...} for raster overlay
 
 
 @dataclass
@@ -60,6 +61,7 @@ class PageModel:
                 span_id=b["span_id"], role=b.get("role", "body"),
                 bbox=list(b["bbox"]), text=b.get("text", ""),
                 font=FontSpec(**f) if f else None,
+                box=b.get("box"),
             ))
         figures = [Figure(bbox=list(f["bbox"]), img=f["img"]) for f in d.get("figures", [])]
         return cls(
