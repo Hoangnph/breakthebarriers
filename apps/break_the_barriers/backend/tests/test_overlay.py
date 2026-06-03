@@ -42,7 +42,7 @@ def test_items_to_page_html_returns_html_and_blocks():
                            prov=[SimpleNamespace(bbox=bbox, page_no=1)])
     page_size = SimpleNamespace(width=595.0, height=842.0)
 
-    html, blocks = DoclingExtractor._items_to_page_html([(item, 0)], 1, page_size)
+    html, blocks, figures = DoclingExtractor._items_to_page_html([(item, 0)], 1, page_size)
 
     assert '<span id="s1">' in html
     assert len(blocks) == 1
@@ -160,7 +160,7 @@ def test_items_to_page_html_bottomleft_bbox_positive_height():
                            prov=[SimpleNamespace(bbox=bbox, page_no=1)])
     page_size = SimpleNamespace(width=595.0, height=842.0)
 
-    _html, blocks = DoclingExtractor._items_to_page_html([(item, 0)], 1, page_size)
+    _html, blocks, _figures = DoclingExtractor._items_to_page_html([(item, 0)], 1, page_size)
 
     assert len(blocks) == 1
     l, t, w, h = blocks[0]["bbox"]

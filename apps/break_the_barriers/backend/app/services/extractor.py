@@ -313,7 +313,7 @@ class DoclingExtractor:
         for page_no in sorted(pages_items.keys()):
             page_item = doc.pages.get(page_no)
             page_size = page_item.size if page_item else None
-            page_html, blocks = cls._items_to_page_html(pages_items[page_no], page_no, page_size)
+            page_html, blocks, fig_boxes = cls._items_to_page_html(pages_items[page_no], page_no, page_size)
 
             file_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.html"))
             with open(file_path, "w", encoding="utf-8") as f:
@@ -349,6 +349,49 @@ class DoclingExtractor:
             with open(layout_path, "w", encoding="utf-8") as f:
                 json.dump(layout, f)
 
+            # ── PageModel (SP-A): typography + figures + classification ──
+            from backend.app.services.page_model import PageModel, Block, Figure
+            from backend.app.services.typography_extractor import extract_page_fonts
+            from backend.app.services.figure_extractor import crop_figure
+            from backend.app.services.page_classifier import classify_kind
+
+            fonts = {}
+            try:
+                fonts = extract_page_fonts(str(pdf_path), page_no, blocks)
+            except Exception as e:
+                logger.warning(f"Font extraction failed p{page_no}: {e}")
+
+            figures = []
+            if pil_img is not None and page_size is not None and fig_boxes:
+                sx = pil_img.width / page_size.width
+                sy = pil_img.height / page_size.height
+                for i, fb in enumerate(fig_boxes, start=1):
+                    try:
+                        fname = crop_figure(pil_img, fb, sx, sy, output_dir, doc_id, page_no, i)
+                        figures.append(Figure(bbox=fb, img=fname))
+                    except Exception as e:
+                        logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
+
+            model_blocks = [
+                Block(span_id=b["span_id"], role="body", bbox=b["bbox"],
+                      text="", font=fonts.get(b["span_id"]))
+                for b in blocks
+            ]
+            pw = page_size.width if page_size else 1.0
+            ph = page_size.height if page_size else 1.0
+            kind = classify_kind(pw, ph, [b["bbox"] for b in blocks],
+                                 [f.bbox for f in figures])
+            bg_color = blocks[0].get("bg", "#ffffff") if blocks else "#ffffff"
+            model = PageModel(
+                page_w=pw, page_h=ph, kind=kind,
+                background={"color": bg_color,
+                            "image": image_name if kind != "text" else None},
+                blocks=model_blocks, figures=figures,
+            )
+            model_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.model.json"))
+            with open(model_path, "w", encoding="utf-8") as f:
+                f.write(model.to_json())
+
         return html_files
 
     @staticmethod
@@ -362,6 +405,7 @@ class DoclingExtractor:
 
         span_counter = [0]
         blocks: List[dict] = []
+        figures: List[list] = []
         page_h = getattr(page_size, "height", None)
 
         def record_block(sid: str, item) -> None:
@@ -409,6 +453,12 @@ class DoclingExtractor:
             elif label == "code":
                 body_parts.append(f"<pre><code>{html_lib.escape(text)}</code></pre>")
             elif label == "picture":
+                prov = getattr(item, "prov", None)
+                if prov and page_h is not None:
+                    from docling_core.types.doc import CoordOrigin
+                    bb = prov[0].bbox
+                    tl = bb if bb.coord_origin == CoordOrigin.TOPLEFT else bb.to_top_left_origin(page_height=page_h)
+                    figures.append([tl.l, min(tl.t, tl.b), tl.r - tl.l, abs(tl.b - tl.t)])
                 body_parts.append(f'<figure><img src="" alt="Figure on page {page_no}"/></figure>')
             elif label == "table":
                 body_parts.append(DoclingExtractor._table_text_to_html(text))
@@ -427,7 +477,7 @@ class DoclingExtractor:
             + "\n".join(body_parts)
             + "\n</body>\n</html>"
         )
-        return html, blocks
+        return html, blocks, figures
 
     @staticmethod
     def _table_text_to_html(text: str) -> str:
