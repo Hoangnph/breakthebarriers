@@ -116,6 +116,16 @@ Tests dùng SQLite in-memory — không ảnh hưởng DB production.
 
 ---
 
+## PageModel pipeline (SP-A — faithful text-layer)
+
+Bản dịch overlay được render từ một **PageModel** giàu thông tin (nguồn dữ liệu duy nhất), thay cho cách "ảnh raster + hộp chữ đặc" cũ.
+
+- **Trích xuất**: `DoclingExtractor.extract_pdf_to_html` ghi 2 sidecar/trang cạnh HTML: `{doc}-{n}.layout.json` (cũ) và `{doc}-{n}.model.json` (PageModel). PageModel gồm `kind` (text|image|mixed), `blocks` (bbox + `font` từ PyMuPDF), `figures` (ảnh cắt từ raster), `background`.
+- **Services** (`app/services/`): `page_model.py` (dataclass + JSON), `typography_extractor.py` (PyMuPDF font/màu/căn lề + helper thuần), `figure_extractor.py` (crop figure), `page_classifier.py` (`classify_kind`), `text_fitter.py` (`fit_font_size` nhận biết dấu phụ tiếng Việt), `text_layer_renderer.py` (render trang chữ = HTML thật, không raster), `page_renderer.py` (`render_page` dispatch theo `kind`).
+- **DB**: cột `DBPage.model_json` (prod Postgres cần `ALTER TABLE pages ADD COLUMN model_json TEXT;`). Router `extraction.py` nạp sidecar; endpoint `GET /api/docs/{id}/pages/{n}` (documents.py) ưu tiên `model_json` → `render_page`, fallback sang `layout_json` khi lỗi. Giữ nguyên hợp đồng `raw=true` (inject `page_size`) và non-raw (JSON dict).
+- **Phụ thuộc**: `pymupdf` (đã thêm vào requirements). **Export PDF/EPUB là SP-B** (chưa làm).
+- Spec/plan: `docs/superpowers/specs/2026-06-03-faithful-text-layer-reconstruction-design.md`, `docs/superpowers/plans/2026-06-03-faithful-text-layer-reconstruction-sp-a.md`.
+
 ## Lưu ý quan trọng
 
 - **`.env` được bảo vệ** — Claude không được tự sửa file này
