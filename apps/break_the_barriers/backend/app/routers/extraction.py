@@ -110,9 +110,15 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
                 with open(layout_path, "r", encoding="utf-8") as lf:
                     layout_json = lf.read()
 
+            model_json = None
+            model_path = file_path[:-5] + ".model.json"  # ".html" -> ".model.json"
+            if os.path.exists(model_path):
+                with open(model_path, "r", encoding="utf-8") as mf:
+                    model_json = mf.read()
+
             spans = Extractor.extract_spans(final_html)
             db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html,
-                          status="raw", layout_json=layout_json))
+                          status="raw", layout_json=layout_json, model_json=model_json))
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
 
