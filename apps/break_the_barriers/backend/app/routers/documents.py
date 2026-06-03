@@ -246,6 +246,7 @@ def get_page_content(
         raise HTTPException(status_code=404, detail="Page not found")
 
     # Prefer the rich PageModel when present (SP-A). Falls back to layout_json below.
+    html = None
     if page.model_json:
         try:
             from backend.app.services.page_model import PageModel
@@ -259,52 +260,53 @@ def get_page_content(
                 trans_dict = {t.span_id: (t.original_text or "") for t in rows}
             else:
                 trans_dict = {t.span_id: (t.translated_text or "") for t in rows}
-            return HTMLResponse(render_page(pm, trans_dict, image_base))
+            html = render_page(pm, trans_dict, image_base)
         except Exception as e:
             import logging
             logging.getLogger(__name__).warning(
                 f"PageModel render failed for {doc_id} p{page_num}, falling back: {e}")
-            # fall through to the legacy layout_json path
+            html = None
 
-    import json as _json
-    from backend.app.services.overlay_renderer import render_overlay_html
+    if html is None:
+        import json as _json
+        from backend.app.services.overlay_renderer import render_overlay_html
 
-    layout = None
-    if page.layout_json:
-        try:
-            parsed = _json.loads(page.layout_json)
-            if parsed.get("image"):
-                layout = parsed
-        except Exception:
-            layout = None
-    # Absolute URL to the backend so the raster <img> resolves against the API host,
-    # not the frontend origin (the HTML is injected via dangerouslySetInnerHTML there).
-    image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
+        layout = None
+        if page.layout_json:
+            try:
+                parsed = _json.loads(page.layout_json)
+                if parsed.get("image"):
+                    layout = parsed
+            except Exception:
+                layout = None
+        # Absolute URL to the backend so the raster <img> resolves against the API host,
+        # not the frontend origin (the HTML is injected via dangerouslySetInnerHTML there).
+        image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
 
-    if lang == "en":
-        if layout:
-            html = render_overlay_html(layout, {}, image_base)   # raster gốc, không overlay
+        if lang == "en":
+            if layout:
+                html = render_overlay_html(layout, {}, image_base)   # raster gốc, không overlay
+            else:
+                html = page.original_html
         else:
-            html = page.original_html
-    else:
-        if layout:
-            translations = db.query(DBTranslation).filter(
-                DBTranslation.document_id == doc_id,
-                DBTranslation.page_num == page_num
-            ).all()
-            trans_dict = {t.span_id: (t.translated_text or "") for t in translations}
-            html = render_overlay_html(layout, trans_dict, image_base)
-        elif page.translated_html:
-            html = page.translated_html
-        else:
-            translations = db.query(DBTranslation).filter(
-                DBTranslation.document_id == doc_id,
-                DBTranslation.page_num == page_num
-            ).all()
-            trans_dict = {}
-            for t in translations:
-                trans_dict[t.span_id] = t.translated_text or Translator.translate_text_agentic(t.original_text)
-            html = Compiler.inject_translation(page.original_html, trans_dict)
+            if layout:
+                translations = db.query(DBTranslation).filter(
+                    DBTranslation.document_id == doc_id,
+                    DBTranslation.page_num == page_num
+                ).all()
+                trans_dict = {t.span_id: (t.translated_text or "") for t in translations}
+                html = render_overlay_html(layout, trans_dict, image_base)
+            elif page.translated_html:
+                html = page.translated_html
+            else:
+                translations = db.query(DBTranslation).filter(
+                    DBTranslation.document_id == doc_id,
+                    DBTranslation.page_num == page_num
+                ).all()
+                trans_dict = {}
+                for t in translations:
+                    trans_dict[t.span_id] = t.translated_text or Translator.translate_text_agentic(t.original_text)
+                html = Compiler.inject_translation(page.original_html, trans_dict)
 
     if raw:
         script_inject = """

@@ -11,16 +11,27 @@ def _seed(db_session, model):
     db_session.commit()
 
 
-def test_preview_text_page_renders_text_layer(client, db_session):
-    model = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
-             "background": {"color": "#ffffff", "image": None},
-             "blocks": [{"span_id": "s1", "role": "heading", "bbox": [72, 40, 200, 24],
-                         "text": "", "font": {"size": 24, "weight": 700, "italic": False,
-                                              "color": "#111", "align": "left",
-                                              "family_class": "sans"}}],
-             "figures": []}
-    _seed(db_session, model)
+_MODEL = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+          "background": {"color": "#ffffff", "image": None},
+          "blocks": [{"span_id": "s1", "role": "heading", "bbox": [72, 40, 200, 24],
+                      "text": "", "font": {"size": 24, "weight": 700, "italic": False,
+                                           "color": "#111", "align": "left",
+                                           "family_class": "sans"}}],
+          "figures": []}
+
+
+def test_preview_text_page_raw_renders_text_layer_with_pagesize(client, db_session):
+    _seed(db_session, _MODEL)
+    r = client.get("/api/docs/p_doc/pages/1?lang=vi&raw=true")
+    assert r.status_code == 200
+    assert "GIỚI THIỆU" in r.text            # translated text rendered
+    assert 'class="ov-bg"' not in r.text     # no raster overlay on a text page
+    assert "page_size" in r.text             # raw injection preserved (preview scaling)
+
+
+def test_preview_text_page_nonraw_returns_json_html(client, db_session):
+    _seed(db_session, _MODEL)
     r = client.get("/api/docs/p_doc/pages/1?lang=vi")
     assert r.status_code == 200
-    assert "GIỚI THIỆU" in r.text
-    assert 'class="ov-bg"' not in r.text   # no raster on text page
+    data = r.json()                          # non-raw must stay a JSON dict
+    assert "GIỚI THIỆU" in data["html"]
