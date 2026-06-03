@@ -88,3 +88,43 @@ def sample_bg_color(image_path: str, bbox_px) -> str:
     except Exception as e:
         logger.warning(f"sample_bg_color failed for {image_path}: {e}")
         return "#ffffff"
+
+
+def analyze_block_box(image_path: str, bbox_pt, scale_x: float, scale_y: float,
+                      *, var_threshold: float = 18.0, samples: int = 24) -> dict:
+    """Decide the background treatment for a translated-text block over a raster.
+    Uniform local background -> {"mode":"fill","fill":"#rrggbb"} (median color).
+    Photo-like (high colour variance) -> {"mode":"scrim","fill":"rgba(...)"} whose
+    tone matches the local luminance (dark scrim on dark bg, light on light) so the
+    original text colour stays readable. Any failure -> fill via sample_bg_color."""
+    l, t, w, h = bbox_pt
+    bbox_px = (l * scale_x, t * scale_y, (l + w) * scale_x, (t + h) * scale_y)
+    try:
+        with Image.open(image_path) as im:
+            im = im.convert("RGB")
+            W, H = im.size
+            x0 = max(0, min(int(l * scale_x), W - 1)); y0 = max(0, min(int(t * scale_y), H - 1))
+            x1 = max(x0 + 1, min(int((l + w) * scale_x), W)); y1 = max(y0 + 1, min(int((t + h) * scale_y), H))
+            sx = max(1, (x1 - x0) // samples); sy = max(1, (y1 - y0) // samples)
+            pts = [im.getpixel((x, y)) for x in range(x0, x1, sx) for y in range(y0, y1, sy)]
+            if not pts:
+                return {"mode": "fill", "fill": sample_bg_color(image_path, bbox_px)}
+            n = len(pts)
+            mean = [sum(p[i] for p in pts) / n for i in range(3)]
+            var = sum((p[i] - mean[i]) ** 2 for p in pts for i in range(3)) / (3 * n)
+            std = var ** 0.5
+            lum = 0.299 * mean[0] + 0.587 * mean[1] + 0.114 * mean[2]
+            if std <= var_threshold:
+                rr = sorted(p[0] for p in pts)[n // 2]
+                gg = sorted(p[1] for p in pts)[n // 2]
+                bb = sorted(p[2] for p in pts)[n // 2]
+                return {"mode": "fill", "fill": f"#{rr:02x}{gg:02x}{bb:02x}"}
+            if lum >= 140:
+                return {"mode": "scrim", "fill": "rgba(255,255,255,0.55)"}
+            return {"mode": "scrim", "fill": "rgba(0,0,0,0.45)"}
+    except Exception as e:
+        logger.warning(f"analyze_block_box failed for {image_path}: {e}")
+        try:
+            return {"mode": "fill", "fill": sample_bg_color(image_path, bbox_px)}
+        except Exception:
+            return {"mode": "fill", "fill": "#ffffff"}
