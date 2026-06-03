@@ -409,9 +409,22 @@ class DoclingExtractor:
                     except Exception as e:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
 
+            boxes = {}
+            if image_name and pil_img is not None and page_size is not None:
+                from backend.app.services.page_image import analyze_block_box
+                _bsx = pil_img.width / page_size.width
+                _bsy = pil_img.height / page_size.height
+                _img_path = os.path.join(output_dir, image_name)
+                for b in blocks:
+                    try:
+                        boxes[b["span_id"]] = analyze_block_box(_img_path, b["bbox"], _bsx, _bsy)
+                    except Exception as e:
+                        logger.warning(f"analyze_block_box failed p{page_no} {b['span_id']}: {e}")
+
             model_blocks = [
                 Block(span_id=b["span_id"], role=b.get("role", "body"), bbox=b["bbox"],
-                      text="", font=b.get("font") or fonts.get(b["span_id"]))
+                      text="", font=b.get("font") or fonts.get(b["span_id"]),
+                      box=boxes.get(b["span_id"]))
                 for b in blocks
             ]
             pw = page_size.width if page_size else 1.0
