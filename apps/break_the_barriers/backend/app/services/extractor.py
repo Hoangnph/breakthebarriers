@@ -488,6 +488,46 @@ class DoclingExtractor:
         return html, blocks, figures
 
     @staticmethod
+    def _blocks_to_page_html(tagged_blocks, page_no):
+        """Build semantic HTML + a parallel block list from PyMuPDF tagged blocks.
+        Mirrors _items_to_page_html's output shape but sourced from PyMuPDF:
+        each returned block carries span_id, bbox, font (FontSpec), role."""
+        parts = []
+        blocks = []
+        open_list = False
+        for i, b in enumerate(tagged_blocks, start=1):
+            sid = f"s{i}"
+            blocks.append({"span_id": sid, "bbox": b["bbox"],
+                           "font": b.get("font"), "role": b.get("role", "body")})
+            span = f'<span id="{sid}">{html_lib.escape(b["text"])}</span>'
+            role = b.get("role", "body")
+            if role == "list":
+                if not open_list:
+                    parts.append("<ul>")
+                    open_list = True
+                parts.append(f"<li>{span}</li>")
+                continue
+            if open_list:
+                parts.append("</ul>")
+                open_list = False
+            if role == "heading":
+                parts.append(f"<h2>{span}</h2>")
+            else:
+                parts.append(f"<p>{span}</p>")
+        if open_list:
+            parts.append("</ul>")
+        html = (
+            f"<!DOCTYPE html>\n<html>\n<head>\n"
+            f'<meta charset="UTF-8">\n'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            f"<style>\n{_DOCLING_RESPONSIVE_CSS}\n</style>\n"
+            f"</head>\n<body>\n"
+            + "\n".join(parts)
+            + "\n</body>\n</html>"
+        )
+        return html, blocks
+
+    @staticmethod
     def _table_text_to_html(text: str) -> str:
         """
         Convert tab-delimited table text (from Docling) to a semantic HTML table.
