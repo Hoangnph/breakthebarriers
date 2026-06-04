@@ -69,26 +69,29 @@ Chữ ký hàm không đổi; chỉ đổi tên file ảnh nền được chọn
 
 ## Thành phần B — 3 trạng thái xem
 
-### B1. Tham số `view` cho `GET /api/docs/{id}/pages/{n}`
-Thêm `view=original|html|translated` (mặc định suy từ `lang` cũ để tương thích
-ngược: thiếu `view` thì `lang=en`→`html`, `lang=vi`→`translated`).
+**Nguyên tắc:** "Bản gốc" = **thuần túy đọc tài liệu nguồn** (không tái dựng,
+không overlay). Đã có sẵn endpoint phục vụ trang PDF thật, nên "Gốc" nhúng thẳng
+trang PDF — không cần backend render mới cho view này.
 
-| view | Nội dung | Render |
+| Trạng thái | Nội dung | Nguồn |
 |---|---|---|
-| `original` | Trang raster gốc nguyên vẹn (chữ nung, không tái dựng) | HTML chỉ chứa `<img>` full-bleed trỏ `assets/{background.image}`; nếu trang không có raster (`kind=text`, image=None) → fallback `html` |
-| `html` | Tái dựng nền sạch, ngôn ngữ gốc | `render_page` với `original_text` (= `lang=en` hiện tại) |
-| `translated` | Tái dựng nền sạch, ngôn ngữ đích | `render_page` với `translated_text` (= `lang=vi` hiện tại) |
+| `Gốc` | Trang **PDF tài liệu thật**, nét/zoom được, chỉ để đọc | Nhúng `GET /api/docs/{id}/pdf?page={n}` (endpoint sẵn có) trong PDF viewer/iframe — **không** qua `render_page` |
+| `HTML` | Tái dựng nền sạch, ngôn ngữ gốc | `GET .../pages/{n}?lang=en` (đường hiện tại) |
+| `Dịch` | Tái dựng nền sạch, ngôn ngữ đích | `GET .../pages/{n}?lang=vi` (gồm nền AI-cleaned nếu có, theo A3) |
 
-- `original` giữ đúng hợp đồng `raw=true` (inject page_size) và non-raw (JSON dict
-  có thêm `view`, `page_class`, `cover`).
-- `html`/`translated` đi đúng đường `render_page` hiện tại (gồm nền AI-cleaned nếu
-  có, theo A3).
+### B1. Backend
+- **Không cần** view-mode mới: "Gốc" dùng endpoint PDF sẵn có; "HTML"/"Dịch" dùng
+  `lang=en|vi` hiện tại. Không đổi hợp đồng `render_page`/`raw`/non-raw.
+- (Tùy chọn nhỏ) Có thể thêm alias `view=html|translated` map sang `lang` cho rõ
+  nghĩa phía frontend, nhưng không bắt buộc.
 
 ### B2. Frontend (Next.js) — toggle tối thiểu
-Thay toggle 2 nút Original/Translated bằng **3 nút: Gốc / HTML / Dịch** gọi
-`view=original|html|translated`. Nút **"Làm sạch nền AI"** chỉ hiện khi
-`page_class/cover` ⇒ `clean-photo`; bấm → `POST .../clean-bg` → reload view hiện
-tại. UI tối thiểu; bản đầy đủ (revert, trạng thái, hàng loạt) ở #3.
+Thay toggle 2 nút Original/Translated bằng **3 nút: Gốc / HTML / Dịch**:
+- `Gốc` → nhúng URL PDF từng trang (`/api/docs/{id}/pdf?page={n}`) trong viewer.
+- `HTML`/`Dịch` → iframe `pages/{n}?lang=en|vi` (raw) như hiện tại.
+Nút **"Làm sạch nền AI"** chỉ hiện khi `page_class/cover` ⇒ `clean-photo`; bấm →
+`POST .../clean-bg` → reload tab hiện tại. UI tối thiểu; bản đầy đủ (revert,
+trạng thái, hàng loạt) ở #3.
 
 ---
 
@@ -117,8 +120,8 @@ View `original` luôn trả raster gốc để đối chiếu.
 - `render_text_layer`: trang `clean-photo` có `background.clean_image` → HTML vẽ
   ảnh sạch (chứa tên file clean) chứ không phải ảnh gốc; `clean-photo` chưa sạch →
   vẫn vẽ ảnh gốc.
-- `GET pages` `view=original` → HTML chứa `<img>` raster gốc, KHÔNG có `tl-text`;
-  `view=html`/`translated` → đi `render_page` (giữ test cũ); tương thích `lang`.
+- "Gốc" không có backend mới (nhúng endpoint PDF sẵn có) → verify thủ công ở
+  frontend; `lang=en|vi` giữ nguyên test cũ.
 
 ## Ngoài phạm vi Pha 2
 
@@ -130,9 +133,10 @@ View `original` luôn trả raster gốc để đối chiếu.
 ## Các file đụng tới
 
 - Tạo: `app/services/image_cleaner.py`.
-- Sửa: `app/routers/documents.py` (endpoint clean-bg + tham số `view`),
+- Sửa: `app/routers/documents.py` (thêm endpoint `clean-bg`),
   `app/services/text_layer_renderer.py` (chọn `clean_image` cho clean-photo).
-- Frontend: component preview Next.js (toggle 3 nút + nút làm sạch) —
-  `apps/break_the_barriers/frontend` (verify thủ công).
+- Frontend: component preview Next.js (toggle 3 nút Gốc/HTML/Dịch — "Gốc" nhúng
+  PDF; + nút "Làm sạch nền AI") — `apps/break_the_barriers/frontend` (verify thủ công).
 - Test: `tests/test_image_cleaner.py` (mới), bổ sung
-  `tests/test_text_layer_renderer.py`, `tests/test_preview_pagemodel.py`.
+  `tests/test_text_layer_renderer.py` (clean_image), `tests/test_preview_pagemodel.py`
+  (endpoint clean-bg).
