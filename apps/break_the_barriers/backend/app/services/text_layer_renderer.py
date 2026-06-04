@@ -46,6 +46,40 @@ def _pct(v: float, total: float) -> float:
     return v / total * 100.0 if total else 0.0
 
 
+def _x_overlap_frac(a: list, b: list) -> float:
+    """Fraction of the narrower box's width covered by the horizontal overlap
+    of two bboxes [l, t, w, h]. 0.0 means no horizontal overlap."""
+    al, aw = a[0], a[2]
+    bl, bw = b[0], b[2]
+    ov = min(al + aw, bl + bw) - max(al, bl)
+    if ov <= 0:
+        return 0.0
+    return ov / max(1.0, min(aw, bw))
+
+
+def compute_slot_heights(blocks: list, figures: list, page_h: float,
+                         *, overlap_frac: float = 0.25) -> dict:
+    """For each block, the vertical slot from its top down to the nearest
+    obstacle below it (a block or figure whose x-range overlaps by more than
+    `overlap_frac`), floored at the block's own height. Points in, points out."""
+    obstacles = [fig.bbox for fig in figures] + [b.bbox for b in blocks]
+    slots: dict = {}
+    for blk in blocks:
+        l, t, w, h = blk.bbox
+        nearest = float(page_h)
+        for ob in obstacles:
+            if ob is blk.bbox:
+                continue
+            ot = ob[1]
+            if ot <= t:
+                continue
+            if _x_overlap_frac(blk.bbox, ob) < overlap_frac:
+                continue
+            nearest = min(nearest, ot)
+        slots[blk.span_id] = max(h, nearest - t)
+    return slots
+
+
 def render_text_layer(model: PageModel, translations: dict, image_url_base: str) -> str:
     pw = model.page_w or 1.0
     ph = model.page_h or 1.0
