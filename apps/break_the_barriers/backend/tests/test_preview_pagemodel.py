@@ -35,3 +35,15 @@ def test_preview_text_page_nonraw_returns_json_html(client, db_session):
     assert r.status_code == 200
     data = r.json()                          # non-raw must stay a JSON dict
     assert "GIỚI THIỆU" in data["html"]
+
+
+def test_preview_nonraw_returns_page_class_and_cover(client, db_session):
+    model = dict(_MODEL)
+    model["page_class"] = "regenerable"
+    model["cover"] = "front"
+    _seed(db_session, model)
+    r = client.get("/api/docs/p_doc/pages/1?lang=vi")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["page_class"] == "regenerable"
+    assert data["cover"] == "front"

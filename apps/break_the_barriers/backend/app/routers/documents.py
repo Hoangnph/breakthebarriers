@@ -335,4 +335,13 @@ window.addEventListener('load', () => {
             html_injected = (html or "") + script_inject
         return HTMLResponse(content=html_injected)
 
-    return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html}
+    page_class, cover = "text", "none"
+    if page.model_json:
+        try:
+            from backend.app.services.page_model import PageModel
+            _pm = PageModel.from_json(page.model_json)
+            page_class, cover = _pm.page_class, _pm.cover
+        except Exception:
+            pass
+    return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html,
+            "page_class": page_class, "cover": cover}
