@@ -110,3 +110,30 @@ def test_front_cover_keeps_raster_phase1():
     html = render_text_layer(_raster_model("regenerable", "front"),
                              {"s1": "X"}, image_url_base="http://api/assets")
     assert 'class="tl-bg"' in html
+
+
+def _clean_photo_model(clean_image=None):
+    bg = {"color": "#000", "image": "page-1.png"}
+    if clean_image:
+        bg["clean_image"] = clean_image
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed", background=bg,
+        blocks=[Block(span_id="s1", role="heading", bbox=[36, 516, 432, 60],
+                      text="", font=FontSpec(36, 700, False, "#fff", "left", "sans"))],
+        figures=[],
+        page_class="regenerable", cover="front",
+    )
+
+
+def test_clean_photo_uses_clean_image_when_present():
+    html = render_text_layer(_clean_photo_model("page-1.clean.png"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert "page-1.clean.png" in html
+    # original raster must NOT be referenced (strip the clean name first to avoid substring match)
+    assert "page-1.png" not in html.replace("page-1.clean.png", "")
+
+
+def test_clean_photo_falls_back_to_raster_when_not_cleaned():
+    html = render_text_layer(_clean_photo_model(None),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert "page-1.png" in html

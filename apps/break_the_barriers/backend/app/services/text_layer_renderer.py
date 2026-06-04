@@ -90,7 +90,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     draw_raster = policy != "base-color"
 
     parts = []
-    image_name = (model.background or {}).get("image")
+    bgd = model.background or {}
+    image_name = bgd.get("image")
+    if policy == "clean-photo" and bgd.get("clean_image"):
+        image_name = bgd.get("clean_image")
     if image_name and draw_raster:
         bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
         parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')
