@@ -65,8 +65,7 @@ def test_render_emits_min_and_max_height_bounds():
     # "min-height:1" only comes from inline styles.
     # Use max-height which only appears in inline styles (not in _CSS constant).
     assert html.count("max-height:") == 2
-    # Verify both blocks got a min-height inline (CSS adds 1, so total should be 3).
-    assert html.count("min-height:") == 3
+    assert html.count("min-height:5.938%") == 2  # inline bound per block, CSS-independent
 
 
 def test_render_max_height_uses_slot_not_bbox():
