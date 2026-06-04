@@ -312,6 +312,9 @@ class DoclingExtractor:
 
         html_files = []
         for page_no in sorted(pages_items.keys()):
+            _pages_sorted = sorted(pages_items.keys())
+            _total_pages = len(_pages_sorted)
+            _page_index = _pages_sorted.index(page_no)
             page_item = doc.pages.get(page_no)
             page_size = page_item.size if page_item else None
             # Always derive docling figure boxes + a fallback text build.
@@ -440,11 +443,33 @@ class DoclingExtractor:
             kind = classify_kind(pw, ph, [b["bbox"] for b in blocks],
                                  [f.bbox for f in figures], bg_is_photo=bg_is_photo)
             bg_color = blocks[0].get("bg", "#ffffff") if blocks else "#ffffff"
+
+            # ── #0 eligibility: per-figure photo/diagram → page_class + cover ──
+            from backend.app.services.picture_classifier import classify_picture_file
+            from backend.app.services.page_eligibility import classify_page, detect_cover
+            figure_labels = []
+            for _fig in figures:
+                try:
+                    figure_labels.append(
+                        classify_picture_file(os.path.join(output_dir, _fig.img))[0])
+                except Exception as _e:
+                    logger.warning(f"picture classify failed p{page_no} {_fig.img}: {_e}")
+                    figure_labels.append("uncertain")   # safe → preserve
+            _page_area = max(pw * ph, 1.0)
+            _text_ratio = sum(b["bbox"][2] * b["bbox"][3] for b in blocks) / _page_area
+            _fig_ratio = sum(f.bbox[2] * f.bbox[3] for f in figures) / _page_area
+            _has_table = any(b.get("role") == "table" for b in blocks)
+            page_class = classify_page(_text_ratio, _fig_ratio, figure_labels,
+                                       has_table=_has_table, bg_is_photo=bg_is_photo)
+            cover = detect_cover(_page_index, _total_pages, text_ratio=_text_ratio,
+                                 fig_ratio=_fig_ratio, bg_is_photo=bg_is_photo)
+
             model = PageModel(
                 page_w=pw, page_h=ph, kind=kind,
                 background={"color": bg_color,
                             "image": image_name if kind != "text" else None},
                 blocks=model_blocks, figures=figures,
+                page_class=page_class, cover=cover,
             )
             model_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.model.json"))
             with open(model_path, "w", encoding="utf-8") as f:
