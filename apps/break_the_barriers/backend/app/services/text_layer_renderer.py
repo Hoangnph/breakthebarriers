@@ -8,6 +8,7 @@ import html as html_lib
 
 from backend.app.services.page_model import PageModel
 from backend.app.services.text_fitter import fit_font_size
+from backend.app.services.background_policy import resolve_background_policy
 
 # Vietnamese-capable web fonts, one per family class.
 _FONT_STACK = {
@@ -85,9 +86,12 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     ph = model.page_h or 1.0
     bg = (model.background or {}).get("color") or "#ffffff"
 
+    policy = resolve_background_policy(model.page_class, model.cover)
+    draw_raster = policy != "base-color"
+
     parts = []
     image_name = (model.background or {}).get("image")
-    if image_name:
+    if image_name and draw_raster:
         bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
         parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')
     # Figures first (z-order below text).
@@ -119,7 +123,7 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
                              height_growth=1.0)
         box = blk.box or None
         box_css = ""
-        if box and box.get("fill"):
+        if box and box.get("fill") and draw_raster:
             if box.get("mode") == "scrim":
                 box_css = f"background:{box['fill']};padding:0 2px;"
             else:

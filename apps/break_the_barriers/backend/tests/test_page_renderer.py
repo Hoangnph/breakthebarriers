@@ -13,7 +13,7 @@ def _image_model():
     return PageModel(595, 842, "image", {"color": "#000", "image": "page-1.png"},
                      [Block("s1", "body", [40, 700, 120, 18], "C", None,
                             box={"mode": "scrim", "fill": "rgba(0,0,0,0.45)"})],
-                     [])
+                     [], page_class="preserve")
 
 
 def test_text_kind_uses_unified_renderer():

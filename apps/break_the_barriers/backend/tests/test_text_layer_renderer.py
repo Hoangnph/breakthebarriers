@@ -75,3 +75,38 @@ def test_render_max_height_uses_slot_not_bbox():
                              image_url_base="http://api/assets")
     assert "max-height:11.876%" in html   # slot-based, not 5.938%
     assert "min-height:5.938%" in html     # bbox-height floor
+
+
+def _raster_model(page_class, cover):
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#3c84bf", "image": "page-2.png"},
+        blocks=[Block(span_id="s1", role="body", bbox=[70, 480, 300, 14],
+                      text="", font=FontSpec(11, 400, False, "#000", "left", "sans"),
+                      box={"mode": "scrim", "fill": "rgba(255,255,255,0.55)"})],
+        figures=[],
+        page_class=page_class, cover=cover,
+    )
+
+
+def test_base_color_page_omits_raster_and_box():
+    html = render_text_layer(_raster_model("regenerable", "none"),
+                             {"s1": "Mục lục"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' not in html
+    assert "page-2.png" not in html
+    assert "rgba(255,255,255,0.55)" not in html
+    assert "Mục lục" in html
+
+
+def test_preserve_page_keeps_raster_and_box():
+    html = render_text_layer(_raster_model("preserve", "none"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' in html
+    assert "page-2.png" in html
+    assert "rgba(255,255,255,0.55)" in html
+
+
+def test_front_cover_keeps_raster_phase1():
+    html = render_text_layer(_raster_model("regenerable", "front"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' in html

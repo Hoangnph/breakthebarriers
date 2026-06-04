@@ -9,6 +9,7 @@ def _img_model(box=None):
         blocks=[Block("s1", "heading", [72, 40, 200, 24], "x",
                       FontSpec(24, 700, False, "#fff", "left", "sans"), box=box)],
         figures=[],
+        page_class="preserve",
     )
 
 
