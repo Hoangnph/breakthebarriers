@@ -40,6 +40,8 @@ class PageModel:
     background: Dict[str, Any]   # {"color": "#rrggbb", "image": filename|None}
     blocks: List[Block]
     figures: List[Figure]
+    page_class: str = "text"     # text | preserve | regenerable
+    cover: str = "none"          # front | back | none
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -47,6 +49,8 @@ class PageModel:
             "background": self.background,
             "blocks": [asdict(b) for b in self.blocks],
             "figures": [asdict(f) for f in self.figures],
+            "page_class": self.page_class,
+            "cover": self.cover,
         }
 
     def to_json(self) -> str:
@@ -68,6 +72,8 @@ class PageModel:
             page_w=d["page_w"], page_h=d["page_h"], kind=d.get("kind", "text"),
             background=d.get("background", {"color": "#ffffff", "image": None}),
             blocks=blocks, figures=figures,
+            page_class=d.get("page_class", "text"),
+            cover=d.get("cover", "none"),
         )
 
     @classmethod

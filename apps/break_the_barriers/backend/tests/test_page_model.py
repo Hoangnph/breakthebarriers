@@ -31,3 +31,30 @@ def test_pagemodel_roundtrip_font_none():
     restored = PageModel.from_json(m.to_json())
     assert restored.blocks[0].font is None
     assert restored.background["image"] == "page-1.png"
+
+
+def test_pagemodel_defaults_page_class_and_cover():
+    from backend.app.services.page_model import PageModel
+    pm = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                   background={"color": "#fff", "image": None}, blocks=[], figures=[])
+    assert pm.page_class == "text"
+    assert pm.cover == "none"
+
+
+def test_pagemodel_roundtrip_preserves_page_class_and_cover():
+    from backend.app.services.page_model import PageModel
+    pm = PageModel(page_w=1.0, page_h=1.0, kind="image",
+                   background={"color": "#fff", "image": "p.png"}, blocks=[], figures=[],
+                   page_class="regenerable", cover="front")
+    d = pm.to_dict()
+    assert d["page_class"] == "regenerable" and d["cover"] == "front"
+    pm2 = PageModel.from_dict(d)
+    assert pm2.page_class == "regenerable" and pm2.cover == "front"
+
+
+def test_pagemodel_from_dict_old_json_defaults():
+    from backend.app.services.page_model import PageModel
+    pm = PageModel.from_dict({"page_w": 1.0, "page_h": 1.0, "kind": "text",
+                              "background": {"color": "#fff", "image": None},
+                              "blocks": [], "figures": []})
+    assert pm.page_class == "text" and pm.cover == "none"
