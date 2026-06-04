@@ -100,6 +100,8 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
             f'width:{_pct(w, pw):.3f}%;height:{_pct(h, ph):.3f}%;"/>'
         )
 
+    slots = compute_slot_heights(model.blocks, model.figures, ph)
+
     for blk in model.blocks:
         text = (translations or {}).get(blk.span_id)
         if not text:
@@ -111,8 +113,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         weight = (f.weight if f else (700 if blk.role == "heading" else 400))
         italic = "italic" if (f and f.italic) else "normal"
         align = (f.align if f else "left")
+        slot_h = slots.get(blk.span_id, h)
         base = (f.size if f and f.size else max(8.0, h * 0.8))
-        size = fit_font_size(text, w, h, max_size=base, min_size=6.0)
+        size = fit_font_size(text, w, slot_h, max_size=base, min_size=6.0,
+                             height_growth=1.0)
         box = blk.box or None
         box_css = ""
         if box and box.get("fill"):
@@ -124,6 +128,7 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
             f'<div class="tl-text" data-fit="1" '
             f'style="left:{_pct(l, pw):.3f}%;top:{_pct(t, ph):.3f}%;'
             f'width:{_pct(w, pw):.3f}%;'
+            f'min-height:{_pct(h, ph):.3f}%;max-height:{_pct(slot_h, ph):.3f}%;'
             f'font-family:{family};font-size:{size:.1f}px;font-weight:{weight};'
             f'font-style:{italic};color:{color};text-align:{align};{box_css}">'
             f'{html_lib.escape(text)}</div>'
