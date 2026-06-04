@@ -60,7 +60,7 @@ def _x_overlap_frac(a: list, b: list) -> float:
 def compute_slot_heights(blocks: list, figures: list, page_h: float,
                          *, overlap_frac: float = 0.25) -> dict:
     """For each block, the vertical slot from its top down to the nearest
-    obstacle below it (a block or figure whose x-range overlaps by more than
+    obstacle below it (a block or figure whose x-range overlaps by at least
     `overlap_frac`), floored at the block's own height. Points in, points out."""
     obstacles = [fig.bbox for fig in figures] + [b.bbox for b in blocks]
     slots: dict = {}
