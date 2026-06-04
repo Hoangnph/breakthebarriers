@@ -11,6 +11,8 @@ import sys
 import glob
 import json
 
+# Point sys.path at backend/ (not apps/break_the_barriers/) so `app.services.*`
+# imports resolve WITHOUT pulling in main.py and its DB/config import chain.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.page_model import PageModel
