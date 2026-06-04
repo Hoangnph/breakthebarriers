@@ -12,29 +12,34 @@ export interface ContentLayoutProps {
   apiUrl: string
   pages: PageInfo[]
   currentPage: number
-  lang: "en" | "vi"
+  lang: "pdf" | "en" | "vi"
   zoom: number
+  cleanBust?: number
   onPageChange: (page: number) => void
 }
 
 export default function LayoutReader({
-  docId, apiUrl, pages, currentPage, lang, zoom, onPageChange,
+  docId, apiUrl, pages, currentPage, lang, zoom, cleanBust, onPageChange,
 }: ContentLayoutProps) {
   const idx = pages.findIndex((p) => p.page_num === currentPage)
   const prev = idx > 0 ? pages[idx - 1].page_num : null
   const next = idx < pages.length - 1 ? pages[idx + 1].page_num : null
-  const src = `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true`
+  const isPdf = lang === "pdf"
+  const bustParam = cleanBust ? `&t=${cleanBust}` : ""
+  const src = isPdf
+    ? `${apiUrl}/api/docs/${docId}/pdf?page=${currentPage}`
+    : `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true${bustParam}`
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <main className="flex-1 min-h-0 bg-[#525659]">
         <iframe
-          key={`${currentPage}-${lang}`}
+          key={`${currentPage}-${lang}-${cleanBust ?? 0}`}
           src={src}
           className="w-full h-full border-none block"
           title={`Trang ${currentPage}`}
           sandbox="allow-same-origin allow-scripts"
-          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
+          onLoad={isPdf ? undefined : (e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       </main>
 

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import type { ContentLayoutProps } from "./LayoutReader"
 
 export default function LayoutSidebar({
-  docId, apiUrl, pages, currentPage, lang, zoom, onPageChange,
+  docId, apiUrl, pages, currentPage, lang, zoom, cleanBust, onPageChange,
   onTranslate,
 }: ContentLayoutProps & { onTranslate?: (pageNum: number) => void }) {
   const activeRef = useRef<HTMLDivElement | null>(null)
@@ -17,7 +17,11 @@ export default function LayoutSidebar({
     return "—"
   }
 
-  const src = `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true`
+  const isPdf = lang === "pdf"
+  const bustParam = cleanBust ? `&t=${cleanBust}` : ""
+  const src = isPdf
+    ? `${apiUrl}/api/docs/${docId}/pdf?page=${currentPage}`
+    : `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true${bustParam}`
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -56,12 +60,12 @@ export default function LayoutSidebar({
       {/* Main content — full-height iframe that auto-fits the page */}
       <main className="flex-1 min-h-0 bg-[#525659]">
         <iframe
-          key={`${currentPage}-${lang}`}
+          key={`${currentPage}-${lang}-${cleanBust ?? 0}`}
           src={src}
           className="w-full h-full border-none block"
           title={`Trang ${currentPage}`}
           sandbox="allow-same-origin allow-scripts"
-          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
+          onLoad={isPdf ? undefined : (e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       </main>
     </div>

@@ -10,7 +10,12 @@ import LayoutSidebar from "./LayoutSidebar"
 import LayoutSplit from "./LayoutSplit"
 
 type Layout = "reader" | "sidebar" | "split"
-type Lang = "en" | "vi"
+type Lang = "pdf" | "en" | "vi"
+
+interface PageMeta {
+  page_class?: string
+  cover?: string
+}
 
 interface Doc {
   id: string
@@ -38,6 +43,9 @@ export default function PreviewPage() {
   const [layout, setLayout] = useState<Layout>("reader")
   const [lang, setLang] = useState<Lang>("en")
   const [zoom, setZoom] = useState(1)
+  const [pageMeta, setPageMeta] = useState<PageMeta>({})
+  const [cleanStatus, setCleanStatus] = useState<"idle" | "running" | "error">("idle")
+  const [cleanBust, setCleanBust] = useState<number>(0)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollFailRef = useRef(0)
 
@@ -71,6 +79,26 @@ export default function PreviewPage() {
     if (!pollRef.current) pollRef.current = setInterval(reloadPages, 3000)
   }
 
+  // Fetch non-raw page metadata to determine page_class / cover
+  useEffect(() => {
+    setPageMeta({})
+    setCleanStatus("idle")
+    fetchAPI<PageMeta>(`/api/docs/${id}/pages/${currentPage}`)
+      .then((m) => setPageMeta(m))
+      .catch(() => setPageMeta({}))
+  }, [id, currentPage])
+
+  async function handleCleanBg() {
+    setCleanStatus("running")
+    try {
+      await fetchAPI(`/api/docs/${id}/pages/${currentPage}/clean-bg`, { method: "POST" })
+      setCleanStatus("idle")
+      setCleanBust(Date.now())
+    } catch {
+      setCleanStatus("error")
+    }
+  }
+
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
 
   // Restore preferences from localStorage
@@ -78,7 +106,7 @@ export default function PreviewPage() {
     const savedLayout = localStorage.getItem(LAYOUT_KEY) as Layout | null
     const savedLang = localStorage.getItem(LANG_KEY) as Lang | null
     if (savedLayout && ["reader", "sidebar", "split"].includes(savedLayout)) setLayout(savedLayout)
-    if (savedLang && ["en", "vi"].includes(savedLang)) setLang(savedLang)
+    if (savedLang && ["pdf", "en", "vi"].includes(savedLang)) setLang(savedLang as Lang)
   }, [])
 
   // Load document + page list on mount
@@ -158,7 +186,7 @@ export default function PreviewPage() {
     )
   }
 
-  const contentProps = { docId: id, apiUrl: API_URL, pages, currentPage, lang, zoom, onPageChange: setCurrentPage }
+  const contentProps = { docId: id, apiUrl: API_URL, pages, currentPage, lang, zoom, cleanBust, onPageChange: setCurrentPage }
   const splitProps = { docId: id, pages, currentPage, apiUrl: API_URL, zoom, onPageChange: setCurrentPage }
 
   return (
@@ -177,16 +205,31 @@ export default function PreviewPage() {
         {/* Lang toggle — hidden in split */}
         {layout !== "split" && (
           <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+            <button onClick={() => changeLang("pdf")}
+                    className={`px-3 py-1 text-xs font-medium ${lang === "pdf" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+              Gốc
+            </button>
             <button onClick={() => changeLang("en")}
                     className={`px-3 py-1 text-xs font-medium ${lang === "en" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-              Original
+              HTML
             </button>
             <button onClick={() => changeLang("vi")}
                     disabled={!canTranslated}
                     className={`px-3 py-1 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed ${lang === "vi" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-              Translated
+              Dịch
             </button>
           </div>
+        )}
+
+        {/* Clean-bg button — visible only for cover/clean-photo pages */}
+        {pageMeta.page_class === "regenerable" && (pageMeta.cover === "front" || pageMeta.cover === "back") && (
+          <button
+            onClick={handleCleanBg}
+            disabled={cleanStatus === "running"}
+            className="px-3 py-1 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          >
+            {cleanStatus === "running" ? "Đang làm sạch…" : cleanStatus === "error" ? "Lỗi làm sạch" : "Làm sạch nền AI"}
+          </button>
         )}
 
         {/* Layout switcher */}
