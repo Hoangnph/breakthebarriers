@@ -18,8 +18,13 @@ def test_all_photo_low_text_is_regenerable():
     assert classify_page(0.1, 0.5, ["photo", "photo"], has_table=False, bg_is_photo=False) == "regenerable"
 
 
-def test_photo_background_cover_is_regenerable():
+def test_bg_photo_low_text_is_regenerable():
     assert classify_page(0.24, 0.03, [], has_table=False, bg_is_photo=True) == "regenerable"
+
+
+def test_mixed_photo_and_diagram_forces_preserve():
+    # A page with both a photo and a chart is unsafe to regenerate.
+    assert classify_page(0.1, 0.5, ["photo", "diagram"], has_table=False, bg_is_photo=False) == "preserve"
 
 
 def test_no_image_with_text_is_text():
