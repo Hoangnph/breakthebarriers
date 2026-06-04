@@ -345,3 +345,40 @@ window.addEventListener('load', () => {
             pass
     return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html,
             "page_class": page_class, "cover": cover}
+
+
+@router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg")
+def clean_page_bg(doc_id: str, page_num: int,
+                  force: bool = Query(False), db: Session = Depends(get_db)):
+    from backend.app.services.page_model import PageModel
+    from backend.app.services.background_policy import resolve_background_policy
+    from backend.app.services import image_cleaner
+
+    page = db.query(DBPage).filter(DBPage.document_id == doc_id,
+                                   DBPage.page_num == page_num).first()
+    if not page or not page.model_json:
+        raise HTTPException(status_code=404, detail="Page or model not found")
+    pm = PageModel.from_json(page.model_json)
+    if resolve_background_policy(pm.page_class, pm.cover) != "clean-photo":
+        raise HTTPException(status_code=400, detail="Page is not a clean-photo page")
+    src_name = (pm.background or {}).get("image")
+    if not src_name:
+        raise HTTPException(status_code=400, detail="Page has no raster to clean")
+
+    doc_dir = os.path.join(DATA_DIR, "extracted_html", doc_id)
+    clean_name = src_name.rsplit(".", 1)[0] + ".clean.png"
+    clean_path = os.path.join(doc_dir, clean_name)
+
+    if os.path.exists(clean_path) and not force:
+        status = "cached"
+    else:
+        ok = image_cleaner.clean_page_background(
+            os.path.join(doc_dir, src_name), clean_path)
+        if not ok:
+            raise HTTPException(status_code=502, detail="Background cleaning failed")
+        status = "cleaned"
+
+    pm.background["clean_image"] = clean_name
+    page.model_json = pm.to_json()
+    db.commit()
+    return {"status": status, "clean_image": clean_name}

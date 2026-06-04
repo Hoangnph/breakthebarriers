@@ -47,3 +47,48 @@ def test_preview_nonraw_returns_page_class_and_cover(client, db_session):
     data = r.json()
     assert data["page_class"] == "regenerable"
     assert data["cover"] == "front"
+
+
+import os
+from backend.app.core import DATA_DIR
+from backend.app.services import image_cleaner as _image_cleaner_mod
+
+
+def _seed_clean_photo(db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    db_session.add(DBDocument(id="cp_doc", filename="c.pdf", total_pages=1, status="translated"))
+    model = {"page_w": 595.0, "page_h": 842.0, "kind": "mixed",
+             "background": {"color": "#000", "image": "page-1.png"},
+             "blocks": [], "figures": [],
+             "page_class": "regenerable", "cover": "front"}
+    db_session.add(DBPage(document_id="cp_doc", page_num=1, original_html="<p/>",
+                          status="translated", model_json=json.dumps(model)))
+    db_session.commit()
+
+
+def test_clean_bg_updates_model_json(client, db_session, monkeypatch):
+    _seed_clean_photo(db_session)
+
+    def _fake_clean(src, out, **kw):
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(out, "wb") as f:
+            f.write(b"CLEAN")
+        return True
+    monkeypatch.setattr(_image_cleaner_mod, "clean_page_background", _fake_clean)
+
+    r = client.post("/api/docs/cp_doc/pages/1/clean-bg")
+    assert r.status_code == 200
+    assert r.json()["clean_image"] == "page-1.clean.png"
+    from backend.app.models_db import DBPage
+    page = db_session.query(DBPage).filter(DBPage.document_id == "cp_doc",
+                                           DBPage.page_num == 1).first()
+    assert "page-1.clean.png" in page.model_json
+    p = os.path.join(DATA_DIR, "extracted_html", "cp_doc", "page-1.clean.png")
+    if os.path.exists(p):
+        os.remove(p)
+
+
+def test_clean_bg_rejects_non_clean_photo(client, db_session):
+    _seed(db_session, _MODEL)   # _MODEL is a text page -> base-color, not clean-photo
+    r = client.post("/api/docs/p_doc/pages/1/clean-bg")
+    assert r.status_code == 400
