@@ -340,6 +340,8 @@ window.addEventListener('load', () => {
     if page.model_json:
         try:
             from backend.app.services.page_model import PageModel
+            # Re-parse here (not reuse the render-block `pm`, which is unbound on
+            # the layout_json fallback path) to read metadata fields safely.
             _pm = PageModel.from_json(page.model_json)
             page_class, cover = _pm.page_class, _pm.cover
             _bg = _pm.background or {}
@@ -357,7 +359,6 @@ def clean_page_bg(doc_id: str, page_num: int,
                   method: str = Query("inpaint"), force: bool = Query(False),
                   db: Session = Depends(get_db)):
     from backend.app.services.page_model import PageModel
-    from backend.app.services.background_policy import resolve_background_policy
     from backend.app.services import image_cleaner
 
     page = db.query(DBPage).filter(DBPage.document_id == doc_id,
