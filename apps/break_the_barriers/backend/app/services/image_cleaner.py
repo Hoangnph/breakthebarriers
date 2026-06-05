@@ -11,9 +11,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 _PROMPT = (
-    "Remove ALL overlaid text, letters, numbers, and captions from this image. "
-    "Keep the photograph, illustration, colors, lighting, and composition exactly "
-    "the same. Output the same image with no text anywhere."
+    "You are a precise image inpainting tool, NOT an image generator. "
+    "Remove ONLY the rendered text, letters, numbers, and any "
+    "table-of-contents/caption boxes from this image. Do NOT redraw, regenerate, "
+    "restyle, or move any person, face, object, background, lighting, or color. "
+    "Reconstruct strictly the small regions directly beneath the removed text by "
+    "extending the immediately surrounding pixels (inpainting). Every area that "
+    "had no text MUST remain pixel-identical to the input. Output the same photo, "
+    "same composition, with the text gone."
 )
 
 
