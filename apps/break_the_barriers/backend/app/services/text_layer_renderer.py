@@ -105,7 +105,8 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     # Figures first (z-order below text).
     for fig in model.figures:
         l, t, w, h = fig.bbox
-        src = html_lib.escape(f"{image_url_base}/{fig.img}", quote=True)
+        fig_name = fig.clean_img or fig.img
+        src = html_lib.escape(f"{image_url_base}/{fig_name}", quote=True)
         parts.append(
             f'<img class="tl-fig" src="{src}" alt="figure" '
             f'style="left:{_pct(l, pw):.3f}%;top:{_pct(t, ph):.3f}%;'

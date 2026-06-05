@@ -187,3 +187,25 @@ def test_base_color_renders_on_white_not_sampled_color():
     html = render_text_layer(pm, {}, image_url_base="http://api/assets")
     assert "background:#ffffff" in html
     assert "#3c84bf" not in html
+
+
+def test_figure_uses_clean_img_when_present():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[],
+        figures=[Figure(bbox=[10, 10, 100, 50], img="f1.png", clean_img="f1.clean.png")],
+        page_class="text", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert "f1.clean.png" in html
+    assert "f1.png" not in html.replace("f1.clean.png", "")
+
+
+def test_figure_falls_back_to_img_without_clean():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[], figures=[Figure(bbox=[10, 10, 100, 50], img="f1.png")],
+        page_class="text", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert "f1.png" in html
