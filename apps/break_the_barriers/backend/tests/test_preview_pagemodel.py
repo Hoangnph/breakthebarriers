@@ -118,3 +118,28 @@ def test_clean_bg_inpaint_method_sets_inpaint_file(client, db_session, monkeypat
         p = os.path.join(doc_dir, fn)
         if os.path.exists(p):
             os.remove(p)
+
+
+def test_set_page_policy_override(client, db_session):
+    _seed_clean_photo(db_session)
+    r = client.post("/api/docs/cp_doc/pages/1/policy", json={"value": "base-color"})
+    assert r.status_code == 200
+    assert r.json()["policy_override"] == "base-color"
+    from backend.app.models_db import DBPage
+    page = db_session.query(DBPage).filter(DBPage.document_id == "cp_doc",
+                                           DBPage.page_num == 1).first()
+    assert "base-color" in page.model_json
+
+
+def test_set_page_policy_auto_clears(client, db_session):
+    _seed_clean_photo(db_session)
+    client.post("/api/docs/cp_doc/pages/1/policy", json={"value": "keep-raster"})
+    r = client.post("/api/docs/cp_doc/pages/1/policy", json={"value": "auto"})
+    assert r.status_code == 200
+    assert r.json()["policy_override"] is None
+
+
+def test_set_page_policy_invalid_400(client, db_session):
+    _seed_clean_photo(db_session)
+    r = client.post("/api/docs/cp_doc/pages/1/policy", json={"value": "nope"})
+    assert r.status_code == 400

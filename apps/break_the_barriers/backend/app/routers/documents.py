@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
-from backend.app.models import DocumentMetadata
+from backend.app.models import DocumentMetadata, PagePolicyRequest
 from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBUser
 from backend.app.dependencies import get_optional_user
 from backend.app.core import DATA_DIR, estimate_pdf_pages
@@ -401,3 +401,24 @@ def clean_page_bg(doc_id: str, page_num: int,
     page.model_json = pm.to_json()
     db.commit()
     return {"status": status, "clean_image": clean_name, "method": method}
+
+
+@router.post("/api/docs/{doc_id}/pages/{page_num}/policy")
+def set_page_policy(doc_id: str, page_num: int,
+                    payload: PagePolicyRequest, db: Session = Depends(get_db)):
+    from backend.app.services.page_model import PageModel
+    page = db.query(DBPage).filter(DBPage.document_id == doc_id,
+                                   DBPage.page_num == page_num).first()
+    if not page or not page.model_json:
+        raise HTTPException(status_code=404, detail="Page or model not found")
+    pm = PageModel.from_json(page.model_json)
+    val = payload.value
+    if val == "auto":
+        (pm.background or {}).pop("policy_override", None)
+    elif val in ("base-color", "keep-raster", "clean-photo"):
+        pm.background["policy_override"] = val
+    else:
+        raise HTTPException(status_code=400, detail="Invalid policy value")
+    page.model_json = pm.to_json()
+    db.commit()
+    return {"policy_override": (pm.background or {}).get("policy_override")}

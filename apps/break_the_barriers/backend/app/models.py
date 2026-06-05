@@ -19,6 +19,9 @@ class TranslationRequest(BaseModel):
     quality_tier: str = "high"
     use_v2: bool = True
 
+class PagePolicyRequest(BaseModel):
+    value: str   # auto | base-color | keep-raster | clean-photo
+
 class CompilationRequest(BaseModel):
     page_num: int
 
