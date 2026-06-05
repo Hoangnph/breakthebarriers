@@ -58,3 +58,18 @@ def test_pagemodel_from_dict_old_json_defaults():
                               "background": {"color": "#fff", "image": None},
                               "blocks": [], "figures": []})
     assert pm.page_class == "text" and pm.cover == "none"
+
+
+def test_figure_clean_img_roundtrip_and_default():
+    from backend.app.services.page_model import PageModel, Figure
+    pm = PageModel(page_w=1.0, page_h=1.0, kind="mixed",
+                   background={"color": "#fff", "image": "p.png"}, blocks=[],
+                   figures=[Figure(bbox=[0, 0, 10, 10], img="f.png", clean_img="f.clean.png")])
+    d = pm.to_dict()
+    assert d["figures"][0]["clean_img"] == "f.clean.png"
+    pm2 = PageModel.from_dict(d)
+    assert pm2.figures[0].clean_img == "f.clean.png"
+    pm3 = PageModel.from_dict({"page_w": 1.0, "page_h": 1.0, "kind": "mixed",
+                               "background": {"color": "#fff", "image": None},
+                               "blocks": [], "figures": [{"bbox": [0, 0, 5, 5], "img": "g.png"}]})
+    assert pm3.figures[0].clean_img is None

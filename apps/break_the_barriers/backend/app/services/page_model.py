@@ -30,6 +30,7 @@ class Block:
 class Figure:
     bbox: List[float]      # [l, t, w, h] top-left points
     img: str               # filename only
+    clean_img: Optional[str] = None   # AI-cleaned (text-removed) variant filename
 
 
 @dataclass
@@ -67,7 +68,8 @@ class PageModel:
                 font=FontSpec(**f) if f else None,
                 box=b.get("box"),
             ))
-        figures = [Figure(bbox=list(f["bbox"]), img=f["img"]) for f in d.get("figures", [])]
+        figures = [Figure(bbox=list(f["bbox"]), img=f["img"],
+                          clean_img=f.get("clean_img")) for f in d.get("figures", [])]
         return cls(
             page_w=d["page_w"], page_h=d["page_h"], kind=d.get("kind", "text"),
             background=d.get("background", {"color": "#ffffff", "image": None}),
