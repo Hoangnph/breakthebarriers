@@ -31,8 +31,25 @@ def test_no_image_with_text_is_text():
     assert classify_page(0.4, 0.0, [], has_table=False, bg_is_photo=False) == "text"
 
 
-def test_text_heavy_page_with_photo_is_preserve():
-    assert classify_page(0.5, 0.2, ["photo"], has_table=False, bg_is_photo=False) == "preserve"
+def test_text_heavy_page_with_photo_is_text():
+    # A text-heavy page with one photo -> render as text (base-color); figure still cropped.
+    assert classify_page(0.5, 0.2, ["photo"], has_table=False, bg_is_photo=False) == "text"
+
+
+def test_text_dominant_with_diagram_is_text():
+    assert classify_page(0.31, 0.23, ["diagram"], has_table=False, bg_is_photo=False) == "text"
+
+
+def test_figure_dominant_diagram_still_preserve():
+    assert classify_page(0.07, 0.80, ["diagram"], has_table=False, bg_is_photo=False) == "preserve"
+
+
+def test_text_dominant_with_table_still_preserve():
+    assert classify_page(0.40, 0.10, [], has_table=True, bg_is_photo=False) == "preserve"
+
+
+def test_sparse_text_with_diagram_not_text():
+    assert classify_page(0.10, 0.05, ["diagram"], has_table=False, bg_is_photo=False) == "preserve"
 
 
 # --- detect_cover ---

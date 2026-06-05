@@ -10,9 +10,15 @@ from typing import List
 
 def classify_page(text_ratio: float, fig_ratio: float, figure_labels: List[str],
                   *, has_table: bool, bg_is_photo: bool,
-                  text_max: float = 0.30, fig_min: float = 0.15) -> str:
+                  text_max: float = 0.30, fig_min: float = 0.15,
+                  text_dominant_min: float = 0.15) -> str:
     has_image = bg_is_photo or fig_ratio >= fig_min or bool(figure_labels)
-    if not has_image and text_ratio > 0:
+    if not has_image and text_ratio > 0 and not has_table:
+        return "text"
+    # Text-dominant page (text covers >= figures, no table, no photo bg): render as
+    # text so the body is clean; figures are still cropped & preserved by the renderer.
+    if (not bg_is_photo and text_ratio >= text_dominant_min and text_ratio >= fig_ratio
+            and not has_table):
         return "text"
     if has_table or any(lbl in ("diagram", "uncertain") for lbl in figure_labels):
         return "preserve"
