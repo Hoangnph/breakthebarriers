@@ -137,3 +137,18 @@ def test_clean_photo_falls_back_to_raster_when_not_cleaned():
     html = render_text_layer(_clean_photo_model(None),
                              {"s1": "X"}, image_url_base="http://api/assets")
     assert "page-1.png" in html
+
+
+def test_clean_photo_text_background_is_transparent():
+    # On a clean-photo page the background is already AI-cleaned, so the overlay
+    # text must NOT carry a scrim/fill box — it sits directly on the clean photo.
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#000", "image": "page-1.png",
+                    "clean_image": "page-1.clean-inpaint.png"},
+        blocks=[Block(span_id="s1", role="heading", bbox=[36, 516, 432, 60], text="",
+                      font=FontSpec(36, 700, False, "#fff", "left", "sans"),
+                      box={"mode": "scrim", "fill": "rgba(255,255,255,0.55)"})],
+        figures=[], page_class="regenerable", cover="front")
+    html = render_text_layer(pm, {"s1": "X"}, image_url_base="http://api/assets")
+    assert "rgba(255,255,255,0.55)" not in html

@@ -126,7 +126,7 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
                              height_growth=1.0)
         box = blk.box or None
         box_css = ""
-        if box and box.get("fill") and draw_raster:
+        if box and box.get("fill") and policy == "keep-raster":
             if box.get("mode") == "scrim":
                 box_css = f"background:{box['fill']};padding:0 2px;"
             else:
