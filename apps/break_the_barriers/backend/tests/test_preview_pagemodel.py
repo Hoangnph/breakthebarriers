@@ -76,7 +76,7 @@ def test_clean_bg_updates_model_json(client, db_session, monkeypatch):
         return True
     monkeypatch.setattr(_image_cleaner_mod, "clean_page_background", _fake_clean)
 
-    r = client.post("/api/docs/cp_doc/pages/1/clean-bg")
+    r = client.post("/api/docs/cp_doc/pages/1/clean-bg?method=full")
     assert r.status_code == 200
     assert r.json()["clean_image"] == "page-1.clean.png"
     from backend.app.models_db import DBPage

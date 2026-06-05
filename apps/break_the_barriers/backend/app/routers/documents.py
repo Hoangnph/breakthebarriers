@@ -349,7 +349,7 @@ window.addEventListener('load', () => {
 
 @router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg")
 def clean_page_bg(doc_id: str, page_num: int,
-                  method: str = Query("full"), force: bool = Query(False),
+                  method: str = Query("inpaint"), force: bool = Query(False),
                   db: Session = Depends(get_db)):
     from backend.app.services.page_model import PageModel
     from backend.app.services.background_policy import resolve_background_policy
