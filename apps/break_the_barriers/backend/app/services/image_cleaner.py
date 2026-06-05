@@ -62,3 +62,37 @@ def clean_page_background(src_path: str, out_path: str, *, client=None,
     with open(out_path, "wb") as fh:
         fh.write(data)
     return True
+
+
+def build_text_mask(boxes_px, width: int, height: int, *,
+                    dilate: int = 6, feather: int = 9):
+    """Soft mask (float [0,1], shape HxW) = 1 where text boxes are.
+    boxes_px: iterable of (l, t, w, h) in pixels."""
+    import numpy as np
+    import cv2
+    mask = np.zeros((height, width), dtype=np.uint8)
+    for (l, t, w, h) in boxes_px:
+        x0 = max(0, int(round(l))); y0 = max(0, int(round(t)))
+        x1 = min(width, int(round(l + w))); y1 = min(height, int(round(t + h)))
+        if x1 > x0 and y1 > y0:
+            mask[y0:y1, x0:x1] = 255
+    if dilate > 0:
+        k = cv2.getStructuringElement(cv2.MORPH_RECT, (dilate * 2 + 1, dilate * 2 + 1))
+        mask = cv2.dilate(mask, k)
+    if feather > 0:
+        kf = feather if feather % 2 == 1 else feather + 1
+        mask = cv2.GaussianBlur(mask, (kf, kf), 0)
+    return mask.astype(np.float32) / 255.0
+
+
+def composite_inpaint(original_bgr, ai_bgr, mask):
+    """result = original*(1-mask) + resize(ai)*mask. Outside the mask the output
+    is pixel-identical to original_bgr."""
+    import numpy as np
+    import cv2
+    h, w = original_bgr.shape[:2]
+    if ai_bgr.shape[:2] != (h, w):
+        ai_bgr = cv2.resize(ai_bgr, (w, h), interpolation=cv2.INTER_AREA)
+    m3 = np.dstack([mask, mask, mask]).astype(np.float32)
+    out = original_bgr.astype(np.float32) * (1.0 - m3) + ai_bgr.astype(np.float32) * m3
+    return np.clip(out, 0, 255).astype(np.uint8)

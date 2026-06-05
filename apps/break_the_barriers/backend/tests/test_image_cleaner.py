@@ -56,3 +56,29 @@ def test_gemini_clean_bytes_none_when_no_image(tmp_path):
     client = types.SimpleNamespace(models=types.SimpleNamespace(
         generate_content=lambda **kw: types.SimpleNamespace(candidates=[empty])))
     assert _gemini_clean_bytes(str(src), client=client) is None
+
+
+import numpy as np
+from backend.app.services.image_cleaner import build_text_mask, composite_inpaint
+
+
+def test_build_text_mask_marks_box_and_clears_corner():
+    mask = build_text_mask([(40, 40, 20, 20)], 100, 100, dilate=0, feather=0)
+    assert mask.shape == (100, 100)
+    assert mask[50, 50] == 1.0
+    assert mask[0, 0] == 0.0
+
+
+def test_build_text_mask_dilate_expands():
+    base = build_text_mask([(40, 40, 20, 20)], 100, 100, dilate=0, feather=0)
+    grown = build_text_mask([(40, 40, 20, 20)], 100, 100, dilate=6, feather=0)
+    assert grown.sum() > base.sum()
+
+
+def test_composite_takes_ai_inside_mask_original_outside():
+    original = np.zeros((40, 40, 3), np.uint8); original[:, :, 0] = 255   # BGR blue
+    ai = np.zeros((40, 40, 3), np.uint8); ai[:, :, 2] = 255               # BGR red
+    mask = build_text_mask([(15, 15, 10, 10)], 40, 40, dilate=0, feather=0)
+    out = composite_inpaint(original, ai, mask)
+    assert out[20, 20, 2] > 200 and out[20, 20, 0] < 60   # center = red (ai)
+    assert out[0, 0, 0] > 200 and out[0, 0, 2] < 60       # corner = blue (original)
