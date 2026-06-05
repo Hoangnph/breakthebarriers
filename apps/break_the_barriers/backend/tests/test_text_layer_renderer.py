@@ -175,3 +175,15 @@ def test_blocks_carry_data_span_and_edit_script():
     html = render_text_layer(pm, {"s1": "Xin chào"}, image_url_base="http://api/assets")
     assert 'data-span="s1"' in html
     assert "btb-edit" in html
+
+
+def test_base_color_renders_on_white_not_sampled_color():
+    # A base-color content page must use a WHITE page background, not the dark
+    # sampled photo color (e.g. #3c84bf) left over from the original raster.
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#3c84bf", "image": "page-2.png"},
+        blocks=[], figures=[], page_class="regenerable", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert "background:#ffffff" in html
+    assert "#3c84bf" not in html

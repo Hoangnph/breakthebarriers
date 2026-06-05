@@ -89,6 +89,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     policy = effective_policy(model.page_class, model.cover,
                               (model.background or {}).get("policy_override"))
     draw_raster = policy != "base-color"
+    # On a base-color page the original raster is dropped, so render on a clean
+    # WHITE page — not the dark color sampled from the discarded photo.
+    if policy == "base-color":
+        bg = "#ffffff"
 
     parts = []
     bgd = model.background or {}
