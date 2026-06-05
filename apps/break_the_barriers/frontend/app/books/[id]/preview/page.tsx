@@ -15,6 +15,8 @@ type Lang = "pdf" | "en" | "vi"
 interface PageMeta {
   page_class?: string
   cover?: string
+  policy_override?: string | null
+  has_clean_image?: boolean
 }
 
 interface Doc {
@@ -46,6 +48,9 @@ export default function PreviewPage() {
   const [pageMeta, setPageMeta] = useState<PageMeta>({})
   const [cleanStatus, setCleanStatus] = useState<Record<"full" | "inpaint", "idle" | "running" | "error">>({ full: "idle", inpaint: "idle" })
   const [cleanBust, setCleanBust] = useState<number>(0)
+  const [revertStatus, setRevertStatus] = useState<"idle" | "running" | "error">("idle")
+  const [retranslateStatus, setRetranslateStatus] = useState<"idle" | "running" | "done" | "error">("idle")
+  const [editMode, setEditMode] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollFailRef = useRef(0)
 
@@ -79,13 +84,23 @@ export default function PreviewPage() {
     if (!pollRef.current) pollRef.current = setInterval(reloadPages, 3000)
   }
 
-  // Fetch non-raw page metadata to determine page_class / cover
+  // Fetch non-raw page metadata to determine page_class / cover / policy_override / has_clean_image
+  async function reloadPageMeta() {
+    try {
+      const m = await fetchAPI<PageMeta>(`/api/docs/${id}/pages/${currentPage}`)
+      setPageMeta(m)
+    } catch {
+      setPageMeta({})
+    }
+  }
+
   useEffect(() => {
     setPageMeta({})
     setCleanStatus({ full: "idle", inpaint: "idle" })
-    fetchAPI<PageMeta>(`/api/docs/${id}/pages/${currentPage}`)
-      .then((m) => setPageMeta(m))
-      .catch(() => setPageMeta({}))
+    setRevertStatus("idle")
+    setRetranslateStatus("idle")
+    reloadPageMeta()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentPage])
 
   async function runClean(method: "full" | "inpaint") {
@@ -94,8 +109,48 @@ export default function PreviewPage() {
       await fetchAPI(`/api/docs/${id}/pages/${currentPage}/clean-bg?method=${method}`, { method: "POST" })
       setCleanStatus((s) => ({ ...s, [method]: "idle" }))
       setCleanBust(Date.now())
+      reloadPageMeta()
     } catch {
       setCleanStatus((s) => ({ ...s, [method]: "error" }))
+    }
+  }
+
+  async function runRevert() {
+    setRevertStatus("running")
+    try {
+      await fetchAPI(`/api/docs/${id}/pages/${currentPage}/clean-bg/revert`, { method: "POST" })
+      setRevertStatus("idle")
+      setCleanBust(Date.now())
+      reloadPageMeta()
+    } catch {
+      setRevertStatus("error")
+    }
+  }
+
+  async function runRetranslate() {
+    setRetranslateStatus("running")
+    try {
+      await fetchAPI(`/api/docs/${id}/translate`, {
+        method: "POST",
+        body: JSON.stringify({ page_num: currentPage, target_lang: "vi", quality_tier: "high", use_v2: true }),
+      })
+      setRetranslateStatus("done")
+      setCleanBust(Date.now())
+    } catch {
+      setRetranslateStatus("error")
+    }
+  }
+
+  async function setPolicy(value: string) {
+    try {
+      await fetchAPI(`/api/docs/${id}/pages/${currentPage}/policy`, {
+        method: "POST",
+        body: JSON.stringify({ value }),
+      })
+      setCleanBust(Date.now())
+      reloadPageMeta()
+    } catch {
+      // ignore — user can retry
     }
   }
 
@@ -175,6 +230,28 @@ export default function PreviewPage() {
     }
   }, [pages, currentPage])
 
+  // Click-to-edit: listen for btb-edit postMessages from page iframes when editMode is ON
+  useEffect(() => {
+    if (!editMode) return
+    async function onEditMsg(e: MessageEvent) {
+      if (e.data?.type !== "btb-edit") return
+      const { span_id, text } = e.data as { span_id: string; text: string }
+      const newValue = window.prompt(`Sửa chữ (span ${span_id}):`, text)
+      if (newValue === null || newValue === text) return
+      try {
+        await fetchAPI(`/api/docs/${id}/translations/${span_id}`, {
+          method: "PUT",
+          body: JSON.stringify({ translated_text: newValue }),
+        })
+        setCleanBust(Date.now())
+      } catch {
+        alert("Lỗi khi lưu bản dịch")
+      }
+    }
+    window.addEventListener("message", onEditMsg)
+    return () => window.removeEventListener("message", onEditMsg)
+  }, [editMode, id])
+
   const currentPageInfo = pages.find((p) => p.page_num === currentPage)
   const canTranslated = currentPageInfo?.has_translated ?? false
 
@@ -221,9 +298,8 @@ export default function PreviewPage() {
           </div>
         )}
 
-        {/* Clean-bg buttons — visible on cover (clean-photo) pages. Cover wins
-            over page_class, matching resolve_background_policy on the backend. */}
-        {(pageMeta.cover === "front" || pageMeta.cover === "back") && (
+        {/* Clean-bg buttons — visible when effective policy is clean-photo */}
+        {(pageMeta.policy_override === "clean-photo" || (pageMeta.policy_override == null && (pageMeta.cover === "front" || pageMeta.cover === "back"))) && (
           <div className="flex gap-1.5 flex-shrink-0">
             {(["full", "inpaint"] as const).map((method) => (
               <button
@@ -239,6 +315,15 @@ export default function PreviewPage() {
                   : method === "full" ? "Làm sạch (Full)" : "Làm sạch (Inpaint)"}
               </button>
             ))}
+            {pageMeta.has_clean_image && (
+              <button
+                onClick={runRevert}
+                disabled={revertStatus === "running"}
+                className="px-3 py-1 text-xs font-medium rounded-lg border border-red-300 text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {revertStatus === "running" ? "Đang hoàn tác…" : revertStatus === "error" ? "Lỗi hoàn tác" : "Revert"}
+              </button>
+            )}
           </div>
         )}
 
@@ -275,6 +360,54 @@ export default function PreviewPage() {
           {currentPage}/{doc.total_pages}
         </span>
       </header>
+
+      {/* Per-page control panel */}
+      <div className="bg-white border-b border-gray-100 px-4 py-2 flex flex-wrap items-center gap-x-6 gap-y-2 flex-shrink-0">
+        <span className="text-xs font-semibold text-gray-500 flex-shrink-0">Tùy chỉnh trang {currentPage}</span>
+
+        {/* Background policy radios */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-400 mr-1">Nền:</span>
+          {([
+            { value: "auto",        label: "Auto" },
+            { value: "base-color",  label: "Trắng" },
+            { value: "keep-raster", label: "Giữ ảnh" },
+            { value: "clean-photo", label: "Làm sạch" },
+          ] as const).map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="radio"
+                name={`policy-${currentPage}`}
+                value={value}
+                checked={(pageMeta.policy_override ?? "auto") === value}
+                onChange={() => setPolicy(value)}
+                className="accent-indigo-600"
+              />
+              <span className="text-xs text-gray-600">{label}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* Re-translate button */}
+        <button
+          onClick={runRetranslate}
+          disabled={retranslateStatus === "running"}
+          className="px-3 py-1 text-xs font-medium rounded-lg border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+        >
+          {retranslateStatus === "running" ? "Đang dịch…" : retranslateStatus === "done" ? "Đã dịch lại ✓" : retranslateStatus === "error" ? "Lỗi dịch" : "Dịch lại trang"}
+        </button>
+
+        {/* Click-to-edit toggle */}
+        <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+          <input
+            type="checkbox"
+            checked={editMode}
+            onChange={(e) => setEditMode(e.target.checked)}
+            className="accent-indigo-600"
+          />
+          <span className="text-xs text-gray-600">Bật sửa chữ</span>
+        </label>
+      </div>
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
