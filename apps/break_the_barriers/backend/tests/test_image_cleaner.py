@@ -1,6 +1,7 @@
 import types
 from PIL import Image
 from backend.app.services.image_cleaner import clean_page_background
+from backend.app.services.image_cleaner import _gemini_clean_bytes
 
 
 def _make_png(path):
@@ -40,3 +41,18 @@ def test_returns_false_on_client_error(tmp_path):
         raise RuntimeError("api down")
     client = types.SimpleNamespace(models=types.SimpleNamespace(generate_content=_boom))
     assert clean_page_background(str(src), str(out), client=client) is False
+
+
+def test_gemini_clean_bytes_returns_data(tmp_path):
+    src = tmp_path / "page-1.png"; _make_png(src)
+    data = _gemini_clean_bytes(str(src), client=_client_returning(b"AIBYTES"))
+    assert data == b"AIBYTES"
+
+
+def test_gemini_clean_bytes_none_when_no_image(tmp_path):
+    import types
+    src = tmp_path / "page-1.png"; _make_png(src)
+    empty = types.SimpleNamespace(content=types.SimpleNamespace(parts=[]))
+    client = types.SimpleNamespace(models=types.SimpleNamespace(
+        generate_content=lambda **kw: types.SimpleNamespace(candidates=[empty])))
+    assert _gemini_clean_bytes(str(src), client=client) is None

@@ -26,8 +26,10 @@ def _default_model() -> str:
     return os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 
 
-def clean_page_background(src_path: str, out_path: str, *, client=None,
-                          model: str | None = None) -> bool:
+def _gemini_clean_bytes(src_path: str, *, client=None,
+                        model: str | None = None) -> bytes | None:
+    """Call Gemini image-edit and return the cleaned image bytes, or None on any
+    failure (no key, no image in response, API error)."""
     model = model or _default_model()
     try:
         from PIL import Image
@@ -35,7 +37,7 @@ def clean_page_background(src_path: str, out_path: str, *, client=None,
             from google import genai
             api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:
-                return False
+                return None
             client = genai.Client(api_key=api_key)
         img = Image.open(src_path)
         resp = client.models.generate_content(model=model, contents=[_PROMPT, img])
@@ -45,10 +47,18 @@ def clean_page_background(src_path: str, out_path: str, *, client=None,
                 inline = getattr(part, "inline_data", None)
                 data = getattr(inline, "data", None) if inline else None
                 if data:
-                    with open(out_path, "wb") as fh:
-                        fh.write(data)
-                    return True
-        return False
+                    return data
+        return None
     except Exception as e:
-        logger.warning(f"clean_page_background failed for {src_path}: {e}")
+        logger.warning(f"_gemini_clean_bytes failed for {src_path}: {e}")
+        return None
+
+
+def clean_page_background(src_path: str, out_path: str, *, client=None,
+                         model: str | None = None) -> bool:
+    data = _gemini_clean_bytes(src_path, client=client, model=model)
+    if not data:
         return False
+    with open(out_path, "wb") as fh:
+        fh.write(data)
+    return True
