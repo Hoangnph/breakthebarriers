@@ -349,7 +349,8 @@ window.addEventListener('load', () => {
 
 @router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg")
 def clean_page_bg(doc_id: str, page_num: int,
-                  force: bool = Query(False), db: Session = Depends(get_db)):
+                  method: str = Query("full"), force: bool = Query(False),
+                  db: Session = Depends(get_db)):
     from backend.app.services.page_model import PageModel
     from backend.app.services.background_policy import resolve_background_policy
     from backend.app.services import image_cleaner
@@ -366,14 +367,32 @@ def clean_page_bg(doc_id: str, page_num: int,
         raise HTTPException(status_code=400, detail="Page has no raster to clean")
 
     doc_dir = os.path.join(DATA_DIR, "extracted_html", doc_id)
-    clean_name = src_name.rsplit(".", 1)[0] + ".clean.png"
+
+    if method == "inpaint":
+        clean_name = src_name.rsplit(".", 1)[0] + ".clean-inpaint.png"
+    else:
+        clean_name = src_name.rsplit(".", 1)[0] + ".clean.png"
     clean_path = os.path.join(doc_dir, clean_name)
 
     if os.path.exists(clean_path) and not force:
         status = "cached"
     else:
-        ok = image_cleaner.clean_page_background(
-            os.path.join(doc_dir, src_name), clean_path)
+        src_path = os.path.join(doc_dir, src_name)
+        if method == "inpaint":
+            boxes_px = []
+            try:
+                from PIL import Image as _Image
+                rw, rh = _Image.open(src_path).size
+                sx = rw / (pm.page_w or 1.0)
+                sy = rh / (pm.page_h or 1.0)
+                for b in pm.blocks:
+                    l, t, w, h = b.bbox
+                    boxes_px.append((l * sx, t * sy, w * sx, h * sy))
+            except Exception:
+                boxes_px = []
+            ok = image_cleaner.clean_page_background_inpaint(src_path, clean_path, boxes_px)
+        else:
+            ok = image_cleaner.clean_page_background(src_path, clean_path)
         if not ok:
             raise HTTPException(status_code=502, detail="Background cleaning failed")
         status = "cleaned"
@@ -381,4 +400,4 @@ def clean_page_bg(doc_id: str, page_num: int,
     pm.background["clean_image"] = clean_name
     page.model_json = pm.to_json()
     db.commit()
-    return {"status": status, "clean_image": clean_name}
+    return {"status": status, "clean_image": clean_name, "method": method}

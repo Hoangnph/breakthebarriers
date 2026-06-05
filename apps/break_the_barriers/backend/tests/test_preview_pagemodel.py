@@ -92,3 +92,29 @@ def test_clean_bg_rejects_non_clean_photo(client, db_session):
     _seed(db_session, _MODEL)   # _MODEL is a text page -> base-color, not clean-photo
     r = client.post("/api/docs/p_doc/pages/1/clean-bg")
     assert r.status_code == 400
+
+
+def test_clean_bg_inpaint_method_sets_inpaint_file(client, db_session, monkeypatch):
+    _seed_clean_photo(db_session)
+    import cv2, numpy as np
+    doc_dir = os.path.join(DATA_DIR, "extracted_html", "cp_doc")
+    os.makedirs(doc_dir, exist_ok=True)
+    cv2.imwrite(os.path.join(doc_dir, "page-1.png"), np.zeros((20, 20, 3), np.uint8))
+
+    def _fake_inpaint(src, out, boxes, **kw):
+        with open(out, "wb") as f:
+            f.write(b"INP")
+        return True
+    monkeypatch.setattr(_image_cleaner_mod, "clean_page_background_inpaint", _fake_inpaint)
+
+    r = client.post("/api/docs/cp_doc/pages/1/clean-bg?method=inpaint")
+    assert r.status_code == 200
+    assert r.json()["clean_image"] == "page-1.clean-inpaint.png"
+    from backend.app.models_db import DBPage
+    page = db_session.query(DBPage).filter(DBPage.document_id == "cp_doc",
+                                           DBPage.page_num == 1).first()
+    assert "page-1.clean-inpaint.png" in page.model_json
+    for fn in ("page-1.png", "page-1.clean-inpaint.png"):
+        p = os.path.join(doc_dir, fn)
+        if os.path.exists(p):
+            os.remove(p)
