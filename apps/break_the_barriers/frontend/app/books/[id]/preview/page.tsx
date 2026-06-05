@@ -44,7 +44,7 @@ export default function PreviewPage() {
   const [lang, setLang] = useState<Lang>("en")
   const [zoom, setZoom] = useState(1)
   const [pageMeta, setPageMeta] = useState<PageMeta>({})
-  const [cleanStatus, setCleanStatus] = useState<"idle" | "running" | "error">("idle")
+  const [cleanStatus, setCleanStatus] = useState<Record<"full" | "inpaint", "idle" | "running" | "error">>({ full: "idle", inpaint: "idle" })
   const [cleanBust, setCleanBust] = useState<number>(0)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollFailRef = useRef(0)
@@ -82,20 +82,20 @@ export default function PreviewPage() {
   // Fetch non-raw page metadata to determine page_class / cover
   useEffect(() => {
     setPageMeta({})
-    setCleanStatus("idle")
+    setCleanStatus({ full: "idle", inpaint: "idle" })
     fetchAPI<PageMeta>(`/api/docs/${id}/pages/${currentPage}`)
       .then((m) => setPageMeta(m))
       .catch(() => setPageMeta({}))
   }, [id, currentPage])
 
-  async function handleCleanBg() {
-    setCleanStatus("running")
+  async function runClean(method: "full" | "inpaint") {
+    setCleanStatus((s) => ({ ...s, [method]: "running" }))
     try {
-      await fetchAPI(`/api/docs/${id}/pages/${currentPage}/clean-bg`, { method: "POST" })
-      setCleanStatus("idle")
+      await fetchAPI(`/api/docs/${id}/pages/${currentPage}/clean-bg?method=${method}`, { method: "POST" })
+      setCleanStatus((s) => ({ ...s, [method]: "idle" }))
       setCleanBust(Date.now())
     } catch {
-      setCleanStatus("error")
+      setCleanStatus((s) => ({ ...s, [method]: "error" }))
     }
   }
 
@@ -221,15 +221,24 @@ export default function PreviewPage() {
           </div>
         )}
 
-        {/* Clean-bg button — visible only for cover/clean-photo pages */}
+        {/* Clean-bg buttons — visible only for cover/clean-photo pages */}
         {pageMeta.page_class === "regenerable" && (pageMeta.cover === "front" || pageMeta.cover === "back") && (
-          <button
-            onClick={handleCleanBg}
-            disabled={cleanStatus === "running"}
-            className="px-3 py-1 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-          >
-            {cleanStatus === "running" ? "Đang làm sạch…" : cleanStatus === "error" ? "Lỗi làm sạch" : "Làm sạch nền AI"}
-          </button>
+          <div className="flex gap-1.5 flex-shrink-0">
+            {(["full", "inpaint"] as const).map((method) => (
+              <button
+                key={method}
+                onClick={() => runClean(method)}
+                disabled={cleanStatus[method] === "running"}
+                className="px-3 py-1 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cleanStatus[method] === "running"
+                  ? "Đang làm sạch…"
+                  : cleanStatus[method] === "error"
+                  ? "Lỗi làm sạch"
+                  : method === "full" ? "Làm sạch (Full)" : "Làm sạch (Inpaint)"}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Layout switcher */}
