@@ -8,7 +8,7 @@ import html as html_lib
 
 from backend.app.services.page_model import PageModel
 from backend.app.services.text_fitter import fit_font_size
-from backend.app.services.background_policy import resolve_background_policy
+from backend.app.services.background_policy import resolve_background_policy, effective_policy
 
 # Vietnamese-capable web fonts, one per family class.
 _FONT_STACK = {
@@ -86,7 +86,8 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     ph = model.page_h or 1.0
     bg = (model.background or {}).get("color") or "#ffffff"
 
-    policy = resolve_background_policy(model.page_class, model.cover)
+    policy = effective_policy(model.page_class, model.cover,
+                              (model.background or {}).get("policy_override"))
     draw_raster = policy != "base-color"
 
     parts = []
@@ -133,6 +134,7 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
                 box_css = f"background:{box['fill']};"
         parts.append(
             f'<div class="tl-text" data-fit="1" '
+            f'data-span="{html_lib.escape(blk.span_id, quote=True)}" '
             f'style="left:{_pct(l, pw):.3f}%;top:{_pct(t, ph):.3f}%;'
             f'width:{_pct(w, pw):.3f}%;'
             f'min-height:{_pct(h, ph):.3f}%;max-height:{_pct(slot_h, ph):.3f}%;'
@@ -160,6 +162,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         "window.addEventListener('message',function(e){var d=e.data||{};"
         "if(d.type==='btb-zoom'&&typeof d.zoom==='number'){"
         "userZoom=Math.max(0.25,Math.min(5,d.zoom));apply();}});"
+        "document.addEventListener('click',function(e){"
+        "var el=e.target.closest&&e.target.closest('.tl-text');if(!el)return;"
+        "window.parent.postMessage({type:'btb-edit',"
+        "span_id:el.getAttribute('data-span'),text:el.textContent},'*');});/*btb-edit*/"
         "if(document.readyState!=='loading')run();"
         "else window.addEventListener('DOMContentLoaded',run);"
         "window.addEventListener('load',run);})();</script>"

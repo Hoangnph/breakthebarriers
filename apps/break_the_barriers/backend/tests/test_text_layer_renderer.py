@@ -152,3 +152,26 @@ def test_clean_photo_text_background_is_transparent():
         figures=[], page_class="regenerable", cover="front")
     html = render_text_layer(pm, {"s1": "X"}, image_url_base="http://api/assets")
     assert "rgba(255,255,255,0.55)" not in html
+
+
+def test_policy_override_forces_base_color_on_preserve():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#000", "image": "page-1.png", "policy_override": "base-color"},
+        blocks=[Block(span_id="s1", role="body", bbox=[70, 480, 300, 14], text="",
+                      font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+        figures=[], page_class="preserve", cover="none")
+    html = render_text_layer(pm, {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' not in html          # override base-color drops raster
+
+
+def test_blocks_carry_data_span_and_edit_script():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[Block(span_id="s1", role="body", bbox=[72, 40, 200, 24], text="",
+                      font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+        figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"s1": "Xin chào"}, image_url_base="http://api/assets")
+    assert 'data-span="s1"' in html
+    assert "btb-edit" in html
