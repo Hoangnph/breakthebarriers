@@ -96,3 +96,28 @@ def composite_inpaint(original_bgr, ai_bgr, mask):
     m3 = np.dstack([mask, mask, mask]).astype(np.float32)
     out = original_bgr.astype(np.float32) * (1.0 - m3) + ai_bgr.astype(np.float32) * m3
     return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def clean_page_background_inpaint(src_path: str, out_path: str, boxes_px, *,
+                                  client=None, model: str | None = None) -> bool:
+    """Gemini-clean the whole page, then composite ONLY the text-box regions onto
+    the original so everything else stays pixel-identical. Returns False on any
+    failure (caller keeps the original raster)."""
+    try:
+        import numpy as np
+        import cv2
+        data = _gemini_clean_bytes(src_path, client=client, model=model)
+        if not data:
+            return False
+        ai = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+        original = cv2.imread(src_path, cv2.IMREAD_COLOR)
+        if ai is None or original is None:
+            return False
+        h, w = original.shape[:2]
+        mask = build_text_mask(boxes_px, w, h)
+        result = composite_inpaint(original, ai, mask)
+        cv2.imwrite(out_path, result)
+        return True
+    except Exception as e:
+        logger.warning(f"clean_page_background_inpaint failed for {src_path}: {e}")
+        return False

@@ -82,3 +82,39 @@ def test_composite_takes_ai_inside_mask_original_outside():
     out = composite_inpaint(original, ai, mask)
     assert out[20, 20, 2] > 200 and out[20, 20, 0] < 60   # center = red (ai)
     assert out[0, 0, 0] > 200 and out[0, 0, 2] < 60       # corner = blue (original)
+
+
+import cv2
+from backend.app.services.image_cleaner import clean_page_background_inpaint
+
+
+def _png_bytes(bgr):
+    ok, buf = cv2.imencode(".png", bgr)
+    return buf.tobytes()
+
+
+def test_inpaint_composites_ai_only_in_mask(tmp_path):
+    src = tmp_path / "page-1.png"
+    blue = np.zeros((40, 40, 3), np.uint8); blue[:, :, 0] = 255   # original blue
+    cv2.imwrite(str(src), blue)
+    red = np.zeros((40, 40, 3), np.uint8); red[:, :, 2] = 255     # AI red
+    out = tmp_path / "page-1.clean-inpaint.png"
+    ok = clean_page_background_inpaint(
+        str(src), str(out), [(15, 15, 10, 10)],
+        client=_client_returning(_png_bytes(red)))
+    assert ok is True
+    res = cv2.imread(str(out))
+    assert res[20, 20, 2] > 200      # center = red (AI inpainted)
+    assert res[0, 0, 0] > 200        # corner = blue (original preserved)
+
+
+def test_inpaint_false_when_ai_returns_no_image(tmp_path):
+    import types
+    src = tmp_path / "page-1.png"
+    cv2.imwrite(str(src), np.zeros((10, 10, 3), np.uint8))
+    out = tmp_path / "o.png"
+    empty = types.SimpleNamespace(content=types.SimpleNamespace(parts=[]))
+    client = types.SimpleNamespace(models=types.SimpleNamespace(
+        generate_content=lambda **kw: types.SimpleNamespace(candidates=[empty])))
+    assert clean_page_background_inpaint(str(src), str(out), [(1, 1, 2, 2)],
+                                         client=client) is False
