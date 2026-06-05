@@ -221,8 +221,9 @@ export default function PreviewPage() {
           </div>
         )}
 
-        {/* Clean-bg buttons — visible only for cover/clean-photo pages */}
-        {pageMeta.page_class === "regenerable" && (pageMeta.cover === "front" || pageMeta.cover === "back") && (
+        {/* Clean-bg buttons — visible on cover (clean-photo) pages. Cover wins
+            over page_class, matching resolve_background_policy on the backend. */}
+        {(pageMeta.cover === "front" || pageMeta.cover === "back") && (
           <div className="flex gap-1.5 flex-shrink-0">
             {(["full", "inpaint"] as const).map((method) => (
               <button

@@ -10,11 +10,14 @@ from __future__ import annotations
 
 
 def resolve_background_policy(page_class: str, cover: str) -> str:
+    # A front/back cover is a photo/design page, never a content diagram, so it
+    # is always background-cleanable — even if the per-figure heuristic was
+    # uncertain and labelled the page `preserve`. Cover wins over page_class.
+    if cover in ("front", "back"):
+        return "clean-photo"
     if page_class == "preserve":
         return "keep-raster"
     if page_class == "regenerable":
-        if cover in ("front", "back"):
-            return "clean-photo"
         return "base-color"
     if page_class == "text":
         return "base-color"
