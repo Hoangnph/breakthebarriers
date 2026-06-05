@@ -336,15 +336,20 @@ window.addEventListener('load', () => {
         return HTMLResponse(content=html_injected)
 
     page_class, cover = "text", "none"
+    policy_override, has_clean_image = None, False
     if page.model_json:
         try:
             from backend.app.services.page_model import PageModel
             _pm = PageModel.from_json(page.model_json)
             page_class, cover = _pm.page_class, _pm.cover
+            _bg = _pm.background or {}
+            policy_override = _bg.get("policy_override")
+            has_clean_image = bool(_bg.get("clean_image"))
         except Exception:
             pass
     return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "html": html,
-            "page_class": page_class, "cover": cover}
+            "page_class": page_class, "cover": cover,
+            "policy_override": policy_override, "has_clean_image": has_clean_image}
 
 
 @router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg")
@@ -360,7 +365,9 @@ def clean_page_bg(doc_id: str, page_num: int,
     if not page or not page.model_json:
         raise HTTPException(status_code=404, detail="Page or model not found")
     pm = PageModel.from_json(page.model_json)
-    if resolve_background_policy(pm.page_class, pm.cover) != "clean-photo":
+    from backend.app.services.background_policy import effective_policy
+    if effective_policy(pm.page_class, pm.cover,
+                        (pm.background or {}).get("policy_override")) != "clean-photo":
         raise HTTPException(status_code=400, detail="Page is not a clean-photo page")
     src_name = (pm.background or {}).get("image")
     if not src_name:
@@ -422,3 +429,17 @@ def set_page_policy(doc_id: str, page_num: int,
     page.model_json = pm.to_json()
     db.commit()
     return {"policy_override": (pm.background or {}).get("policy_override")}
+
+
+@router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg/revert")
+def revert_clean_bg(doc_id: str, page_num: int, db: Session = Depends(get_db)):
+    from backend.app.services.page_model import PageModel
+    page = db.query(DBPage).filter(DBPage.document_id == doc_id,
+                                   DBPage.page_num == page_num).first()
+    if not page or not page.model_json:
+        raise HTTPException(status_code=404, detail="Page or model not found")
+    pm = PageModel.from_json(page.model_json)
+    pm.background.pop("clean_image", None)
+    page.model_json = pm.to_json()
+    db.commit()
+    return {"status": "reverted"}

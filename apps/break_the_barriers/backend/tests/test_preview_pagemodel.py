@@ -143,3 +143,61 @@ def test_set_page_policy_invalid_400(client, db_session):
     _seed_clean_photo(db_session)
     r = client.post("/api/docs/cp_doc/pages/1/policy", json={"value": "nope"})
     assert r.status_code == 400
+
+
+def test_clean_bg_revert_drops_clean_image(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    db_session.add(DBDocument(id="rv_doc", filename="r.pdf", total_pages=1, status="translated"))
+    model = {"page_w": 595.0, "page_h": 842.0, "kind": "mixed",
+             "background": {"color": "#000", "image": "page-1.png",
+                            "clean_image": "page-1.clean-inpaint.png"},
+             "blocks": [], "figures": [], "page_class": "regenerable", "cover": "front"}
+    db_session.add(DBPage(document_id="rv_doc", page_num=1, original_html="<p/>",
+                          status="translated", model_json=json.dumps(model)))
+    db_session.commit()
+    r = client.post("/api/docs/rv_doc/pages/1/clean-bg/revert")
+    assert r.status_code == 200 and r.json()["status"] == "reverted"
+    page = db_session.query(DBPage).filter(DBPage.document_id == "rv_doc",
+                                           DBPage.page_num == 1).first()
+    assert "clean-inpaint" not in page.model_json
+
+
+def test_metadata_returns_override_and_has_clean(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    db_session.add(DBDocument(id="md_doc", filename="m.pdf", total_pages=1, status="translated"))
+    model = {"page_w": 1.0, "page_h": 1.0, "kind": "mixed",
+             "background": {"color": "#000", "image": "page-1.png",
+                            "clean_image": "page-1.clean.png", "policy_override": "keep-raster"},
+             "blocks": [], "figures": [], "page_class": "regenerable", "cover": "front"}
+    db_session.add(DBPage(document_id="md_doc", page_num=1, original_html="<p/>",
+                          status="translated", model_json=json.dumps(model)))
+    db_session.commit()
+    d = client.get("/api/docs/md_doc/pages/1").json()
+    assert d["policy_override"] == "keep-raster"
+    assert d["has_clean_image"] is True
+
+
+def test_clean_bg_gating_respects_override(client, db_session, monkeypatch):
+    from backend.app.models_db import DBDocument, DBPage
+    import os, cv2, numpy as np
+    db_session.add(DBDocument(id="ov_doc", filename="o.pdf", total_pages=1, status="translated"))
+    model = {"page_w": 595.0, "page_h": 842.0, "kind": "mixed",
+             "background": {"color": "#000", "image": "page-1.png", "policy_override": "clean-photo"},
+             "blocks": [], "figures": [], "page_class": "preserve", "cover": "none"}
+    db_session.add(DBPage(document_id="ov_doc", page_num=1, original_html="<p/>",
+                          status="translated", model_json=json.dumps(model)))
+    db_session.commit()
+    doc_dir = os.path.join(DATA_DIR, "extracted_html", "ov_doc")
+    os.makedirs(doc_dir, exist_ok=True)
+    cv2.imwrite(os.path.join(doc_dir, "page-1.png"), np.zeros((10, 10, 3), np.uint8))
+
+    def _fake_inpaint(src, out, boxes, **kw):
+        open(out, "wb").write(b"X"); return True
+    monkeypatch.setattr(_image_cleaner_mod, "clean_page_background_inpaint", _fake_inpaint)
+
+    r = client.post("/api/docs/ov_doc/pages/1/clean-bg?method=inpaint")
+    assert r.status_code == 200
+    for fn in ("page-1.png", "page-1.clean-inpaint.png"):
+        p = os.path.join(doc_dir, fn)
+        if os.path.exists(p):
+            os.remove(p)
