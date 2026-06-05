@@ -22,3 +22,13 @@ def resolve_background_policy(page_class: str, cover: str) -> str:
     if page_class == "text":
         return "base-color"
     return "keep-raster"   # safe default for unknown labels
+
+
+_VALID_POLICIES = ("base-color", "keep-raster", "clean-photo")
+
+
+def effective_policy(page_class: str, cover: str, override) -> str:
+    """A valid manual override wins; otherwise fall back to the auto policy."""
+    if override in _VALID_POLICIES:
+        return override
+    return resolve_background_policy(page_class, cover)
