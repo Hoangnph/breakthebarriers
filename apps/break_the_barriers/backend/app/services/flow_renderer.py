@@ -4,6 +4,7 @@ import html as html_lib
 from typing import List
 
 from backend.app.services.flow_model import FlowElement
+from backend.app.services.toc_parser import parse_toc_entry
 
 _FONTS = (
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -24,35 +25,96 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-fig { max-width: 100%; height: auto; display: block; }
 .fl-page { width: 100%; height: auto; display: block; margin: 1.5em 0;
            border-radius: 4px; }
+.fl-doc section { scroll-margin-top: 16px; }
+.fl-contents { margin: 1.5em 0; }
+.fl-toc-link { display: flex; align-items: flex-end; text-decoration: none;
+               color: inherit; margin: .25em 0; }
+.fl-toc-link .t { flex: 0 1 auto; }
+.fl-toc-dots { flex: 1 1 8px; min-width: 8px; margin: 0 4px 4px;
+               border-bottom: 1px dotted #aaa; }
+.fl-toc-link.lvl2 { margin-left: 1.5em; }
+.fl-toc-link.lvl3 { margin-left: 3em; }
+.fl-toc-link:hover .t { text-decoration: underline; }
 """
+
+
+def _heading_entries(flow, translations):
+    out = []
+    for el in flow:
+        if el.kind == "heading":
+            text = (translations or {}).get(el.span_id)
+            if text:
+                out.append((el.span_id, el.level, text))
+    return out
+
+
+def _contents_html(headings) -> str:
+    links = []
+    for span, level, text in headings:
+        lvl = level if level in (1, 2, 3) else 3
+        sid = html_lib.escape(f"sec-{span}", quote=True)
+        links.append(
+            f'<a href="#{sid}" class="fl-toc-link lvl{lvl}">'
+            f'<span class="t">{html_lib.escape(text)}</span>'
+            f'<span class="fl-toc-dots"></span></a>')
+    return f'<nav class="fl-contents">{"".join(links)}</nav>'
 
 
 def render_flow_html(flow: List[FlowElement], translations: dict,
                      image_url_base: str) -> str:
+    headings = _heading_entries(flow, translations)
+    contents_html = _contents_html(headings) if headings else ""
     parts: List[str] = []
+    section_open = False
+    contents_done = False
+
+    def ensure_section():
+        nonlocal section_open
+        if not section_open:
+            parts.append('<section class="fl-intro">')
+            section_open = True
+
     for el in flow:
+        text = (translations or {}).get(el.span_id) if el.span_id else None
+        if el.kind in ("paragraph", "caption", "list") and text and parse_toc_entry(text):
+            ensure_section()
+            if not contents_done and contents_html:
+                parts.append(contents_html)
+                contents_done = True
+            continue
+        if el.kind == "heading" and text:
+            if section_open:
+                parts.append("</section>")
+            sid = html_lib.escape(f"sec-{el.span_id}", quote=True)
+            parts.append(f'<section id="{sid}">')
+            section_open = True
+            lvl = el.level if el.level in (1, 2, 3) else 3
+            span = html_lib.escape(el.span_id or "", quote=True)
+            parts.append(f'<h{lvl} data-span="{span}">{html_lib.escape(text)}</h{lvl}>')
+            continue
         if el.kind == "image_block" and el.src:
+            ensure_section()
             src = html_lib.escape(f"{image_url_base}/{el.src}", quote=True)
             parts.append(f'<img class="fl-page" src="{src}" alt="page"/>')
             continue
         if el.kind == "figure" and el.src:
+            ensure_section()
             src = html_lib.escape(f"{image_url_base}/{el.src}", quote=True)
             parts.append(f'<figure><img class="fl-fig" src="{src}" alt="figure"/></figure>')
             continue
-        text = (translations or {}).get(el.span_id)
         if not text:
             continue
+        ensure_section()
         span = html_lib.escape(el.span_id or "", quote=True)
         body = html_lib.escape(text)
-        if el.kind == "heading":
-            lvl = el.level if el.level in (1, 2, 3) else 3
-            parts.append(f'<h{lvl} data-span="{span}">{body}</h{lvl}>')
-        elif el.kind == "caption":
+        if el.kind == "caption":
             parts.append(f'<p class="cap" data-span="{span}">{body}</p>')
         elif el.kind == "list":
             parts.append(f'<p class="li" data-span="{span}">• {body}</p>')
         else:
             parts.append(f'<p data-span="{span}">{body}</p>')
+    if section_open:
+        parts.append("</section>")
     return (
         '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
