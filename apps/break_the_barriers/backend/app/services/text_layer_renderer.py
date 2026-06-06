@@ -9,6 +9,7 @@ import html as html_lib
 from backend.app.services.page_model import PageModel
 from backend.app.services.text_fitter import fit_font_size
 from backend.app.services.background_policy import resolve_background_policy, effective_policy
+from backend.app.services.toc_parser import parse_toc_entry, is_toc_page
 
 # Vietnamese-capable web fonts, one per family class.
 _FONT_STACK = {
@@ -40,6 +41,11 @@ body { background: #525659; }
 .tl-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .tl-text { position: absolute; line-height: 1.2; overflow: hidden;
            word-break: break-word; }
+.tl-toc { display: flex; align-items: flex-end; white-space: nowrap; }
+.tl-toc-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.tl-toc-leader { flex: 1 1 8px; min-width: 8px; margin: 0 4px 3px;
+                 border-bottom: 1px dotted currentColor; }
+.tl-toc-num { flex: 0 0 auto; }
 """
 
 
@@ -115,6 +121,8 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
 
     slots = compute_slot_heights(model.blocks, model.figures, ph)
 
+    toc_page = is_toc_page([(translations or {}).get(b.span_id, "") for b in model.blocks])
+
     for blk in model.blocks:
         text = (translations or {}).get(blk.span_id)
         if not text:
@@ -146,15 +154,25 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
                 box_css = f"background:{box['fill']};padding:0 2px;"
             else:
                 box_css = f"background:{box['fill']};"
+        entry = parse_toc_entry(text) if toc_page else None
+        if entry:
+            _title, _num = entry
+            inner = (f'<span class="tl-toc-title">{html_lib.escape(_title)}</span>'
+                     f'<span class="tl-toc-leader"></span>'
+                     f'<span class="tl-toc-num">{html_lib.escape(_num)}</span>')
+            cls = "tl-text tl-toc"
+        else:
+            inner = html_lib.escape(text)
+            cls = "tl-text"
         parts.append(
-            f'<div class="tl-text" data-fit="1" '
+            f'<div class="{cls}" data-fit="1" '
             f'data-span="{html_lib.escape(blk.span_id, quote=True)}" '
             f'style="left:{_pct(l, pw):.3f}%;top:{_pct(t, ph):.3f}%;'
             f'width:{_pct(w, pw):.3f}%;'
             f'min-height:{_pct(h, ph):.3f}%;max-height:{_pct(max_h, ph):.3f}%;'
             f'font-family:{family};font-size:{size:.1f}px;font-weight:{weight};'
             f'font-style:{italic};color:{color};text-align:{align};{box_css}">'
-            f'{html_lib.escape(text)}</div>'
+            f'{inner}</div>'
         )
 
     script = (

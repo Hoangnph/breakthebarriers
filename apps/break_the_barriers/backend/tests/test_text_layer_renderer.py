@@ -274,3 +274,38 @@ def test_single_line_body_block_clamps_to_bbox():
     html = render_text_layer(pm, {"t": "Tiêu đề", "b2": "x"}, image_url_base="http://api/a")
     t_min, t_max = _maxmin(html, "t")
     assert t_min == t_max          # single-line body clamps to bbox (no slot growth)
+
+
+def _toc_model():
+    def blk(span, top):
+        return Block(span_id=span, role="body", bbox=[72, top, 300, 14], text="",
+                     font=FontSpec(11, 400, False, "#000", "left", "sans"))
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[blk("s1", 100), blk("s2", 120), blk("s3", 140),
+                Block(span_id="hd", role="heading", bbox=[72, 60, 200, 24], text="",
+                      font=FontSpec(24, 700, False, "#000", "left", "sans"))],
+        figures=[], page_class="text", cover="none")
+
+
+def test_toc_page_renders_flex_entries():
+    html = render_text_layer(_toc_model(),
+                             {"s1": "Lời nói đầu......3", "s2": "Giới thiệu......4",
+                              "s3": "Thuật toán\t 8", "hd": "MỤC LỤC"},
+                             image_url_base="http://api/a")
+    assert 'class="tl-text tl-toc"' in html
+    assert 'class="tl-toc-num">3<' in html
+    assert 'class="tl-toc-title">Lời nói đầu<' in html
+    assert "......" not in html
+    assert '>MỤC LỤC</div>' in html
+
+
+def test_non_toc_page_unchanged():
+    pm = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                   background={"color": "#fff", "image": None},
+                   blocks=[Block(span_id="s1", role="body", bbox=[72, 100, 300, 14],
+                                 text="", font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+                   figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"s1": "Chỉ một mục......3"}, image_url_base="http://api/a")
+    assert 'class="tl-text tl-toc"' not in html
