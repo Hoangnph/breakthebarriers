@@ -38,6 +38,14 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-toc-link:hover .t { text-decoration: underline; }
 """
 
+_ZOOM_SCRIPT = (
+    "<script>window.addEventListener('message',function(e){"
+    "var d=e.data||{};"
+    "if(d.type==='btb-zoom'&&typeof d.zoom==='number'){"
+    "document.documentElement.style.fontSize=(d.zoom*100)+'%';}"
+    "});</script>"
+)
+
 
 def _clamp_level(level: int) -> int:
     return level if level in (1, 2, 3) else 3
@@ -127,5 +135,6 @@ def render_flow_html(flow: List[FlowElement], translations: dict,
         '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         f'{_FONTS}<style>{_CSS}</style></head><body>'
-        f'<article class="fl-doc">{"".join(parts)}</article></body></html>'
+        f'<article class="fl-doc">{"".join(parts)}</article>'
+        f'{_ZOOM_SCRIPT}</body></html>'
     )

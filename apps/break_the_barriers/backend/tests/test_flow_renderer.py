@@ -100,3 +100,13 @@ def test_list_item_has_li_class_and_css():
     html = render_flow_html(flow, {"x": "Mục một"}, image_url_base="http://api/a")
     assert '<p class="li" data-span="x">' in html
     assert ".fl-doc p.li" in html
+
+
+def test_flow_html_has_zoom_listener():
+    html = render_flow_html([FlowElement(kind="paragraph", span_id="p")],
+                            {"p": "x"}, image_url_base="http://api/a")
+    assert "btb-zoom" in html
+    assert "documentElement.style.fontSize" in html
+    assert "addEventListener('message'" in html
+    # script sits inside the body, after the article
+    assert html.index("fl-doc") < html.index("btb-zoom") < html.index("</body>")
