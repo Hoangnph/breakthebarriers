@@ -13,6 +13,12 @@ from backend.app.services.page_image import save_page_image, sample_bg_color
 
 logger = logging.getLogger(__name__)
 
+
+def _figure_cleaning_enabled() -> bool:
+    """Only auto-clean figures outside tests and when an API key exists."""
+    return (not os.getenv("PYTEST_CURRENT_TEST")) and bool(os.getenv("GEMINI_API_KEY"))
+
+
 _DOCLING_RESPONSIVE_CSS = """
 * { box-sizing: border-box; }
 body {
@@ -408,7 +414,20 @@ class DoclingExtractor:
                 for i, fb in enumerate(fig_boxes, start=1):
                     try:
                         fname = crop_figure(pil_img, fb, sx, sy, output_dir, doc_id, page_no, i)
-                        figures.append(Figure(bbox=fb, img=fname))
+                        _fig = Figure(bbox=fb, img=fname)
+                        if _figure_cleaning_enabled():
+                            try:
+                                from backend.app.services.figure_text_detector import detect_text_boxes
+                                from backend.app.services.image_cleaner import clean_page_background_inpaint
+                                _cp = os.path.join(output_dir, fname)
+                                _tboxes = detect_text_boxes(_cp)
+                                if _tboxes:
+                                    _cn = fname.rsplit(".", 1)[0] + ".clean.png"
+                                    if clean_page_background_inpaint(_cp, os.path.join(output_dir, _cn), _tboxes):
+                                        _fig.clean_img = _cn
+                            except Exception as _e:
+                                logger.warning(f"Figure clean failed p{page_no} #{i}: {_e}")
+                        figures.append(_fig)
                     except Exception as e:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
 
