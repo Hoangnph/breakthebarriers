@@ -26,7 +26,7 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-page { width: 100%; height: auto; display: block; margin: 1.5em 0;
            border-radius: 4px; }
 .fl-doc section { scroll-margin-top: 16px; }
-.fl-contents { margin: 1.5em 0; }
+.fl-contents { margin: 1.5em 0; padding: 0; }
 .fl-toc-link { display: flex; align-items: flex-end; text-decoration: none;
                color: inherit; margin: .25em 0; }
 .fl-toc-link .t { flex: 0 1 auto; }
