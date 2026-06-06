@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react"
+import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, ScrollText, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
 import { TRANSLATE_LANG_KEY } from "@/lib/constants"
 import LayoutReader, { type PageInfo } from "./LayoutReader"
 import LayoutSidebar from "./LayoutSidebar"
 import LayoutSplit from "./LayoutSplit"
+import LayoutFlow from "./LayoutFlow"
 
-type Layout = "reader" | "sidebar" | "split"
+type Layout = "flow" | "reader" | "sidebar" | "split"
 type Lang = "pdf" | "en" | "vi"
 
 interface PageMeta {
@@ -30,9 +31,15 @@ const LAYOUT_KEY = "btb_preview_layout"
 const LANG_KEY = "btb_preview_lang"
 
 const LAYOUT_ICONS: Record<Layout, { icon: LucideIcon; label: string }> = {
+  flow:    { icon: ScrollText,     label: "Liền mạch" },
   reader:  { icon: AlignJustify,   label: "Reader" },
   sidebar: { icon: LayoutTemplate, label: "Sidebar" },
   split:   { icon: Columns2,       label: "Split" },
+}
+
+// Whole-document flow only renders en|vi (no per-page PDF). Coerce pdf -> vi.
+function flowLang(l: Lang): "en" | "vi" {
+  return l === "pdf" ? "vi" : l
 }
 
 export default function PreviewPage() {
@@ -42,7 +49,7 @@ export default function PreviewPage() {
   const [doc, setDoc] = useState<Doc | null>(null)
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [layout, setLayout] = useState<Layout>("reader")
+  const [layout, setLayout] = useState<Layout>("flow")
   const [lang, setLang] = useState<Lang>("en")
   const [zoom, setZoom] = useState(1)
   const [pageMeta, setPageMeta] = useState<PageMeta>({})
@@ -160,7 +167,7 @@ export default function PreviewPage() {
   useEffect(() => {
     const savedLayout = localStorage.getItem(LAYOUT_KEY) as Layout | null
     const savedLang = localStorage.getItem(LANG_KEY) as Lang | null
-    if (savedLayout && ["reader", "sidebar", "split"].includes(savedLayout)) setLayout(savedLayout)
+    if (savedLayout && ["flow", "reader", "sidebar", "split"].includes(savedLayout)) setLayout(savedLayout)
     if (savedLang && ["pdf", "en", "vi"].includes(savedLang)) setLang(savedLang as Lang)
   }, [])
 
@@ -187,6 +194,8 @@ export default function PreviewPage() {
   function changeLayout(l: Layout) {
     setLayout(l)
     localStorage.setItem(LAYOUT_KEY, l)
+    // Flow can't show the original PDF; if Gốc was selected, fall back to Dịch.
+    if (l === "flow" && lang === "pdf") changeLang("vi")
   }
 
   function changeLang(l: Lang) {
@@ -283,7 +292,8 @@ export default function PreviewPage() {
         {layout !== "split" && (
           <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
             <button onClick={() => changeLang("pdf")}
-                    className={`px-3 py-1 text-xs font-medium ${lang === "pdf" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    disabled={layout === "flow"}
+                    className={`px-3 py-1 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed ${lang === "pdf" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
               Gốc
             </button>
             <button onClick={() => changeLang("en")}
@@ -299,7 +309,7 @@ export default function PreviewPage() {
         )}
 
         {/* Clean-bg buttons — visible when effective policy is clean-photo */}
-        {(pageMeta.policy_override === "clean-photo" || (pageMeta.policy_override == null && (pageMeta.cover === "front" || pageMeta.cover === "back"))) && (
+        {layout !== "flow" && (pageMeta.policy_override === "clean-photo" || (pageMeta.policy_override == null && (pageMeta.cover === "front" || pageMeta.cover === "back"))) && (
           <div className="flex gap-1.5 flex-shrink-0">
             {(["full", "inpaint"] as const).map((method) => (
               <button
@@ -329,7 +339,7 @@ export default function PreviewPage() {
 
         {/* Layout switcher */}
         <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-          {(["reader", "sidebar", "split"] as Layout[]).map((key) => {
+          {(["flow", "reader", "sidebar", "split"] as Layout[]).map((key) => {
             const { icon: Icon, label } = LAYOUT_ICONS[key]
             return (
               <button key={key} onClick={() => changeLayout(key)} title={label}
@@ -357,11 +367,12 @@ export default function PreviewPage() {
         </div>
 
         <span className="text-xs text-gray-400 flex-shrink-0">
-          {currentPage}/{doc.total_pages}
+          {layout === "flow" ? `${doc.total_pages} trang` : `${currentPage}/${doc.total_pages}`}
         </span>
       </header>
 
-      {/* Per-page control panel */}
+      {/* Per-page control panel — per-page editing tools, hidden in flow */}
+      {layout !== "flow" && (
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex flex-wrap items-center gap-x-6 gap-y-2 flex-shrink-0">
         <span className="text-xs font-semibold text-gray-500 flex-shrink-0">Tùy chỉnh trang {currentPage}</span>
 
@@ -408,8 +419,10 @@ export default function PreviewPage() {
           <span className="text-xs text-gray-600">Bật sửa chữ</span>
         </label>
       </div>
+      )}
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {layout === "flow"    && <LayoutFlow docId={id} apiUrl={API_URL} lang={flowLang(lang)} zoom={zoom} />}
         {layout === "reader"  && <LayoutReader  {...contentProps} />}
         {layout === "sidebar" && <LayoutSidebar {...contentProps} onTranslate={translatePage} />}
         {layout === "split"   && <LayoutSplit   {...splitProps} />}
