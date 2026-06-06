@@ -354,6 +354,38 @@ window.addEventListener('load', () => {
             "policy_override": policy_override, "has_clean_image": has_clean_image}
 
 
+@router.get("/api/docs/{doc_id}/flow")
+def get_document_flow(doc_id: str, request: Request,
+                      lang: str = Query("vi", pattern="^(en|vi)$"),
+                      db: Session = Depends(get_db)):
+    from backend.app.services.page_model import PageModel
+    from backend.app.services.flow_model import build_document_flow
+    from backend.app.services.flow_renderer import render_flow_html
+    from backend.app.models_db import DBTranslation
+
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    page_rows = (db.query(DBPage).filter(DBPage.document_id == doc_id)
+                 .order_by(DBPage.page_num).all())
+    pages = []
+    for pr in page_rows:
+        if pr.model_json:
+            try:
+                pages.append(PageModel.from_json(pr.model_json))
+            except Exception:
+                pass
+    rows = db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).all()
+    if lang == "en":
+        trans = {t.span_id: (t.original_text or "") for t in rows}
+    else:
+        trans = {t.span_id: (t.translated_text or "") for t in rows}
+    image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
+    flow = build_document_flow(pages)
+    html = render_flow_html(flow, trans, image_base)
+    return HTMLResponse(content=html)
+
+
 @router.post("/api/docs/{doc_id}/pages/{page_num}/clean-bg")
 def clean_page_bg(doc_id: str, page_num: int,
                   method: str = Query("inpaint"), force: bool = Query(False),

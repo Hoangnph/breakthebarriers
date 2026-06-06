@@ -201,3 +201,33 @@ def test_clean_bg_gating_respects_override(client, db_session, monkeypatch):
         p = os.path.join(doc_dir, fn)
         if os.path.exists(p):
             os.remove(p)
+
+
+def test_flow_endpoint_returns_document_html(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    db_session.add(DBDocument(id="fl_doc", filename="f.pdf", total_pages=2, status="translated"))
+    m1 = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+          "background": {"color": "#fff", "image": None},
+          "blocks": [{"span_id": "h", "role": "heading", "bbox": [72, 40, 300, 28], "text": "",
+                      "font": {"size": 28, "weight": 700, "italic": False, "color": "#000",
+                               "align": "left", "family_class": "sans"}}],
+          "figures": [], "page_class": "text", "cover": "none"}
+    m2 = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+          "background": {"color": "#fff", "image": None},
+          "blocks": [{"span_id": "p", "role": "body", "bbox": [72, 40, 300, 60], "text": "",
+                      "font": {"size": 11, "weight": 400, "italic": False, "color": "#000",
+                               "align": "left", "family_class": "sans"}}],
+          "figures": [], "page_class": "text", "cover": "none"}
+    db_session.add(DBPage(document_id="fl_doc", page_num=1, original_html="<p/>",
+                          status="translated", model_json=json.dumps(m1)))
+    db_session.add(DBPage(document_id="fl_doc", page_num=2, original_html="<p/>",
+                          status="translated", model_json=json.dumps(m2)))
+    db_session.add(DBTranslation(document_id="fl_doc", page_num=1, span_id="h",
+                                 original_text="TITLE", translated_text="TIÊU ĐỀ"))
+    db_session.add(DBTranslation(document_id="fl_doc", page_num=2, span_id="p",
+                                 original_text="body", translated_text="đoạn văn dịch"))
+    db_session.commit()
+    r = client.get("/api/docs/fl_doc/flow?lang=vi")
+    assert r.status_code == 200
+    assert "TIÊU ĐỀ" in r.text and "<h1" in r.text
+    assert "đoạn văn dịch" in r.text and "<p" in r.text
