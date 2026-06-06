@@ -42,10 +42,16 @@ Công cụ sẵn có: **tesseract binary** `/opt/homebrew/bin/tesseract`; đã c
 Tên file figure đã sạch. `to_dict` (asdict) tự kèm; `from_dict` đọc
 `clean_img=f.get("clean_img")`. Default None → model.json cũ vẫn nạp.
 
-### C. Làm sạch — TÁI DÙNG `clean_page_background_inpaint`
-Nó = "AI clean toàn ảnh + composite vùng mask lên ảnh gốc". Áp thẳng cho figure
-crop với `text_boxes` từ A → figure sạch chữ, phần còn lại nguyên pixel. **Không
-viết hàm clean mới.**
+### C. Làm sạch — `clean_page_background` (whole-clean)
+**[Cập nhật sau verify]** Masked-inpaint KHÔNG hợp cho figure: tesseract đọc chữ
+banner stylized (trắng-trên-nền-tối) không chuẩn → mask trật → composite giữ chữ
+gốc (đã kiểm thật trên banner FOREWORD). Vì vậy:
+- `detect_text_boxes` (A) chỉ dùng để **gate "figure có chữ"** (bỏ qua figure
+  không chữ, khỏi tốn AI).
+- Figure có chữ → **whole-clean** `clean_page_background(crop, clean)` (AI xóa
+  chữ toàn ảnh, tin cậy). Figure trang trí chịu được việc vẽ lại. Người dùng đã
+  chọn whole-clean cho MỌI figure có chữ (không gate theo photo).
+- Cover vẫn dùng masked-inpaint (bbox block tin cậy) — không đổi.
 
 ### D. Extractor wiring
 Sau khi crop mỗi figure (đã có `crop_figure` → filename), nếu được phép gọi AI:
