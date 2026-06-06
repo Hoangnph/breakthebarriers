@@ -47,6 +47,7 @@ def test_pre_heading_content_in_intro_section():
                             image_url_base="http://api/a")
     assert '<section class="fl-intro">' in html
     assert '<section id="sec-h">' in html
+    assert html.count("<section") == html.count("</section>")
 
 
 def test_generated_contents_links_to_headings_and_suppresses_original_toc():
@@ -60,6 +61,7 @@ def test_generated_contents_links_to_headings_and_suppresses_original_toc():
     assert 'href="#sec-a"' in html and 'href="#sec-b"' in html
     assert "Phần A" in html and "Phần B" in html
     assert "......" not in html
+    assert "Phần A......3" not in html   # raw original TOC entry text suppressed
 
 
 def test_every_contents_link_has_matching_section():
@@ -78,5 +80,23 @@ def test_no_toc_page_no_contents_block():
             FlowElement(kind="paragraph", span_id="p")]
     html = render_flow_html(flow, {"h": "H", "p": "Đoạn thường."},
                             image_url_base="http://api/a")
+    # "Đoạn thường." ends in a period, not dots+number → not a TOC entry
     assert 'class="fl-contents"' not in html
     assert '<section id="sec-h">' in html
+
+
+def test_toc_entry_not_dropped_when_no_headings():
+    # A TOC-shaped paragraph but zero headings: must NOT be silently dropped.
+    flow = [FlowElement(kind="paragraph", span_id="p")]
+    html = render_flow_html(flow, {"p": "Phần A......3"},
+                            image_url_base="http://api/a")
+    assert 'class="fl-contents"' not in html      # no nav (no headings)
+    assert "Phần A" in html                        # content preserved
+    assert '<p data-span="p">' in html             # rendered as a paragraph
+
+
+def test_list_item_has_li_class_and_css():
+    flow = [FlowElement(kind="list", span_id="x")]
+    html = render_flow_html(flow, {"x": "Mục một"}, image_url_base="http://api/a")
+    assert '<p class="li" data-span="x">' in html
+    assert ".fl-doc p.li" in html

@@ -9,7 +9,7 @@ from backend.app.services.toc_parser import parse_toc_entry
 _FONTS = (
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
     '<link href="https://fonts.googleapis.com/css2?'
-    'family=Be+Vietnam+Pro:wght@400;700&display=swap" rel="stylesheet">'
+    'family=Be+Vietnam+Pro:wght@400;700&amp;display=swap" rel="stylesheet">'
 )
 _CSS = """
 * { box-sizing: border-box; }
@@ -21,6 +21,7 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-doc h3 { font-size: 1.2rem; margin: 1.2em 0 .5em; }
 .fl-doc p { margin: 0 0 1em; }
 .fl-doc p.cap { font-size: .9rem; color: #666; }
+.fl-doc p.li { padding-left: 1.25em; text-indent: -1.1em; }
 .fl-doc figure { margin: 1.5em 0; }
 .fl-fig { max-width: 100%; height: auto; display: block; }
 .fl-page { width: 100%; height: auto; display: block; margin: 1.5em 0;
@@ -38,7 +39,11 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 """
 
 
-def _heading_entries(flow, translations):
+def _clamp_level(level: int) -> int:
+    return level if level in (1, 2, 3) else 3
+
+
+def _heading_entries(flow: List[FlowElement], translations: dict | None) -> list:
     out = []
     for el in flow:
         if el.kind == "heading":
@@ -48,10 +53,10 @@ def _heading_entries(flow, translations):
     return out
 
 
-def _contents_html(headings) -> str:
+def _contents_html(headings: list) -> str:
     links = []
     for span, level, text in headings:
-        lvl = level if level in (1, 2, 3) else 3
+        lvl = _clamp_level(level)
         sid = html_lib.escape(f"sec-{span}", quote=True)
         links.append(
             f'<a href="#{sid}" class="fl-toc-link lvl{lvl}">'
@@ -77,18 +82,21 @@ def render_flow_html(flow: List[FlowElement], translations: dict,
     for el in flow:
         text = (translations or {}).get(el.span_id) if el.span_id else None
         if el.kind in ("paragraph", "caption", "list") and text and parse_toc_entry(text):
-            ensure_section()
             if not contents_done and contents_html:
+                ensure_section()
                 parts.append(contents_html)
                 contents_done = True
-            continue
+                continue
+            if contents_done:
+                continue          # already placed nav; suppress remaining TOC entries
+            # else: no headings → no nav; fall through and render the text normally
         if el.kind == "heading" and text:
             if section_open:
                 parts.append("</section>")
             sid = html_lib.escape(f"sec-{el.span_id}", quote=True)
             parts.append(f'<section id="{sid}">')
             section_open = True
-            lvl = el.level if el.level in (1, 2, 3) else 3
+            lvl = _clamp_level(el.level)
             span = html_lib.escape(el.span_id or "", quote=True)
             parts.append(f'<h{lvl} data-span="{span}">{html_lib.escape(text)}</h{lvl}>')
             continue
