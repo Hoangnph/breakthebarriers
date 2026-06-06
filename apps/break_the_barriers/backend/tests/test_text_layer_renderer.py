@@ -259,3 +259,18 @@ def test_heading_shrinks_more_than_body_for_same_long_text():
     h_html = render_text_layer(_one("heading"), {"s1": long}, image_url_base="http://api/a")
     b_html = render_text_layer(_one("body"), {"s1": long}, image_url_base="http://api/a")
     assert _font_px(h_html, "s1") <= _font_px(b_html, "s1")
+
+
+def test_single_line_body_block_clamps_to_bbox():
+    # A body-role block whose box is ~1 line (h <= font*1.8) clamps to bbox too,
+    # so a mislabelled title (role=body) still fits without wrapping off-region.
+    pm = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                   background={"color": "#fff", "image": None},
+                   blocks=[Block(span_id="t", role="body", bbox=[72, 40, 200, 40], text="",
+                                 font=FontSpec(30, 700, False, "#000", "left", "sans")),
+                           Block(span_id="b2", role="body", bbox=[72, 300, 200, 100], text="",
+                                 font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+                   figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"t": "Tiêu đề", "b2": "x"}, image_url_base="http://api/a")
+    t_min, t_max = _maxmin(html, "t")
+    assert t_min == t_max          # single-line body clamps to bbox (no slot growth)

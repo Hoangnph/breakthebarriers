@@ -127,11 +127,15 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         italic = "italic" if (f and f.italic) else "normal"
         align = (f.align if f else "left")
         slot_h = slots.get(blk.span_id, h)
-        # Headings fit to their original bbox (stay ~1 line in their designed
-        # region/banner); body keeps the L3 slot growth to avoid tiny text.
-        is_heading = blk.role == "heading"
-        fit_h = h if is_heading else slot_h
-        max_h = h if is_heading else slot_h
+        # A single-line block (a title/label whose original box is ~1 line) fits
+        # to its bbox so a longer translation shrinks instead of wrapping off its
+        # designed region (e.g. a title off its banner). Multi-line body keeps the
+        # L3 slot growth to avoid tiny text. role is often mislabelled, so also
+        # detect single-line geometry from the bbox height vs font size.
+        f_size = f.size if f and f.size else 0
+        is_single_line = blk.role == "heading" or (f_size and h <= f_size * 1.8)
+        fit_h = h if is_single_line else slot_h
+        max_h = h if is_single_line else slot_h
         base = (f.size if f and f.size else max(8.0, h * 0.8))
         size = fit_font_size(text, w, fit_h, max_size=base, min_size=6.0,
                              height_growth=1.0)
