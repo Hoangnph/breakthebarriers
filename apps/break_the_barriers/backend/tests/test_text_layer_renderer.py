@@ -209,3 +209,53 @@ def test_figure_falls_back_to_img_without_clean():
         page_class="text", cover="none")
     html = render_text_layer(pm, {}, image_url_base="http://api/assets")
     assert "f1.png" in html
+
+
+import re
+
+
+def _two_block_heading_body():
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[
+            Block(span_id="hd", role="heading", bbox=[72, 40, 200, 24], text="",
+                  font=FontSpec(32, 700, False, "#000", "left", "sans")),
+            Block(span_id="bd", role="body", bbox=[72, 200, 200, 100], text="",
+                  font=FontSpec(11, 400, False, "#000", "left", "sans")),
+        ], figures=[], page_class="text", cover="none")
+
+
+def _maxmin(html, span):
+    m = re.search(r'data-span="%s"[^>]*min-height:([0-9.]+)%%;max-height:([0-9.]+)%%' % span, html)
+    assert m, f"div for {span} not found"
+    return m.group(1), m.group(2)
+
+
+def test_heading_clamps_to_bbox_body_uses_slot():
+    html = render_text_layer(_two_block_heading_body(),
+                             {"hd": "Tiêu đề dài hơn nhiều", "bd": "Thân bài"},
+                             image_url_base="http://api/assets")
+    h_min, h_max = _maxmin(html, "hd")
+    b_min, b_max = _maxmin(html, "bd")
+    assert h_min == h_max
+    assert float(b_max) > float(b_min)
+
+
+def _font_px(html, span):
+    m = re.search(r'data-span="%s"[^>]*font-size:([0-9.]+)px' % span, html)
+    assert m
+    return float(m.group(1))
+
+
+def test_heading_shrinks_more_than_body_for_same_long_text():
+    long = "Một tiêu đề tiếng Việt khá là dài để buộc phải xuống dòng"
+    def _one(role):
+        return PageModel(page_w=595.0, page_h=842.0, kind="text",
+                         background={"color": "#fff", "image": None},
+                         blocks=[Block(span_id="s1", role=role, bbox=[72, 40, 150, 20],
+                                       text="", font=FontSpec(28, 700, False, "#000", "left", "sans"))],
+                         figures=[], page_class="text", cover="none")
+    h_html = render_text_layer(_one("heading"), {"s1": long}, image_url_base="http://api/a")
+    b_html = render_text_layer(_one("body"), {"s1": long}, image_url_base="http://api/a")
+    assert _font_px(h_html, "s1") <= _font_px(b_html, "s1")
