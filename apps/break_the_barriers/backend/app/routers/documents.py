@@ -359,7 +359,7 @@ def get_document_flow(doc_id: str, request: Request,
                       lang: str = Query("vi", pattern="^(en|vi)$"),
                       db: Session = Depends(get_db)):
     from backend.app.services.page_model import PageModel
-    from backend.app.services.flow_model import build_document_flow
+    from backend.app.services.flow_model import build_document_flow, flow_span_id
     from backend.app.services.flow_renderer import render_flow_html
     from backend.app.models_db import DBTranslation
 
@@ -372,14 +372,16 @@ def get_document_flow(doc_id: str, request: Request,
     for pr in page_rows:
         if pr.model_json:
             try:
-                pages.append(PageModel.from_json(pr.model_json))
+                pm = PageModel.from_json(pr.model_json)
+                pm.page_num = pr.page_num
+                pages.append(pm)
             except Exception:
                 pass
     rows = db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).all()
     if lang == "en":
-        trans = {t.span_id: (t.original_text or "") for t in rows}
+        trans = {flow_span_id(t.page_num, t.span_id): (t.original_text or "") for t in rows}
     else:
-        trans = {t.span_id: (t.translated_text or "") for t in rows}
+        trans = {flow_span_id(t.page_num, t.span_id): (t.translated_text or "") for t in rows}
     image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
     flow = build_document_flow(pages)
     html = render_flow_html(flow, trans, image_base)

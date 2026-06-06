@@ -43,6 +43,7 @@ class PageModel:
     figures: List[Figure]
     page_class: str = "text"     # text | preserve | regenerable
     cover: str = "none"          # front | back | none
+    page_num: int = 0            # 1-based page number (for globally-unique flow keys)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -52,6 +53,7 @@ class PageModel:
             "figures": [asdict(f) for f in self.figures],
             "page_class": self.page_class,
             "cover": self.cover,
+            "page_num": self.page_num,
         }
 
     def to_json(self) -> str:
@@ -76,6 +78,7 @@ class PageModel:
             blocks=blocks, figures=figures,
             page_class=d.get("page_class", "text"),
             cover=d.get("cover", "none"),
+            page_num=d.get("page_num", 0),
         )
 
     @classmethod

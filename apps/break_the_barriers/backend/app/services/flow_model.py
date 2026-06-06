@@ -19,6 +19,14 @@ class FlowElement:
     src: Optional[str] = None      # figure/image_block filename
 
 
+def flow_span_id(page_num: int, span_id: Optional[str]) -> Optional[str]:
+    """Globally-unique key for a page-local span_id. Used for both flow anchor ids
+    and the render-time translation dict so they stay in sync across pages."""
+    if span_id is None:
+        return None
+    return f"p{page_num}-{span_id}"
+
+
 def _body_size(pages: List[PageModel]) -> float:
     sizes = [b.font.size for p in pages for b in p.blocks
              if b.role == "body" and b.font and b.font.size]
@@ -61,12 +69,16 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
         for tag, obj, _top in items:
             if tag == "fig":
                 flow.append(FlowElement(kind="figure", src=(obj.clean_img or obj.img)))
-            elif _is_heading(obj, body_size):
-                flow.append(FlowElement(kind="heading", span_id=obj.span_id, level=level(obj)))
+                continue
+            # span_id is only unique within a page; namespace by page_num so anchors
+            # and translation keys never collide across the flattened document.
+            sid = flow_span_id(p.page_num, obj.span_id)
+            if _is_heading(obj, body_size):
+                flow.append(FlowElement(kind="heading", span_id=sid, level=level(obj)))
             elif obj.role == "caption":
-                flow.append(FlowElement(kind="caption", span_id=obj.span_id))
+                flow.append(FlowElement(kind="caption", span_id=sid))
             elif obj.role == "list":
-                flow.append(FlowElement(kind="list", span_id=obj.span_id))
+                flow.append(FlowElement(kind="list", span_id=sid))
             else:
-                flow.append(FlowElement(kind="paragraph", span_id=obj.span_id))
+                flow.append(FlowElement(kind="paragraph", span_id=sid))
     return flow
