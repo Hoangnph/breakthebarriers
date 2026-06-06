@@ -418,12 +418,15 @@ class DoclingExtractor:
                         if _figure_cleaning_enabled():
                             try:
                                 from backend.app.services.figure_text_detector import detect_text_boxes
-                                from backend.app.services.image_cleaner import clean_page_background_inpaint
+                                from backend.app.services.image_cleaner import clean_page_background
                                 _cp = os.path.join(output_dir, fname)
-                                _tboxes = detect_text_boxes(_cp)
-                                if _tboxes:
+                                # tesseract only gates "has text"; the mask is
+                                # unreliable on stylized banner text, so clean the
+                                # WHOLE figure (AI removes text; decorative figures
+                                # tolerate the regeneration).
+                                if detect_text_boxes(_cp):
                                     _cn = fname.rsplit(".", 1)[0] + ".clean.png"
-                                    if clean_page_background_inpaint(_cp, os.path.join(output_dir, _cn), _tboxes):
+                                    if clean_page_background(_cp, os.path.join(output_dir, _cn)):
                                         _fig.clean_img = _cn
                             except Exception as _e:
                                 logger.warning(f"Figure clean failed p{page_no} #{i}: {_e}")
