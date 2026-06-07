@@ -198,3 +198,42 @@ def test_block_outside_figure_keeps_separate_figure_with_original_image():
     assert any(e.kind == "figure" and e.src == "f.png" for e in flow)   # original image
     h = next(e for e in flow if e.kind == "heading")
     assert h.overlay is None
+
+
+def test_classify_figure_banner():
+    from backend.app.services.flow_model import classify_figure
+    fig = Figure(bbox=[0, 0, 595, 192], img="b.png")            # full-width
+    title = Block(span_id="t", role="heading", bbox=[36, 146, 182, 43], text="",
+                  font=FontSpec(36, 700, False, "#fff", "left", "sans"))
+    assert classify_figure(fig, 595.0, 842.0, [title]) == "banner"
+
+
+def test_classify_figure_icon():
+    from backend.app.services.flow_model import classify_figure
+    fig = Figure(bbox=[40, 100, 40, 40], img="i.png")           # ~7% x ~5%
+    assert classify_figure(fig, 595.0, 842.0, []) == "icon"
+
+
+def test_classify_figure_content_region():
+    from backend.app.services.flow_model import classify_figure
+    fig = Figure(bbox=[0, 0, 595, 800], img="c.png")
+    blocks = [Block(span_id=f"s{i}", role="body", bbox=[60, 40 + i * 40, 400, 20],
+                    text="", font=FontSpec(11, 400, False, "#000", "left", "sans"))
+              for i in range(6)]
+    assert classify_figure(fig, 595.0, 842.0, blocks) == "content-region"
+
+
+def test_classify_figure_illustration():
+    from backend.app.services.flow_model import classify_figure
+    fig = Figure(bbox=[100, 200, 300, 250], img="p.png")        # mid-size photo
+    assert classify_figure(fig, 595.0, 842.0, []) == "illustration"
+
+
+def test_build_flow_sets_figure_kind():
+    fig = Figure(bbox=[100, 200, 300, 250], img="p.png")
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[_txt("b", "body", 40, 11)], figures=[fig],
+                     page_class="text", cover="none", page_num=1)
+    build_document_flow([page])
+    assert fig.kind == "illustration"

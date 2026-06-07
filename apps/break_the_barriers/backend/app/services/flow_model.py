@@ -27,17 +27,36 @@ _DESIGN_MAX_TEXT_BLOCKS = 4
 _BANNER_MAX_BLOCKS = 2
 _BANNER_MIN_WIDTH_FRAC = 0.8
 _BANNER_MIN_TITLE_SIZE = 16.0
+_ICON_MAX_FRAC = 0.15          # icon: small in BOTH dimensions relative to the page
 
 
-def _is_banner_title(block, fig, page_w: float) -> bool:
-    """A figure is a banner (with an overlaid section title) only when it is wide
-    (spans most of the page) and the overlaid block is a large title. The
-    background is the verified clean image when available (title sits directly on
-    it), otherwise the original image with a covering band behind the title."""
-    if (fig.bbox[2] or 0) < _BANNER_MIN_WIDTH_FRAC * page_w:
-        return False                       # narrow figure → example image/icon, not banner
-    size = block.font.size if block.font and block.font.size else 0
-    return size >= _BANNER_MIN_TITLE_SIZE
+def _banner_primary(blocks, fig):
+    """The largest-font text block sitting on a figure, or None. Helper shared by
+    the classifier and the overlay bonding so they always agree on the title."""
+    contained = [b for b in (blocks or []) if _center_inside(b.bbox, fig.bbox)]
+    if not contained or len(contained) > _BANNER_MAX_BLOCKS:
+        return None
+    return max(contained, key=lambda b: (b.font.size if b.font and b.font.size else 0))
+
+
+def classify_figure(fig, page_w: float, page_h: float, blocks) -> str:
+    """Geometry-only figure type (Tier 1): banner | icon | content-region |
+    illustration. Only `banner` is overlaid/AI-cleaned; everything else keeps its
+    original image. Covers are a PAGE-level concept (cover=front/back), handled
+    before figures are flowed, so they are not a figure kind here."""
+    primary = _banner_primary(blocks, fig)
+    if (primary is not None and page_w
+            and (fig.bbox[2] or 0) >= _BANNER_MIN_WIDTH_FRAC * page_w):
+        size = primary.font.size if primary.font and primary.font.size else 0
+        if size >= _BANNER_MIN_TITLE_SIZE:
+            return "banner"
+    contained = [b for b in (blocks or []) if _center_inside(b.bbox, fig.bbox)]
+    if len(contained) > _BANNER_MAX_BLOCKS:
+        return "content-region"           # overlaps many text blocks → a text area
+    if (page_w and page_h and (fig.bbox[2] or 0) < _ICON_MAX_FRAC * page_w
+            and (fig.bbox[3] or 0) < _ICON_MAX_FRAC * page_h):
+        return "icon"
+    return "illustration"
 
 
 @dataclass
@@ -186,19 +205,12 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
         overlay_for: dict = {}      # id(block) -> overlay dict
         consumed_figs: set = set()  # id(fig)
         for f in p.figures:
-            contained = [b for b in p.blocks
-                         if _center_inside(b.bbox, f.bbox)]
-            # Overlay only on a text-cleaned banner holding a title or two — never
-            # on a raw figure (would double its baked text) nor on a figure that
-            # overlaps many text blocks (that is a content region, not a banner).
-            if not contained or len(contained) > _BANNER_MAX_BLOCKS:
+            # Classify every figure (banner | icon | content-region | illustration);
+            # only a banner is overlaid (title on its image) and consumed.
+            f.kind = classify_figure(f, p.page_w, p.page_h, p.blocks)
+            if f.kind != "banner":
                 continue
-            headings = [b for b in contained if _is_heading(b, body_size)]
-            primary = (headings or sorted(
-                contained,
-                key=lambda b: -(b.font.size if b.font and b.font.size else 0)))[0]
-            if not _is_banner_title(primary, f, p.page_w):
-                continue                    # not a wide titled banner → leave as figure
+            primary = _banner_primary(p.blocks, f)
             overlay_for[id(primary)] = _make_overlay(primary, f)
             consumed_figs.add(id(f))
 

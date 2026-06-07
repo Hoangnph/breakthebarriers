@@ -31,6 +31,7 @@ class Figure:
     bbox: List[float]      # [l, t, w, h] top-left points
     img: str               # filename only
     clean_img: Optional[str] = None   # AI-cleaned (text-removed) variant filename
+    kind: str = "illustration"        # banner | icon | illustration | content-region
 
 
 @dataclass
@@ -71,7 +72,9 @@ class PageModel:
                 box=b.get("box"),
             ))
         figures = [Figure(bbox=list(f["bbox"]), img=f["img"],
-                          clean_img=f.get("clean_img")) for f in d.get("figures", [])]
+                          clean_img=f.get("clean_img"),
+                          kind=f.get("kind", "illustration"))
+                   for f in d.get("figures", [])]
         return cls(
             page_w=d["page_w"], page_h=d["page_h"], kind=d.get("kind", "text"),
             background=d.get("background", {"color": "#ffffff", "image": None}),
