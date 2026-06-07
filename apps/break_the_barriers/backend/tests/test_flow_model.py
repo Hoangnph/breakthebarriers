@@ -116,11 +116,11 @@ def test_running_header_spans_noop_small_doc():
     assert running_header_spans(entries) == set()   # < 4 pages → no-op
 
 
-def test_title_inside_figure_becomes_overlay_banner():
-    # A heading block whose center sits inside a banner figure becomes an overlay
-    # on that figure: the figure is NOT emitted separately, the heading carries
-    # an overlay, and stays a heading (so it still appears in the contents nav).
-    banner = Figure(bbox=[0, 0, 595, 192], img="banner.png")
+def test_title_inside_cleaned_figure_becomes_overlay_banner():
+    # A heading inside a TEXT-CLEANED banner figure becomes an overlay on that
+    # figure (rendered from clean_img): the figure is not emitted separately, the
+    # heading keeps its span (so it still appears in the contents nav).
+    banner = Figure(bbox=[0, 0, 595, 192], img="banner.png", clean_img="banner.clean.png")
     title = Block(span_id="t", role="heading", bbox=[36, 146, 182, 43], text="",
                   font=FontSpec(36, 700, False, "#ffffff", "left", "sans"))
     body = _txt("b", "body", 230, 11)
@@ -132,19 +132,51 @@ def test_title_inside_figure_becomes_overlay_banner():
     assert all(e.kind != "figure" for e in flow)            # banner consumed
     h = next(e for e in flow if e.kind == "heading")
     assert h.span_id == "p3-t" and h.overlay is not None
-    assert h.overlay["src"] == "banner.png"
+    assert h.overlay["src"] == "banner.clean.png"           # cleaned background used
     assert h.overlay["color"] == "#ffffff" and h.overlay["weight"] == 700
     assert 0 <= h.overlay["left"] < 20 and 60 < h.overlay["top"] < 90   # bottom-left
 
 
+def test_uncleaned_banner_is_not_overlaid():
+    # No clean_img → overlaying would double the baked-in text, so DON'T bond:
+    # the figure stays standalone and the title flows normally (no overlay).
+    banner = Figure(bbox=[0, 0, 595, 192], img="banner.png")   # no clean_img
+    title = Block(span_id="t", role="heading", bbox=[36, 146, 182, 43], text="",
+                  font=FontSpec(36, 700, False, "#ffffff", "left", "sans"))
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[title], figures=[banner],
+                     page_class="text", cover="none", page_num=3)
+    flow = build_document_flow([page])
+    assert any(e.kind == "figure" and e.src == "banner.png" for e in flow)
+    h = next(e for e in flow if e.kind == "heading")
+    assert h.overlay is None
+
+
+def test_figure_overlapping_many_blocks_is_not_a_banner():
+    # A figure overlapping many text blocks is a content region, not a banner —
+    # even if cleaned, it must not become an overlay.
+    big = Figure(bbox=[0, 0, 595, 800], img="big.png", clean_img="big.clean.png")
+    blocks = [Block(span_id=f"s{i}", role="body", bbox=[60, 40 + i * 40, 400, 20],
+                    text="", font=FontSpec(11, 400, False, "#000", "left", "sans"))
+              for i in range(6)]
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=blocks, figures=[big],
+                     page_class="text", cover="none", page_num=27)
+    flow = build_document_flow([page])
+    assert all(e.overlay is None for e in flow)
+    assert any(e.kind == "figure" for e in flow)
+
+
 def test_block_outside_figure_keeps_separate_figure():
     # A block whose center is NOT inside the figure leaves the figure standalone.
-    fig = Figure(bbox=[72, 120, 100, 50], img="f.png")
+    fig = Figure(bbox=[72, 120, 100, 50], img="f.png", clean_img="f.clean.png")
     page = PageModel(page_w=595.0, page_h=842.0, kind="text",
                      background={"color": "#fff", "image": None},
                      blocks=[_txt("h", "heading", 40, 28)], figures=[fig],
                      page_class="text", cover="none", page_num=1)
     flow = build_document_flow([page])
-    assert any(e.kind == "figure" and e.src == "f.png" for e in flow)
+    assert any(e.kind == "figure" and e.src == "f.clean.png" for e in flow)
     h = next(e for e in flow if e.kind == "heading")
     assert h.overlay is None

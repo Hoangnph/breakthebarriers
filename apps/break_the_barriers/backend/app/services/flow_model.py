@@ -19,6 +19,11 @@ from backend.app.services.background_policy import effective_policy
 # marked `preserve` (→ keep-raster) still flow as readable HTML.
 _DESIGN_MAX_TEXT_BLOCKS = 4
 
+# A banner-with-title overlay is only safe when the figure background has been
+# text-cleaned (else we'd double the baked-in text) and it holds at most a title
+# or two (a figure overlapping many text blocks is a content region, not a banner).
+_BANNER_MAX_BLOCKS = 2
+
 
 @dataclass
 class FlowElement:
@@ -164,13 +169,16 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
         for f in p.figures:
             contained = [b for b in p.blocks
                          if _center_inside(b.bbox, f.bbox)]
-            if not contained:
+            # Overlay only on a text-cleaned banner holding a title or two — never
+            # on a raw figure (would double its baked text) nor on a figure that
+            # overlaps many text blocks (that is a content region, not a banner).
+            if not contained or not f.clean_img or len(contained) > _BANNER_MAX_BLOCKS:
                 continue
             headings = [b for b in contained if _is_heading(b, body_size)]
             primary = (headings or sorted(
                 contained,
                 key=lambda b: -(b.font.size if b.font and b.font.size else 0)))[0]
-            overlay_for[id(primary)] = _make_overlay(primary, f, (f.clean_img or f.img))
+            overlay_for[id(primary)] = _make_overlay(primary, f, f.clean_img)
             consumed_figs.add(id(f))
 
         items = [("blk", b, b.bbox[1]) for b in p.blocks] + \
