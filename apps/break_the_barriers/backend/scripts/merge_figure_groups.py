@@ -37,8 +37,10 @@ def main() -> int:
         pm = PageModel.from_json(r.model_json)
         if len(pm.figures) < 2:
             continue
-        raster = (pm.background or {}).get("image")
-        if not raster or not osp.exists(osp.join(out_dir, raster)):
+        # background.image is None on content pages (white bg) even though the page
+        # raster page-{n}.png was still saved at extraction — use it directly.
+        raster = (pm.background or {}).get("image") or f"page-{r.page_num}.png"
+        if not osp.exists(osp.join(out_dir, raster)):
             continue
         imgbb = [im["bbox"] for im in pdoc[r.page_num - 1].get_image_info()]
         figbb = [list(f.bbox) for f in pm.figures]
