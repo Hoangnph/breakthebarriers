@@ -39,15 +39,21 @@ def cluster_figures(bboxes: List[list], inflate: float = 0.3) -> List[List[int]]
     return [sorted(g) for g in groups.values() if len(g) >= 2]
 
 
-def decide_mode(cluster_bbox, pdf_image_bboxes, tol: float = 2.0) -> str:
-    """`merge` if some embedded PDF image fully covers the cluster (it was one image
-    split into crops); otherwise `grid` (distinct images — handled by Plan B)."""
-    x0, y0, w, h = cluster_bbox
-    x1, y1 = x0 + w, y0 + h
-    for (ix0, iy0, ix1, iy1) in pdf_image_bboxes:
-        if ix0 - tol <= x0 and iy0 - tol <= y0 and ix1 + tol >= x1 and iy1 + tol >= y1:
-            return "merge"
-    return "grid"
+def _center_in(cx, cy, bbox) -> bool:
+    x0, y0, w, h = bbox
+    return x0 <= cx <= x0 + w and y0 <= cy <= y0 + h
+
+
+def _has_stray_text(union_bbox, member_bboxes, block_bboxes) -> bool:
+    """True if a text block sits inside the cluster's union region but outside every
+    member figure — merging would bake unrelated body text into the image, so don't.
+    (Text inside a member figure is a baked label and is fine.)"""
+    for b in block_bboxes:
+        cx, cy = b[0] + b[2] / 2, b[1] + b[3] / 2
+        if _center_in(cx, cy, union_bbox) and not any(
+                _center_in(cx, cy, m) for m in member_bboxes):
+            return True
+    return False
 
 
 def group_merge_bbox(member_bboxes, block_bboxes,
@@ -69,17 +75,19 @@ def group_merge_bbox(member_bboxes, block_bboxes,
     return [x0, y0, x1 - x0, new_y1 - y0]
 
 
-def plan_merge_groups(fig_bboxes, block_bboxes, pdf_image_bboxes):
-    """For each figure cluster decided `merge`, return {"members": [idx...],
-    "bbox": merged_bbox}. `grid` clusters are skipped (Plan B)."""
+def plan_merge_groups(fig_bboxes, block_bboxes):
+    """Merge every figure cluster into one crop, EXCEPT clusters whose union region
+    holds unrelated body text (would get baked). Returns {"members": [idx...],
+    "bbox": merged_bbox} per merged cluster."""
     out = []
     for members in cluster_figures(fig_bboxes):
         mb = [fig_bboxes[i] for i in members]
         x0 = min(b[0] for b in mb); y0 = min(b[1] for b in mb)
         x1 = max(b[0] + b[2] for b in mb); y1 = max(b[1] + b[3] for b in mb)
-        if decide_mode([x0, y0, x1 - x0, y1 - y0], pdf_image_bboxes) == "merge":
-            out.append({"members": members,
-                        "bbox": group_merge_bbox(mb, block_bboxes)})
+        if _has_stray_text([x0, y0, x1 - x0, y1 - y0], mb, block_bboxes):
+            continue
+        out.append({"members": members,
+                    "bbox": group_merge_bbox(mb, block_bboxes)})
     return out
 
 

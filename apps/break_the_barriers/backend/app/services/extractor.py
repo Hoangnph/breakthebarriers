@@ -472,20 +472,16 @@ class DoclingExtractor:
                     except Exception as e:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
 
-            # Merge figures that a PDF split from ONE embedded image (e.g. a row of
-            # portraits) back into a single faithful crop — restores row layout and
-            # baked captions. Distinct-image clusters are left for the grid path.
+            # Merge clusters of adjacent figures (a PDF split image, or a row of
+            # images) back into a single faithful crop — restores row layout and
+            # baked captions. Skipped when unrelated body text sits in the region.
             if pil_img is not None and page_size is not None and len(figures) >= 2:
                 try:
-                    import fitz
                     from backend.app.services.figure_grouper import (
                         plan_merge_groups, crop_group_region)
-                    _pdoc = fitz.open(str(pdf_path))
-                    _imgbb = [im["bbox"] for im in _pdoc[page_no - 1].get_image_info()]
-                    _pdoc.close()
                     _figbb = [list(f.bbox) for f in figures]
                     _blkbb = [list(b["bbox"]) for b in blocks]
-                    _plans = plan_merge_groups(_figbb, _blkbb, _imgbb)
+                    _plans = plan_merge_groups(_figbb, _blkbb)
                     if _plans:
                         _merged_idx: set = set()
                         _new: list = []

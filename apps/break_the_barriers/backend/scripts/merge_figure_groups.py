@@ -11,7 +11,6 @@ import os.path as osp
 import sys
 
 import backend.app.config  # noqa: F401
-import fitz
 from PIL import Image
 from backend.app.database import SessionLocal
 from backend.app.models_db import DBPage
@@ -24,8 +23,6 @@ def main() -> int:
     dry = "--dry-run" in sys.argv
     doc_id = args[0] if args else "2024-wttc-introduction-to-ai"
     out_dir = osp.join("data", "extracted_html", doc_id)
-    pdf_path = osp.join("data", "raw_pdf", f"{doc_id}.pdf")
-    pdoc = fitz.open(pdf_path)
 
     db = SessionLocal()
     rows = (db.query(DBPage).filter(DBPage.document_id == doc_id)
@@ -42,10 +39,9 @@ def main() -> int:
         raster = (pm.background or {}).get("image") or f"page-{r.page_num}.png"
         if not osp.exists(osp.join(out_dir, raster)):
             continue
-        imgbb = [im["bbox"] for im in pdoc[r.page_num - 1].get_image_info()]
         figbb = [list(f.bbox) for f in pm.figures]
         blkbb = [list(b.bbox) for b in pm.blocks]
-        plans = plan_merge_groups(figbb, blkbb, imgbb)
+        plans = plan_merge_groups(figbb, blkbb)
         if not plans:
             continue
         print(f"p{r.page_num}: {len(plans)} group(s) merge", end=" ")
@@ -68,7 +64,6 @@ def main() -> int:
     if not dry:
         db.commit()
     db.close()
-    pdoc.close()
     print(f"Done. merged groups = {merged}")
     return 0
 
