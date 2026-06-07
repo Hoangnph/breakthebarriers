@@ -472,6 +472,36 @@ class DoclingExtractor:
                     except Exception as e:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
 
+            # Merge figures that a PDF split from ONE embedded image (e.g. a row of
+            # portraits) back into a single faithful crop — restores row layout and
+            # baked captions. Distinct-image clusters are left for the grid path.
+            if pil_img is not None and page_size is not None and len(figures) >= 2:
+                try:
+                    import fitz
+                    from backend.app.services.figure_grouper import (
+                        plan_merge_groups, crop_group_region)
+                    _pdoc = fitz.open(str(pdf_path))
+                    _imgbb = [im["bbox"] for im in _pdoc[page_no - 1].get_image_info()]
+                    _pdoc.close()
+                    _figbb = [list(f.bbox) for f in figures]
+                    _blkbb = [list(b["bbox"]) for b in blocks]
+                    _plans = plan_merge_groups(_figbb, _blkbb, _imgbb)
+                    if _plans:
+                        _merged_idx: set = set()
+                        _new: list = []
+                        for _gi, _plan in enumerate(_plans, start=1):
+                            _merged_idx.update(_plan["members"])
+                            _gname = f"{doc_id}-{page_no}-figgroup{_gi}.png"
+                            _crop = crop_group_region(
+                                pil_img, _plan["bbox"], page_size.width, page_size.height)
+                            _crop.save(os.path.join(output_dir, _gname))
+                            _new.append(Figure(bbox=_plan["bbox"], img=_gname,
+                                               kind="illustration"))
+                        figures = [f for _k, f in enumerate(figures)
+                                   if _k not in _merged_idx] + _new
+                except Exception as _e:
+                    logger.warning(f"Figure grouping failed p{page_no}: {_e}")
+
             boxes = {}
             if image_name and pil_img is not None and page_size is not None:
                 from backend.app.services.page_image import analyze_block_box
