@@ -1,7 +1,10 @@
 """Build a single flowing-document model (ordered FlowElements) from a list of
-per-page PageModels. Text pages flow their blocks; design pages (clean-photo /
-keep-raster) contribute a full-width image_block. Pure: structure only — text is
-filled at render time from translations."""
+per-page PageModels. Content pages flow their text blocks (+ cut figures) as HTML.
+A page is kept as a single full-page image_block ONLY (text NOT re-flowed) when it
+is image-dominant: a cover, or a clean-photo/keep-raster page with very few text
+blocks (<= _DESIGN_MAX_TEXT_BLOCKS). Text-heavy keep-raster pages (often just an
+uncertain `preserve` classification) still flow as HTML so their content stays
+readable/translatable. Pure: structure only — text is filled from translations."""
 from __future__ import annotations
 from dataclasses import dataclass
 from collections import Counter
@@ -9,6 +12,11 @@ from typing import List, Optional
 
 from backend.app.services.page_model import PageModel
 from backend.app.services.background_policy import effective_policy
+
+# A design page (cover/diagram) shows as a full-page image only. For non-cover
+# pages we additionally require few text blocks, so that content pages wrongly
+# marked `preserve` (→ keep-raster) still flow as readable HTML.
+_DESIGN_MAX_TEXT_BLOCKS = 4
 
 
 @dataclass
@@ -58,11 +66,18 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
     for p in pages:
         policy = effective_policy(p.page_class, p.cover,
                                   (p.background or {}).get("policy_override"))
-        if policy in ("clean-photo", "keep-raster"):
+        is_cover = p.cover in ("front", "back")
+        image_only = policy in ("clean-photo", "keep-raster") and (
+            is_cover or len(p.blocks) <= _DESIGN_MAX_TEXT_BLOCKS)
+        if image_only:
+            # Image-dominant page (cover / sparse design): keep the full-page image
+            # only and do NOT re-flow its text. Prefer the original raster
+            # (self-complete, e.g. cover with its title) over the cleaned one.
             bgd = p.background or {}
-            src = (bgd.get("clean_image") if policy == "clean-photo" else None) or bgd.get("image")
+            src = bgd.get("image") or bgd.get("clean_image")
             if src:
                 flow.append(FlowElement(kind="image_block", src=src))
+                continue
         items = [("blk", b, b.bbox[1]) for b in p.blocks] + \
                 [("fig", f, f.bbox[1]) for f in p.figures]
         items.sort(key=lambda it: it[2])

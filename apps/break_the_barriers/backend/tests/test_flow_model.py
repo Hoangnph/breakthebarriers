@@ -21,15 +21,41 @@ def test_text_page_flows_blocks_in_top_order():
     assert flow[0].level == 1
 
 
-def test_clean_photo_page_emits_image_block():
+def test_design_page_emits_image_block_only_no_text():
+    # Design/cover page: keep the full-page image, do NOT re-flow its text.
+    # Prefer the original raster (with title) over the text-removed clean_image.
     page = PageModel(page_w=595.0, page_h=842.0, kind="mixed",
                      background={"color": "#000", "image": "p1.png", "clean_image": "p1.clean.png"},
                      blocks=[_txt("t", "heading", 500, 36)], figures=[],
                      page_class="regenerable", cover="front", page_num=1)
     flow = build_document_flow([page])
-    assert flow[0].kind == "image_block"
-    assert flow[0].src == "p1.clean.png"
-    assert any(e.kind == "heading" and e.span_id == "p1-t" for e in flow)
+    assert [e.kind for e in flow] == ["image_block"]
+    assert flow[0].src == "p1.png"
+    assert all(e.span_id != "p1-t" for e in flow)
+
+
+def test_text_heavy_keep_raster_page_flows_html_not_image():
+    # keep-raster from an uncertain `preserve` class but text-heavy (>4 blocks):
+    # must flow HTML so content stays readable — NOT collapse to a full-page image.
+    blocks = [_txt(f"b{i}", "body", 40 + i * 20, 11) for i in range(6)]
+    page = PageModel(page_w=595.0, page_h=842.0, kind="mixed",
+                     background={"color": "#000", "image": "p4.png"},
+                     blocks=blocks, figures=[],
+                     page_class="preserve", cover="none", page_num=4)
+    flow = build_document_flow([page])
+    assert all(e.kind != "image_block" for e in flow)
+    assert any(e.span_id == "p4-b0" for e in flow)
+
+
+def test_sparse_keep_raster_page_becomes_image():
+    # keep-raster, non-cover, few text blocks (<=4): stays a full-page image.
+    page = PageModel(page_w=595.0, page_h=842.0, kind="mixed",
+                     background={"color": "#000", "image": "p30.png"},
+                     blocks=[_txt("x", "body", 40, 11)], figures=[],
+                     page_class="preserve", cover="none", page_num=30)
+    flow = build_document_flow([page])
+    assert [e.kind for e in flow] == ["image_block"]
+    assert flow[0].src == "p30.png"
 
 
 def test_base_color_page_has_no_image_block():
