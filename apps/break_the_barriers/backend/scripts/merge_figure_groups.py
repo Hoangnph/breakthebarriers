@@ -41,7 +41,7 @@ def main() -> int:
             continue
         figbb = [list(f.bbox) for f in pm.figures]
         blkbb = [list(b.bbox) for b in pm.blocks]
-        plans = plan_merge_groups(figbb, blkbb)
+        plans = plan_merge_groups(figbb, blkbb, pm.page_w, pm.page_h)
         if not plans:
             continue
         print(f"p{r.page_num}: {len(plans)} group(s) merge", end=" ")

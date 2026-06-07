@@ -39,16 +39,34 @@ def cluster_figures(bboxes: List[list], inflate: float = 0.3) -> List[List[int]]
     return [sorted(g) for g in groups.values() if len(g) >= 2]
 
 
+_ICON_MAX_FRAC = 0.15       # icon = small in BOTH dimensions
+_REGION_MAX_BLOCKS = 2      # content-region = overlaps more text blocks than this
+_MIN_BODY_H = 20.0          # a stray block this tall is multi-line body (protect it)
+
+
 def _center_in(cx, cy, bbox) -> bool:
     x0, y0, w, h = bbox
     return x0 <= cx <= x0 + w and y0 <= cy <= y0 + h
 
 
+def _is_image_like(fig_bbox, page_w: float, page_h: float, block_bboxes) -> bool:
+    """A figure worth grouping: not a tiny icon, not a text-heavy content region.
+    (Banners are excluded upstream — they are consumed as title overlays.)"""
+    x0, y0, w, h = fig_bbox
+    if page_w and page_h and w < _ICON_MAX_FRAC * page_w and h < _ICON_MAX_FRAC * page_h:
+        return False
+    n = sum(1 for b in block_bboxes
+            if _center_in(b[0] + b[2] / 2, b[1] + b[3] / 2, fig_bbox))
+    return n <= _REGION_MAX_BLOCKS
+
+
 def _has_stray_text(union_bbox, member_bboxes, block_bboxes) -> bool:
-    """True if a text block sits inside the cluster's union region but outside every
-    member figure — merging would bake unrelated body text into the image, so don't.
-    (Text inside a member figure is a baked label and is fine.)"""
+    """True if MULTI-LINE body text sits inside the cluster's union region but
+    outside every member figure — merging would bake a real paragraph, so don't.
+    One-line labels (e.g. a diagram caption) are fine to bake and do not block."""
     for b in block_bboxes:
+        if b[3] < _MIN_BODY_H:        # one-line label → ok to bake
+            continue
         cx, cy = b[0] + b[2] / 2, b[1] + b[3] / 2
         if _center_in(cx, cy, union_bbox) and not any(
                 _center_in(cx, cy, m) for m in member_bboxes):
@@ -75,12 +93,16 @@ def group_merge_bbox(member_bboxes, block_bboxes,
     return [x0, y0, x1 - x0, new_y1 - y0]
 
 
-def plan_merge_groups(fig_bboxes, block_bboxes):
-    """Merge every figure cluster into one crop, EXCEPT clusters whose union region
-    holds unrelated body text (would get baked). Returns {"members": [idx...],
-    "bbox": merged_bbox} per merged cluster."""
+def plan_merge_groups(fig_bboxes, block_bboxes, page_w: float, page_h: float):
+    """Cluster the IMAGE-LIKE figures (skip icons and content regions) and merge each
+    cluster into one crop, EXCEPT clusters whose union holds multi-line body text.
+    Returns {"members": [original idx...], "bbox": merged_bbox} per merged cluster."""
+    elig = [i for i, fb in enumerate(fig_bboxes)
+            if _is_image_like(fb, page_w, page_h, block_bboxes)]
+    elig_bboxes = [fig_bboxes[i] for i in elig]
     out = []
-    for members in cluster_figures(fig_bboxes):
+    for local in cluster_figures(elig_bboxes):
+        members = [elig[k] for k in local]
         mb = [fig_bboxes[i] for i in members]
         x0 = min(b[0] for b in mb); y0 = min(b[1] for b in mb)
         x1 = max(b[0] + b[2] for b in mb); y1 = max(b[1] + b[3] for b in mb)

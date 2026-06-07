@@ -31,9 +31,12 @@ def test_group_merge_bbox_default_extension_without_block():
     assert abs((bb[1] + bb[3]) - (200 + 0.35 * 100)) < 0.01
 
 
+_PW, _PH = 595.0, 842.0
+
+
 def test_plan_merge_groups_merges_clean_cluster():
     fig_bboxes = [[143, 153, 91, 100], [249, 153, 91, 100], [358, 153, 91, 100]]
-    plans = plan_merge_groups(fig_bboxes, [[221, 288, 154, 12]])
+    plans = plan_merge_groups(fig_bboxes, [[221, 288, 154, 12]], _PW, _PH)
     assert len(plans) == 1
     assert plans[0]["members"] == [0, 1, 2]
     assert plans[0]["bbox"][0] == 143 and plans[0]["bbox"][1] == 153
@@ -41,15 +44,33 @@ def test_plan_merge_groups_merges_clean_cluster():
 
 def test_plan_merge_groups_merges_distinct_image_row():
     # two distinct images side by side, no text between → still merged (one crop)
-    plans = plan_merge_groups([[40, 40, 80, 80], [140, 40, 80, 80]], [])
+    plans = plan_merge_groups([[40, 40, 150, 150], [220, 40, 150, 150]], [], _PW, _PH)
     assert len(plans) == 1 and plans[0]["members"] == [0, 1]
 
 
-def test_plan_merge_groups_skips_when_unrelated_body_text_inside():
-    # a body paragraph sits between the two figures (inside the union, outside both)
-    fig_bboxes = [[40, 40, 60, 200], [300, 40, 60, 200]]
-    body = [[120, 100, 160, 20]]   # center (200,110) inside union, outside figures
-    assert plan_merge_groups(fig_bboxes, body) == []
+def test_plan_merge_groups_one_line_label_does_not_block():
+    # 2 images + a 1-line label inside the union → still merged (label baked)
+    figs = [[60, 190, 150, 150], [230, 190, 150, 150]]   # gap 20 → cluster
+    label = [[60, 250, 320, 14]]   # 1-line caption row inside the union
+    plans = plan_merge_groups(figs, label, _PW, _PH)
+    assert len(plans) == 1 and plans[0]["members"] == [0, 1]
+
+
+def test_plan_merge_groups_skips_when_multiline_body_inside():
+    # a multi-line body paragraph sits between the two figures → don't merge
+    figs = [[40, 40, 150, 300], [230, 40, 150, 300]]   # gap 40 → cluster
+    body = [[195, 100, 30, 60]]   # h=60 multi-line, in the gap (outside both figures)
+    assert plan_merge_groups(figs, body, _PW, _PH) == []
+
+
+def test_plan_merge_groups_excludes_icons_and_regions():
+    # two tiny icons (small in both dims) are not image-like → no cluster, no merge
+    icons = [[40, 40, 30, 30], [90, 40, 30, 30]]
+    assert plan_merge_groups(icons, [], _PW, _PH) == []
+    # a big figure overlapping many text blocks is a content region → excluded
+    region = [[40, 40, 300, 300], [360, 40, 150, 150]]
+    blocks = [[60, 60, 100, 20], [60, 120, 100, 20], [60, 180, 100, 20]]  # 3 in region
+    assert plan_merge_groups(region, blocks, _PW, _PH) == []
 
 
 def test_crop_group_region_scales_to_raster_pixels(tmp_path):

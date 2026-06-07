@@ -481,7 +481,8 @@ class DoclingExtractor:
                         plan_merge_groups, crop_group_region)
                     _figbb = [list(f.bbox) for f in figures]
                     _blkbb = [list(b["bbox"]) for b in blocks]
-                    _plans = plan_merge_groups(_figbb, _blkbb)
+                    _plans = plan_merge_groups(_figbb, _blkbb,
+                                               page_size.width, page_size.height)
                     if _plans:
                         _merged_idx: set = set()
                         _new: list = []
