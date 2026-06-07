@@ -6,9 +6,10 @@ blocks (<= _DESIGN_MAX_TEXT_BLOCKS). Text-heavy keep-raster pages (often just an
 uncertain `preserve` classification) still flow as HTML so their content stays
 readable/translatable. Pure: structure only — text is filled from translations."""
 from __future__ import annotations
+import re
 from dataclasses import dataclass
-from collections import Counter
-from typing import List, Optional
+from collections import Counter, defaultdict
+from typing import Iterable, List, Optional, Tuple
 
 from backend.app.services.page_model import PageModel
 from backend.app.services.background_policy import effective_policy
@@ -33,6 +34,46 @@ def flow_span_id(page_num: int, span_id: Optional[str]) -> Optional[str]:
     if span_id is None:
         return None
     return f"p{page_num}-{span_id}"
+
+
+_RUNNING_MAX_LEN = 80          # running headers/footers are short lines
+
+
+def _norm_hf(text: str) -> str:
+    """Normalize a line for running-header/footer matching: lowercase, drop digits
+    (page numbers vary), collapse whitespace. Empty if nothing meaningful remains."""
+    return re.sub(r"\s+", " ", re.sub(r"\d+", "", (text or "").lower())).strip()
+
+
+def running_header_spans(entries: Iterable[Tuple[int, str, str]]) -> set:
+    """Identify running headers/footers from per-page text and return the set of
+    flow span ids (``p{page}-{span}``) to drop from the flow.
+
+    ``entries`` are ``(page_num, span_id, text)`` triples (use the ORIGINAL text —
+    it is fully populated for every page, unlike sparse translations). A short line
+    whose normalized form recurs on >= 25% of pages (min 3) is treated as a running
+    header/footer. No-op for documents with fewer than 4 pages."""
+    pages_with: dict = defaultdict(set)
+    norm_spans: dict = defaultdict(list)
+    all_pages: set = set()
+    for page_num, span_id, text in entries:
+        all_pages.add(page_num)
+        t = (text or "").strip()
+        if not t or len(t) > _RUNNING_MAX_LEN:
+            continue
+        n = _norm_hf(t)
+        if not n:
+            continue
+        pages_with[n].add(page_num)
+        norm_spans[n].append(flow_span_id(page_num, span_id))
+    if len(all_pages) < 4:
+        return set()
+    threshold = max(3, round(len(all_pages) * 0.25))
+    out: set = set()
+    for n, ps in pages_with.items():
+        if len(ps) >= threshold:
+            out.update(norm_spans[n])
+    return out
 
 
 def _body_size(pages: List[PageModel]) -> float:

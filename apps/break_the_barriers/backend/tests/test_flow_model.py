@@ -1,5 +1,7 @@
 from backend.app.services.page_model import PageModel, Block, Figure, FontSpec
-from backend.app.services.flow_model import build_document_flow, FlowElement
+from backend.app.services.flow_model import (
+    build_document_flow, FlowElement, flow_span_id, running_header_spans,
+)
 
 
 def _txt(span, role, top, size):
@@ -89,3 +91,26 @@ def test_span_ids_are_globally_unique_across_pages():
     ids = [e.span_id for e in flow if e.span_id]
     assert ids == ["p3-s1", "p7-s1"]
     assert len(set(ids)) == len(ids)   # no duplicate anchors
+
+
+def test_running_header_spans_flags_repeated_short_line():
+    words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel"]
+    entries = []
+    for pn in range(1, 9):
+        entries.append((pn, "s1", "INTRODUCTION TO AI"))            # running header
+        entries.append((pn, "s2", f"{words[pn - 1]} body paragraph unique here."))
+    spans = running_header_spans(entries)
+    assert flow_span_id(1, "s1") in spans and flow_span_id(8, "s1") in spans
+    assert flow_span_id(1, "s2") not in spans     # unique content kept
+
+
+def test_running_header_spans_normalizes_footer_page_numbers():
+    # Footer text differs only by page number; digit-stripped normalization matches.
+    entries = [(pn, "f", f"World Travel Council  {pn}") for pn in range(1, 9)]
+    spans = running_header_spans(entries)
+    assert flow_span_id(5, "f") in spans
+
+
+def test_running_header_spans_noop_small_doc():
+    entries = [(1, "a", "Header"), (2, "a", "Header"), (3, "a", "Header")]
+    assert running_header_spans(entries) == set()   # < 4 pages → no-op

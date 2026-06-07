@@ -359,7 +359,7 @@ def get_document_flow(doc_id: str, request: Request,
                       lang: str = Query("vi", pattern="^(en|vi)$"),
                       db: Session = Depends(get_db)):
     from backend.app.services.page_model import PageModel
-    from backend.app.services.flow_model import build_document_flow, flow_span_id
+    from backend.app.services.flow_model import build_document_flow, flow_span_id, running_header_spans
     from backend.app.services.flow_renderer import render_flow_html
     from backend.app.models_db import DBTranslation
 
@@ -384,6 +384,11 @@ def get_document_flow(doc_id: str, request: Request,
         trans = {flow_span_id(t.page_num, t.span_id): (t.translated_text or "") for t in rows}
     image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
     flow = build_document_flow(pages)
+    # Drop running headers/footers (lines that recur across most pages). Detect from
+    # original_text (fully populated) so it works regardless of the view language.
+    running = running_header_spans((t.page_num, t.span_id, t.original_text) for t in rows)
+    if running:
+        flow = [el for el in flow if el.span_id not in running]
     html = render_flow_html(flow, trans, image_base)
     return HTMLResponse(content=html)
 
