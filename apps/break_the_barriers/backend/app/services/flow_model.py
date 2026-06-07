@@ -204,6 +204,15 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
         # as a standalone figure — so title and image stay together as in the design.
         overlay_for: dict = {}      # id(block) -> overlay dict
         consumed_figs: set = set()  # id(fig)
+        # Text blocks sitting ON a figure are part of that image (baked-in labels /
+        # captions) — they must NOT be re-flowed as separate text (that is the
+        # "FAKE FAKE" duplication). The banner title is the only exception: it is
+        # repositioned as an overlay rather than suppressed.
+        covered: set = set()        # id(block) inside some figure
+        for f in p.figures:
+            for b in p.blocks:
+                if _center_inside(b.bbox, f.bbox):
+                    covered.add(id(b))
         for f in p.figures:
             # Classify every figure (banner | icon | content-region | illustration);
             # only a banner is overlaid (title on its image) and consumed.
@@ -223,10 +232,12 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
                 # the AI-cleaned one, which can lose content (faces, labels).
                 flow.append(FlowElement(kind="figure", src=obj.img))
                 continue
+            ov = overlay_for.get(id(obj))
+            if id(obj) in covered and ov is None:
+                continue            # baked-in figure label/caption → suppress
             # span_id is only unique within a page; namespace by page_num so anchors
             # and translation keys never collide across the flattened document.
             sid = flow_span_id(p.page_num, obj.span_id)
-            ov = overlay_for.get(id(obj))
             if _is_heading(obj, body_size):
                 flow.append(FlowElement(kind="heading", span_id=sid, level=level(obj), overlay=ov))
             elif obj.role == "caption":

@@ -237,3 +237,18 @@ def test_build_flow_sets_figure_kind():
                      page_class="text", cover="none", page_num=1)
     build_document_flow([page])
     assert fig.kind == "illustration"
+
+
+def test_label_inside_non_banner_figure_is_suppressed():
+    # A label baked into an illustration must NOT be re-flowed as text (the
+    # "FAKE FAKE" duplication); the figure shows its original image.
+    fig = Figure(bbox=[40, 40, 300, 400], img="pope.png")   # illustration
+    label = Block(span_id="lab", role="body", bbox=[50, 50, 60, 20], text="",
+                  font=FontSpec(12, 700, False, "#fff", "left", "sans"))
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[label], figures=[fig],
+                     page_class="text", cover="none", page_num=6)
+    flow = build_document_flow([page])
+    assert any(e.kind == "figure" and e.src == "pope.png" for e in flow)
+    assert all(e.span_id != "p6-lab" for e in flow)   # baked label suppressed
