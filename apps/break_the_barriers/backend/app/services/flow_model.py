@@ -31,9 +31,9 @@ _BANNER_MIN_TITLE_SIZE = 16.0
 
 def _is_banner_title(block, fig, page_w: float) -> bool:
     """A figure is a banner (with an overlaid section title) only when it is wide
-    (spans most of the page) and the overlaid block is a large title."""
-    if not fig.clean_img:
-        return False                       # background not text-cleaned → would double
+    (spans most of the page) and the overlaid block is a large title. The
+    background is the verified clean image when available (title sits directly on
+    it), otherwise the original image with a covering band behind the title."""
     if (fig.bbox[2] or 0) < _BANNER_MIN_WIDTH_FRAC * page_w:
         return False                       # narrow figure → example image/icon, not banner
     size = block.font.size if block.font and block.font.size else 0
@@ -124,9 +124,11 @@ def _center_inside(b_bbox, f_bbox) -> bool:
     return fx <= cx <= fx + fw and fy <= cy <= fy + fh
 
 
-def _make_overlay(block, fig, src: str) -> dict:
+def _make_overlay(block, fig) -> dict:
     """Position/style for a title block overlaid on a banner figure. Percentages are
-    relative to the figure box; font-size is in cqw (relative to figure width)."""
+    relative to the figure box; font-size is in cqw (relative to figure width). When
+    the figure has no verified clean image, `band` is True so the renderer draws a
+    covering band behind the title (hiding the baked-in text) over the original."""
     bx, by, bw, bh = block.bbox
     fx, fy, fw, fh = fig.bbox
     f = block.font
@@ -135,10 +137,12 @@ def _make_overlay(block, fig, src: str) -> dict:
     weight = int(f.weight) if (f and f.weight) else 700
     size = (f.size if f and f.size else 16)
     return {
-        "src": src,
+        "src": fig.clean_img or fig.img,
+        "band": fig.clean_img is None,
         "left": round((bx - fx) / fw * 100, 2),
         "top": round((by - fy) / fh * 100, 2),
         "width": round(bw / fw * 100, 2),
+        "height": round(bh / fh * 100, 2),
         "color": color,
         "weight": weight,
         "align": align,
@@ -195,7 +199,7 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
                 key=lambda b: -(b.font.size if b.font and b.font.size else 0)))[0]
             if not _is_banner_title(primary, f, p.page_w):
                 continue                    # not a wide titled banner → leave as figure
-            overlay_for[id(primary)] = _make_overlay(primary, f, f.clean_img)
+            overlay_for[id(primary)] = _make_overlay(primary, f)
             consumed_figs.add(id(f))
 
         items = [("blk", b, b.bbox[1]) for b in p.blocks] + \

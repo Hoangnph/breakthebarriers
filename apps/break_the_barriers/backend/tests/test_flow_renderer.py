@@ -136,3 +136,24 @@ def test_overlay_heading_still_appears_in_generated_contents():
                             image_url_base="http://api/a")
     assert 'href="#sec-p3-t"' in html          # overlay heading is a nav entry
     assert '<figure class="fl-banner">' in html
+
+
+def test_band_overlay_renders_covering_band_on_original():
+    ov = {"src": "orig.png", "band": True, "left": 6.0, "top": 76.0, "width": 30.0,
+          "height": 22.0, "color": "#ffffff", "weight": 700, "align": "left",
+          "size_cqw": 6.0}
+    flow = [FlowElement(kind="heading", span_id="p4-t", level=2, overlay=ov)]
+    html = render_flow_html(flow, {"p4-t": "INTRODUCTION"}, image_url_base="http://api/a")
+    assert 'src="http://api/a/orig.png"' in html
+    assert '<div class="fl-ov-band"' in html
+    assert '<h2 class="fl-ov" data-span="p4-t"' in html
+    assert "INTRODUCTION" in html
+
+
+def test_clean_overlay_has_no_band():
+    ov = {"src": "x.clean.png", "band": False, "left": 6.0, "top": 76.0,
+          "width": 30.0, "height": 22.0, "color": "#fff", "weight": 700,
+          "align": "left", "size_cqw": 6.0}
+    flow = [FlowElement(kind="heading", span_id="h", level=2, overlay=ov)]
+    html = render_flow_html(flow, {"h": "FOREWORD"}, image_url_base="http://api/a")
+    assert 'class="fl-ov-band"' not in html

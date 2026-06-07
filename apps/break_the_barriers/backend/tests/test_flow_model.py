@@ -133,13 +133,14 @@ def test_title_inside_cleaned_figure_becomes_overlay_banner():
     h = next(e for e in flow if e.kind == "heading")
     assert h.span_id == "p3-t" and h.overlay is not None
     assert h.overlay["src"] == "banner.clean.png"           # cleaned background used
+    assert h.overlay["band"] is False                       # clean bg → no band needed
     assert h.overlay["color"] == "#ffffff" and h.overlay["weight"] == 700
     assert 0 <= h.overlay["left"] < 20 and 60 < h.overlay["top"] < 90   # bottom-left
 
 
-def test_uncleaned_banner_is_not_overlaid():
-    # No clean_img → overlaying would double the baked-in text, so DON'T bond:
-    # the figure stays standalone and the title flows normally (no overlay).
+def test_uncleaned_banner_overlaid_with_band():
+    # No clean_img → still a banner, but overlay over the ORIGINAL image with a
+    # covering band so the baked-in title is hidden (no doubling, no AI).
     banner = Figure(bbox=[0, 0, 595, 192], img="banner.png")   # no clean_img
     title = Block(span_id="t", role="heading", bbox=[36, 146, 182, 43], text="",
                   font=FontSpec(36, 700, False, "#ffffff", "left", "sans"))
@@ -148,9 +149,11 @@ def test_uncleaned_banner_is_not_overlaid():
                      blocks=[title], figures=[banner],
                      page_class="text", cover="none", page_num=3)
     flow = build_document_flow([page])
-    assert any(e.kind == "figure" and e.src == "banner.png" for e in flow)
+    assert all(e.kind != "figure" for e in flow)            # banner consumed
     h = next(e for e in flow if e.kind == "heading")
-    assert h.overlay is None
+    assert h.overlay is not None
+    assert h.overlay["src"] == "banner.png"                 # original image
+    assert h.overlay["band"] is True                        # band hides baked title
 
 
 def test_figure_overlapping_many_blocks_is_not_a_banner():

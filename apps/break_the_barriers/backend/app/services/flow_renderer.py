@@ -28,6 +28,8 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-banner > .fl-fig { width: 100%; max-width: 100%; }
 .fl-ov { position: absolute; margin: 0; line-height: 1.1;
          text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+.fl-ov-band { position: absolute; background: rgba(12,14,22,.92);
+              border-radius: 3px; }
 .fl-page { width: 100%; height: auto; display: block; margin: 1.5em 0;
            border-radius: 4px; }
 .fl-doc section { scroll-margin-top: 16px; }
@@ -87,7 +89,17 @@ def _overlay_style(ov: dict) -> str:
 
 def _banner_open(ov: dict, image_url_base: str) -> str:
     src = html_lib.escape(f"{image_url_base}/{ov['src']}", quote=True)
-    return f'<figure class="fl-banner"><img class="fl-fig" src="{src}" alt=""/>'
+    out = f'<figure class="fl-banner"><img class="fl-fig" src="{src}" alt=""/>'
+    if ov.get("band"):
+        # original (un-cleaned) background → cover the baked-in title with a band
+        pad = 1.5
+        bl = max(0.0, ov["left"] - pad)
+        bt = max(0.0, ov["top"] - pad)
+        bw = ov["width"] + 2 * pad
+        bh = ov.get("height", 10) + 2 * pad
+        out += (f'<div class="fl-ov-band" style="left:{bl}%;top:{bt}%;'
+                f'width:{bw}%;height:{bh}%"></div>')
+    return out
 
 
 def render_flow_html(flow: List[FlowElement], translations: dict,
