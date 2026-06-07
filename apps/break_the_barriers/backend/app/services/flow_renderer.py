@@ -24,6 +24,10 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-doc p.li { padding-left: 1.25em; text-indent: -1.1em; }
 .fl-doc figure { margin: 1.5em 0; }
 .fl-fig { max-width: 100%; height: auto; display: block; }
+.fl-banner { position: relative; container-type: inline-size; margin: 1.5em 0; }
+.fl-banner > .fl-fig { width: 100%; max-width: 100%; }
+.fl-ov { position: absolute; margin: 0; line-height: 1.1;
+         text-shadow: 0 1px 6px rgba(0,0,0,.55); }
 .fl-page { width: 100%; height: auto; display: block; margin: 1.5em 0;
            border-radius: 4px; }
 .fl-doc section { scroll-margin-top: 16px; }
@@ -73,6 +77,19 @@ def _contents_html(headings: list) -> str:
     return f'<nav class="fl-contents">{"".join(links)}</nav>'
 
 
+def _overlay_style(ov: dict) -> str:
+    # margin:0 inline so it beats .fl-doc h{n}/p margins (which would shift the
+    # absolutely-positioned title down by ~1 line and off the banner).
+    return (f"left:{ov['left']}%;top:{ov['top']}%;width:{ov['width']}%;margin:0;"
+            f"color:{ov['color']};font-weight:{ov['weight']};"
+            f"text-align:{ov['align']};font-size:{ov['size_cqw']}cqw")
+
+
+def _banner_open(ov: dict, image_url_base: str) -> str:
+    src = html_lib.escape(f"{image_url_base}/{ov['src']}", quote=True)
+    return f'<figure class="fl-banner"><img class="fl-fig" src="{src}" alt=""/>'
+
+
 def render_flow_html(flow: List[FlowElement], translations: dict,
                      image_url_base: str) -> str:
     headings = _heading_entries(flow, translations)
@@ -106,7 +123,13 @@ def render_flow_html(flow: List[FlowElement], translations: dict,
             section_open = True
             lvl = _clamp_level(el.level)
             span = html_lib.escape(el.span_id or "", quote=True)
-            parts.append(f'<h{lvl} data-span="{span}">{html_lib.escape(text)}</h{lvl}>')
+            if el.overlay:
+                parts.append(_banner_open(el.overlay, image_url_base))
+                parts.append(f'<h{lvl} class="fl-ov" data-span="{span}" '
+                             f'style="{_overlay_style(el.overlay)}">{html_lib.escape(text)}</h{lvl}>')
+                parts.append("</figure>")
+            else:
+                parts.append(f'<h{lvl} data-span="{span}">{html_lib.escape(text)}</h{lvl}>')
             continue
         if el.kind == "image_block" and el.src:
             ensure_section()
@@ -123,7 +146,12 @@ def render_flow_html(flow: List[FlowElement], translations: dict,
         ensure_section()
         span = html_lib.escape(el.span_id or "", quote=True)
         body = html_lib.escape(text)
-        if el.kind == "caption":
+        if el.overlay:
+            parts.append(_banner_open(el.overlay, image_url_base))
+            parts.append(f'<p class="fl-ov" data-span="{span}" '
+                         f'style="{_overlay_style(el.overlay)}">{body}</p>')
+            parts.append("</figure>")
+        elif el.kind == "caption":
             parts.append(f'<p class="cap" data-span="{span}">{body}</p>')
         elif el.kind == "list":
             parts.append(f'<p class="li" data-span="{span}">• {body}</p>')

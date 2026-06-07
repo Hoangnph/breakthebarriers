@@ -26,6 +26,10 @@ class FlowElement:
     span_id: Optional[str] = None
     level: int = 0                 # heading: 1..3
     src: Optional[str] = None      # figure/image_block filename
+    # When set, this text element is a title overlaid on a banner image (the page
+    # design had the text on top of the figure). Keys: src (figure file), left/top/
+    # width (% of figure box), color, weight, align, size_cqw (font-size in cqw).
+    overlay: Optional[dict] = None
 
 
 def flow_span_id(page_num: int, span_id: Optional[str]) -> Optional[str]:
@@ -89,6 +93,39 @@ def _is_heading(b, body_size: float) -> bool:
     return b.role == "heading" or (fs and fs >= body_size * 1.3)
 
 
+def _center_inside(b_bbox, f_bbox) -> bool:
+    """True if the block's center lies inside the figure rect (bbox = x0,y0,w,h)
+    and the figure is strictly larger — i.e. the block sits on top of the figure."""
+    bx, by, bw, bh = b_bbox
+    fx, fy, fw, fh = f_bbox
+    if fw <= 0 or fh <= 0 or fw * fh <= bw * bh:
+        return False
+    cx, cy = bx + bw / 2, by + bh / 2
+    return fx <= cx <= fx + fw and fy <= cy <= fy + fh
+
+
+def _make_overlay(block, fig, src: str) -> dict:
+    """Position/style for a title block overlaid on a banner figure. Percentages are
+    relative to the figure box; font-size is in cqw (relative to figure width)."""
+    bx, by, bw, bh = block.bbox
+    fx, fy, fw, fh = fig.bbox
+    f = block.font
+    align = f.align if (f and f.align in ("left", "center", "right", "justify")) else "left"
+    color = f.color if (f and f.color and re.match(r"^#[0-9a-fA-F]{3,8}$", f.color)) else "#ffffff"
+    weight = int(f.weight) if (f and f.weight) else 700
+    size = (f.size if f and f.size else 16)
+    return {
+        "src": src,
+        "left": round((bx - fx) / fw * 100, 2),
+        "top": round((by - fy) / fh * 100, 2),
+        "width": round(bw / fw * 100, 2),
+        "color": color,
+        "weight": weight,
+        "align": align,
+        "size_cqw": round(size / fw * 100, 2),
+    }
+
+
 def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
     body_size = _body_size(pages)
     heading_sizes = sorted(
@@ -119,8 +156,25 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
             if src:
                 flow.append(FlowElement(kind="image_block", src=src))
                 continue
+        # Bond each figure to a single title block sitting on top of it (banner with
+        # overlaid title). The figure is then rendered via that block's overlay, not
+        # as a standalone figure — so title and image stay together as in the design.
+        overlay_for: dict = {}      # id(block) -> overlay dict
+        consumed_figs: set = set()  # id(fig)
+        for f in p.figures:
+            contained = [b for b in p.blocks
+                         if _center_inside(b.bbox, f.bbox)]
+            if not contained:
+                continue
+            headings = [b for b in contained if _is_heading(b, body_size)]
+            primary = (headings or sorted(
+                contained,
+                key=lambda b: -(b.font.size if b.font and b.font.size else 0)))[0]
+            overlay_for[id(primary)] = _make_overlay(primary, f, (f.clean_img or f.img))
+            consumed_figs.add(id(f))
+
         items = [("blk", b, b.bbox[1]) for b in p.blocks] + \
-                [("fig", f, f.bbox[1]) for f in p.figures]
+                [("fig", f, f.bbox[1]) for f in p.figures if id(f) not in consumed_figs]
         items.sort(key=lambda it: it[2])
         for tag, obj, _top in items:
             if tag == "fig":
@@ -129,12 +183,13 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
             # span_id is only unique within a page; namespace by page_num so anchors
             # and translation keys never collide across the flattened document.
             sid = flow_span_id(p.page_num, obj.span_id)
+            ov = overlay_for.get(id(obj))
             if _is_heading(obj, body_size):
-                flow.append(FlowElement(kind="heading", span_id=sid, level=level(obj)))
+                flow.append(FlowElement(kind="heading", span_id=sid, level=level(obj), overlay=ov))
             elif obj.role == "caption":
-                flow.append(FlowElement(kind="caption", span_id=sid))
+                flow.append(FlowElement(kind="caption", span_id=sid, overlay=ov))
             elif obj.role == "list":
-                flow.append(FlowElement(kind="list", span_id=sid))
+                flow.append(FlowElement(kind="list", span_id=sid, overlay=ov))
             else:
-                flow.append(FlowElement(kind="paragraph", span_id=sid))
+                flow.append(FlowElement(kind="paragraph", span_id=sid, overlay=ov))
     return flow

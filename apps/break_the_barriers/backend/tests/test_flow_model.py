@@ -114,3 +114,37 @@ def test_running_header_spans_normalizes_footer_page_numbers():
 def test_running_header_spans_noop_small_doc():
     entries = [(1, "a", "Header"), (2, "a", "Header"), (3, "a", "Header")]
     assert running_header_spans(entries) == set()   # < 4 pages → no-op
+
+
+def test_title_inside_figure_becomes_overlay_banner():
+    # A heading block whose center sits inside a banner figure becomes an overlay
+    # on that figure: the figure is NOT emitted separately, the heading carries
+    # an overlay, and stays a heading (so it still appears in the contents nav).
+    banner = Figure(bbox=[0, 0, 595, 192], img="banner.png")
+    title = Block(span_id="t", role="heading", bbox=[36, 146, 182, 43], text="",
+                  font=FontSpec(36, 700, False, "#ffffff", "left", "sans"))
+    body = _txt("b", "body", 230, 11)
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[title, body], figures=[banner],
+                     page_class="text", cover="none", page_num=3)
+    flow = build_document_flow([page])
+    assert all(e.kind != "figure" for e in flow)            # banner consumed
+    h = next(e for e in flow if e.kind == "heading")
+    assert h.span_id == "p3-t" and h.overlay is not None
+    assert h.overlay["src"] == "banner.png"
+    assert h.overlay["color"] == "#ffffff" and h.overlay["weight"] == 700
+    assert 0 <= h.overlay["left"] < 20 and 60 < h.overlay["top"] < 90   # bottom-left
+
+
+def test_block_outside_figure_keeps_separate_figure():
+    # A block whose center is NOT inside the figure leaves the figure standalone.
+    fig = Figure(bbox=[72, 120, 100, 50], img="f.png")
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[_txt("h", "heading", 40, 28)], figures=[fig],
+                     page_class="text", cover="none", page_num=1)
+    flow = build_document_flow([page])
+    assert any(e.kind == "figure" and e.src == "f.png" for e in flow)
+    h = next(e for e in flow if e.kind == "heading")
+    assert h.overlay is None

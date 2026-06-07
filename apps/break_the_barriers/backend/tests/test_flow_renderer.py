@@ -110,3 +110,29 @@ def test_flow_html_has_zoom_listener():
     assert "addEventListener('message'" in html
     # script sits inside the body, after the article
     assert html.index("fl-doc") < html.index("btb-zoom") < html.index("</body>")
+
+
+def test_overlay_heading_renders_banner_with_positioned_title():
+    ov = {"src": "banner.png", "left": 6.1, "top": 76.0, "width": 30.6,
+          "color": "#ffffff", "weight": 700, "align": "left", "size_cqw": 6.05}
+    flow = [FlowElement(kind="heading", span_id="p3-t", level=2, overlay=ov)]
+    html = render_flow_html(flow, {"p3-t": "FOREWORD"}, image_url_base="http://api/a")
+    assert '<figure class="fl-banner">' in html
+    assert 'src="http://api/a/banner.png"' in html
+    # title is inside the banner, absolutely positioned, white, still an h2 + anchor
+    assert '<section id="sec-p3-t">' in html
+    assert '<h2 class="fl-ov" data-span="p3-t"' in html
+    assert "top:76.0%" in html and "color:#ffffff" in html and "cqw" in html
+    assert "FOREWORD" in html
+
+
+def test_overlay_heading_still_appears_in_generated_contents():
+    # With a TOC entry present, the overlay heading drives the synced contents nav.
+    ov = {"src": "b.png", "left": 6.0, "top": 76.0, "width": 30.0,
+          "color": "#ffffff", "weight": 700, "align": "left", "size_cqw": 6.0}
+    flow = [FlowElement(kind="heading", span_id="p3-t", level=2, overlay=ov),
+            FlowElement(kind="paragraph", span_id="toc")]
+    html = render_flow_html(flow, {"p3-t": "FOREWORD", "toc": "Foreword......3"},
+                            image_url_base="http://api/a")
+    assert 'href="#sec-p3-t"' in html          # overlay heading is a nav entry
+    assert '<figure class="fl-banner">' in html
