@@ -11,14 +11,32 @@ import logging
 logger = logging.getLogger(__name__)
 
 _PROMPT = (
-    "You are a precise image inpainting tool, NOT an image generator. "
-    "Remove ONLY the rendered text, letters, numbers, and any "
-    "table-of-contents/caption boxes from this image. Do NOT redraw, regenerate, "
-    "restyle, or move any person, face, object, background, lighting, or color. "
-    "Reconstruct strictly the small regions directly beneath the removed text by "
-    "extending the immediately surrounding pixels (inpainting). Every area that "
-    "had no text MUST remain pixel-identical to the input. Output the same photo, "
-    "same composition, with the text gone."
+    "You are a precise photo inpainting tool, not an image generator. "
+    "Task: make every piece of rendered text disappear — letters, numbers, "
+    "captions, and any solid label/title/table-of-contents boxes. "
+    "Crucially, do not merely erase the text or paint a blank/blurred patch: "
+    "REBUILD the scene that the text was covering so it looks like the text was "
+    "never there. Continue the surrounding background through the cleared area, "
+    "matching its texture, colour, lighting, gradient, edges and perspective, with "
+    "no visible seam, hole, smear, box outline or ghost of the old text. "
+    "Do NOT add, remove, move, restyle or redraw any person, face, body, object, "
+    "logo or scenery, and do NOT change the composition, framing or colours of any "
+    "text-free area. Output the same photo at the same resolution and aspect ratio, "
+    "with the text gone and its background seamlessly reconstructed."
+)
+
+# Vision QA reviewer for the harness: checks a cleaned image against the original.
+_VERIFY_MODEL_DEFAULT = "gemini-2.5-flash"
+_VERIFY_PROMPT = (
+    "You are a strict QA reviewer for a photo text-removal tool. The FIRST image is "
+    "the ORIGINAL, the SECOND is the CLEANED result. Reply with ONLY a JSON object: "
+    '{"text_gone": true|false, "content_preserved": true|false, '
+    '"reconstruction_natural": true|false, "reason": "short explanation"}. '
+    "text_gone = no readable rendered text, letters or labels remain in the cleaned "
+    "image. content_preserved = every person, face, body, object and scenery is "
+    "unchanged (nothing added, removed, distorted or relocated). "
+    "reconstruction_natural = regions where text was removed are filled with natural "
+    "matching background (no blank patch, blur, smear, box outline or artifact)."
 )
 
 
@@ -121,3 +139,77 @@ def clean_page_background_inpaint(src_path: str, out_path: str, boxes_px, *,
     except Exception as e:
         logger.warning(f"clean_page_background_inpaint failed for {src_path}: {e}")
         return False
+
+
+def _resp_text(resp) -> str:
+    """Concatenate text parts of a generate_content response."""
+    out = []
+    for cand in (getattr(resp, "candidates", None) or []):
+        content = getattr(cand, "content", None)
+        for part in (getattr(content, "parts", None) or []):
+            t = getattr(part, "text", None)
+            if t:
+                out.append(t)
+    return "".join(out)
+
+
+def verify_clean(original_path: str, cleaned_path: str, *, client=None,
+                 model: str | None = None) -> tuple[bool, str]:
+    """Vision-QA a cleaned image against the original (the harness 'checker').
+
+    Returns (accept, reason). accept is True only when the reviewer confirms the
+    text is gone, content is preserved AND the reconstruction looks natural. On any
+    infrastructure failure (no key, no/!json reply, API error) returns (True,
+    'verify-skipped: ...') so a flaky verifier never discards an otherwise-good
+    clean — the inpaint composite already guarantees pixels outside the mask."""
+    import json
+    import re
+    try:
+        from PIL import Image
+        if client is None:
+            from google import genai
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                return True, "verify-skipped: no key"
+            client = genai.Client(api_key=api_key)
+        model = model or os.getenv("GEMINI_VERIFY_MODEL", _VERIFY_MODEL_DEFAULT)
+        orig = Image.open(original_path)
+        clean = Image.open(cleaned_path)
+        resp = client.models.generate_content(
+            model=model, contents=[_VERIFY_PROMPT, orig, clean])
+        text = _resp_text(resp)
+        m = re.search(r"\{.*\}", text, re.S)
+        if not m:
+            return True, "verify-skipped: no json"
+        v = json.loads(m.group(0))
+        ok = (bool(v.get("text_gone")) and bool(v.get("content_preserved"))
+              and bool(v.get("reconstruction_natural")))
+        return ok, str(v.get("reason", ""))[:200]
+    except Exception as e:
+        logger.warning(f"verify_clean failed for {cleaned_path}: {e}")
+        return True, "verify-skipped: error"
+
+
+def clean_banner_inpaint_verified(src_path: str, out_path: str, boxes_px, *,
+                                  client=None, model: str | None = None,
+                                  verify: bool = True, max_attempts: int = 2) -> bool:
+    """Inpaint-clean a banner's title region, then QA-verify with the vision harness.
+    Retries on a failed verdict; if no attempt passes, removes the output and returns
+    False so the caller keeps the ORIGINAL image (never a damaged clean)."""
+    for attempt in range(max(1, max_attempts)):
+        if not clean_page_background_inpaint(src_path, out_path, boxes_px,
+                                             client=client, model=model):
+            continue
+        if not verify:
+            return True
+        ok, reason = verify_clean(src_path, out_path, client=client)
+        if ok:
+            return True
+        logger.info(
+            f"banner clean rejected (attempt {attempt + 1}/{max_attempts}): {reason}")
+    try:
+        if os.path.exists(out_path):
+            os.remove(out_path)
+    except OSError:
+        pass
+    return False

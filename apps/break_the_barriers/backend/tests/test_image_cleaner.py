@@ -118,3 +118,77 @@ def test_inpaint_false_when_ai_returns_no_image(tmp_path):
         generate_content=lambda **kw: types.SimpleNamespace(candidates=[empty])))
     assert clean_page_background_inpaint(str(src), str(out), [(1, 1, 2, 2)],
                                          client=client) is False
+
+
+from backend.app.services.image_cleaner import (
+    verify_clean, clean_banner_inpaint_verified,
+)
+
+
+def _client_text(text):
+    part = types.SimpleNamespace(text=text, inline_data=None)
+    content = types.SimpleNamespace(parts=[part])
+    resp = types.SimpleNamespace(candidates=[types.SimpleNamespace(content=content)])
+    return types.SimpleNamespace(
+        models=types.SimpleNamespace(generate_content=lambda **kw: resp))
+
+
+def test_verify_clean_accepts_when_all_true(tmp_path):
+    a = tmp_path / "a.png"; b = tmp_path / "b.png"; _make_png(a); _make_png(b)
+    c = _client_text('{"text_gone": true, "content_preserved": true, '
+                     '"reconstruction_natural": true, "reason": "ok"}')
+    ok, reason = verify_clean(str(a), str(b), client=c)
+    assert ok is True
+
+
+def test_verify_clean_rejects_when_content_changed(tmp_path):
+    a = tmp_path / "a.png"; b = tmp_path / "b.png"; _make_png(a); _make_png(b)
+    c = _client_text('noise {"text_gone": true, "content_preserved": false, '
+                     '"reconstruction_natural": true, "reason": "face removed"} end')
+    ok, reason = verify_clean(str(a), str(b), client=c)
+    assert ok is False and "face" in reason
+
+
+def test_verify_clean_skips_on_non_json(tmp_path):
+    a = tmp_path / "a.png"; b = tmp_path / "b.png"; _make_png(a); _make_png(b)
+    ok, reason = verify_clean(str(a), str(b), client=_client_text("I cannot answer"))
+    assert ok is True and "skip" in reason
+
+
+def _dispatch_client(image_bytes, verify_json):
+    def gen(**kw):
+        contents = kw.get("contents") or []
+        prompt = contents[0] if contents else ""
+        if isinstance(prompt, str) and prompt.startswith("You are a strict QA"):
+            part = types.SimpleNamespace(text=verify_json, inline_data=None)
+        else:
+            part = types.SimpleNamespace(
+                text=None, inline_data=types.SimpleNamespace(data=image_bytes))
+        content = types.SimpleNamespace(parts=[part])
+        return types.SimpleNamespace(candidates=[types.SimpleNamespace(content=content)])
+    return types.SimpleNamespace(models=types.SimpleNamespace(generate_content=gen))
+
+
+def test_banner_verified_passes_and_keeps_output(tmp_path):
+    src = tmp_path / "p.png"
+    blue = np.zeros((40, 40, 3), np.uint8); blue[:, :, 0] = 255
+    cv2.imwrite(str(src), blue)
+    red = np.zeros((40, 40, 3), np.uint8); red[:, :, 2] = 255
+    out = tmp_path / "p.clean.png"
+    c = _dispatch_client(_png_bytes(red),
+                         '{"text_gone":true,"content_preserved":true,'
+                         '"reconstruction_natural":true,"reason":"ok"}')
+    ok = clean_banner_inpaint_verified(str(src), str(out), [(15, 15, 10, 10)], client=c)
+    assert ok is True and out.exists()
+
+
+def test_banner_verified_rejected_removes_output(tmp_path):
+    src = tmp_path / "p.png"
+    cv2.imwrite(str(src), np.zeros((20, 20, 3), np.uint8))
+    out = tmp_path / "p.clean.png"
+    c = _dispatch_client(_png_bytes(np.zeros((20, 20, 3), np.uint8)),
+                         '{"text_gone":false,"content_preserved":true,'
+                         '"reconstruction_natural":true,"reason":"text remains"}')
+    ok = clean_banner_inpaint_verified(str(src), str(out), [(1, 1, 2, 2)],
+                                       client=c, max_attempts=2)
+    assert ok is False and not out.exists()

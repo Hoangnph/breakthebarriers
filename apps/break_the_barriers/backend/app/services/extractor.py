@@ -19,25 +19,32 @@ def _figure_cleaning_enabled() -> bool:
     return (not os.getenv("PYTEST_CURRENT_TEST")) and bool(os.getenv("GEMINI_API_KEY"))
 
 
-def _figure_has_overlaid_title(blocks: List[Dict[str, Any]], fb) -> bool:
-    """True if a small number of text blocks sit on top of the figure (its centers
-    inside the figure rect) — i.e. the figure is a flow 'banner' with an overlaid
-    title. Such figures must be text-cleaned so the flow can place the (translated)
-    title on a clean background, even when tesseract can't read the stylized text.
-    bbox format is [x0, y0, w, h] for both figure and blocks."""
-    from backend.app.services.flow_model import _BANNER_MAX_BLOCKS
+def _banner_title_block(blocks: List[Dict[str, Any]], fb, page_w: float):
+    """Return the title block overlaid on a banner figure, or None. A banner is a
+    WIDE figure (spans >= _BANNER_MIN_WIDTH_FRAC of the page) holding at most
+    _BANNER_MAX_BLOCKS text blocks, whose largest block is a real title (font size
+    >= _BANNER_MIN_TITLE_SIZE). This excludes example images, icons and captions
+    that merely overlap a small label. bbox format is [x0, y0, w, h]."""
+    from backend.app.services.flow_model import (
+        _BANNER_MAX_BLOCKS, _BANNER_MIN_WIDTH_FRAC, _BANNER_MIN_TITLE_SIZE,
+    )
     fx, fy, fw, fh = fb
-    if fw <= 0 or fh <= 0:
-        return False
-    n = 0
+    if fw <= 0 or fh <= 0 or not page_w or fw < _BANNER_MIN_WIDTH_FRAC * page_w:
+        return None
+    contained = []
     for blk in blocks:
         bx, by, bw, bh = blk["bbox"]
         cx, cy = bx + bw / 2, by + bh / 2
         if fx <= cx <= fx + fw and fy <= cy <= fy + fh and fw * fh > bw * bh:
-            n += 1
-            if n > _BANNER_MAX_BLOCKS:   # a content region, not a banner
-                return False
-    return n >= 1
+            contained.append(blk)
+    if not contained or len(contained) > _BANNER_MAX_BLOCKS:
+        return None
+
+    def _fsize(b) -> float:
+        return (b.get("font") or {}).get("size") or 0
+
+    primary = max(contained, key=_fsize)
+    return primary if _fsize(primary) >= _BANNER_MIN_TITLE_SIZE else None
 
 
 _DOCLING_RESPONSIVE_CSS = """
@@ -436,23 +443,31 @@ class DoclingExtractor:
                     try:
                         fname = crop_figure(pil_img, fb, sx, sy, output_dir, doc_id, page_no, i)
                         _fig = Figure(bbox=fb, img=fname)
-                        if _figure_cleaning_enabled():
+                        # Only AI-clean genuine banners (wide figure + overlaid
+                        # title), and only the TITLE REGION via inpaint+verify — never
+                        # whole-clean a figure (that destroys content like faces). The
+                        # title block's box is mapped to the cropped figure's pixels so
+                        # the rest of the banner stays pixel-identical.
+                        title = _banner_title_block(blocks, fb, page_size.width)
+                        if title is not None and _figure_cleaning_enabled():
                             try:
-                                from backend.app.services.figure_text_detector import detect_text_boxes
-                                from backend.app.services.image_cleaner import clean_page_background
+                                from PIL import Image as _PILImage
+                                from backend.app.services.image_cleaner import (
+                                    clean_banner_inpaint_verified,
+                                )
                                 _cp = os.path.join(output_dir, fname)
-                                # Clean the WHOLE figure (AI removes text; decorative
-                                # figures tolerate the regeneration) when it has text.
-                                # tesseract gates ordinary figures, but misses stylized
-                                # banner titles — so ALSO clean any figure that has a
-                                # title block overlaid on it (banner geometry), which
-                                # guarantees every banner is cleaned at extraction.
-                                if detect_text_boxes(_cp) or _figure_has_overlaid_title(blocks, fb):
-                                    _cn = fname.rsplit(".", 1)[0] + ".clean.png"
-                                    if clean_page_background(_cp, os.path.join(output_dir, _cn)):
-                                        _fig.clean_img = _cn
+                                fw_px, fh_px = _PILImage.open(_cp).size
+                                fx, fy, fw, fh = fb
+                                tb = title["bbox"]
+                                sxp, syp = fw_px / fw, fh_px / fh
+                                box_px = ((tb[0] - fx) * sxp, (tb[1] - fy) * syp,
+                                          tb[2] * sxp, tb[3] * syp)
+                                _cn = fname.rsplit(".", 1)[0] + ".clean.png"
+                                if clean_banner_inpaint_verified(
+                                        _cp, os.path.join(output_dir, _cn), [box_px]):
+                                    _fig.clean_img = _cn
                             except Exception as _e:
-                                logger.warning(f"Figure clean failed p{page_no} #{i}: {_e}")
+                                logger.warning(f"Banner clean failed p{page_no} #{i}: {_e}")
                         figures.append(_fig)
                     except Exception as e:
                         logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")

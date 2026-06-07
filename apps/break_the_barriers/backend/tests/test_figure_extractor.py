@@ -24,22 +24,36 @@ def test_crop_figure_clamps_to_bounds(tmp_path):
     assert Image.open(tmp_path / fname).size == (10, 10)
 
 
-def test_figure_has_overlaid_title_detects_banner():
-    from backend.app.services.extractor import _figure_has_overlaid_title
-    fb = [0, 0, 595, 192]                       # full-width banner
-    blocks = [{"bbox": [36, 146, 182, 43]}]     # title sitting on the banner
-    assert _figure_has_overlaid_title(blocks, fb) is True
+def test_banner_title_block_detects_wide_banner_title():
+    from backend.app.services.extractor import _banner_title_block
+    fb = [0, 0, 595, 192]                                       # full-width banner
+    blocks = [{"bbox": [36, 146, 182, 43], "font": {"size": 36}}]   # large title
+    assert _banner_title_block(blocks, fb, 595.0) is blocks[0]
 
 
-def test_figure_has_overlaid_title_ignores_block_outside():
-    from backend.app.services.extractor import _figure_has_overlaid_title
+def test_banner_title_block_ignores_block_outside():
+    from backend.app.services.extractor import _banner_title_block
     fb = [0, 0, 595, 192]
-    blocks = [{"bbox": [60, 400, 400, 20]}]     # body text well below the figure
-    assert _figure_has_overlaid_title(blocks, fb) is False
+    blocks = [{"bbox": [60, 400, 400, 20], "font": {"size": 36}}]   # below the figure
+    assert _banner_title_block(blocks, fb, 595.0) is None
 
 
-def test_figure_has_overlaid_title_rejects_content_region():
-    from backend.app.services.extractor import _figure_has_overlaid_title
-    fb = [0, 0, 595, 800]                       # large region overlapping many blocks
-    blocks = [{"bbox": [60, 40 + i * 40, 400, 20]} for i in range(8)]
-    assert _figure_has_overlaid_title(blocks, fb) is False
+def test_banner_title_block_rejects_narrow_figure():
+    from backend.app.services.extractor import _banner_title_block
+    fb = [40, 100, 120, 120]                                    # ~20% of page width
+    blocks = [{"bbox": [60, 150, 40, 20], "font": {"size": 18}}]
+    assert _banner_title_block(blocks, fb, 595.0) is None
+
+
+def test_banner_title_block_rejects_small_label():
+    from backend.app.services.extractor import _banner_title_block
+    fb = [0, 0, 595, 192]
+    blocks = [{"bbox": [36, 146, 182, 43], "font": {"size": 10}}]   # caption-size
+    assert _banner_title_block(blocks, fb, 595.0) is None
+
+
+def test_banner_title_block_rejects_content_region():
+    from backend.app.services.extractor import _banner_title_block
+    fb = [0, 0, 595, 800]                                       # overlaps many blocks
+    blocks = [{"bbox": [60, 40 + i * 40, 400, 20], "font": {"size": 18}} for i in range(8)]
+    assert _banner_title_block(blocks, fb, 595.0) is None
