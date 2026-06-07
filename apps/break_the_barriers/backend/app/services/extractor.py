@@ -19,6 +19,27 @@ def _figure_cleaning_enabled() -> bool:
     return (not os.getenv("PYTEST_CURRENT_TEST")) and bool(os.getenv("GEMINI_API_KEY"))
 
 
+def _figure_has_overlaid_title(blocks: List[Dict[str, Any]], fb) -> bool:
+    """True if a small number of text blocks sit on top of the figure (its centers
+    inside the figure rect) — i.e. the figure is a flow 'banner' with an overlaid
+    title. Such figures must be text-cleaned so the flow can place the (translated)
+    title on a clean background, even when tesseract can't read the stylized text.
+    bbox format is [x0, y0, w, h] for both figure and blocks."""
+    from backend.app.services.flow_model import _BANNER_MAX_BLOCKS
+    fx, fy, fw, fh = fb
+    if fw <= 0 or fh <= 0:
+        return False
+    n = 0
+    for blk in blocks:
+        bx, by, bw, bh = blk["bbox"]
+        cx, cy = bx + bw / 2, by + bh / 2
+        if fx <= cx <= fx + fw and fy <= cy <= fy + fh and fw * fh > bw * bh:
+            n += 1
+            if n > _BANNER_MAX_BLOCKS:   # a content region, not a banner
+                return False
+    return n >= 1
+
+
 _DOCLING_RESPONSIVE_CSS = """
 * { box-sizing: border-box; }
 body {
@@ -420,11 +441,13 @@ class DoclingExtractor:
                                 from backend.app.services.figure_text_detector import detect_text_boxes
                                 from backend.app.services.image_cleaner import clean_page_background
                                 _cp = os.path.join(output_dir, fname)
-                                # tesseract only gates "has text"; the mask is
-                                # unreliable on stylized banner text, so clean the
-                                # WHOLE figure (AI removes text; decorative figures
-                                # tolerate the regeneration).
-                                if detect_text_boxes(_cp):
+                                # Clean the WHOLE figure (AI removes text; decorative
+                                # figures tolerate the regeneration) when it has text.
+                                # tesseract gates ordinary figures, but misses stylized
+                                # banner titles — so ALSO clean any figure that has a
+                                # title block overlaid on it (banner geometry), which
+                                # guarantees every banner is cleaned at extraction.
+                                if detect_text_boxes(_cp) or _figure_has_overlaid_title(blocks, fb):
                                     _cn = fname.rsplit(".", 1)[0] + ".clean.png"
                                     if clean_page_background(_cp, os.path.join(output_dir, _cn)):
                                         _fig.clean_img = _cn

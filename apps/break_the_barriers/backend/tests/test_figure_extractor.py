@@ -22,3 +22,24 @@ def test_crop_figure_clamps_to_bounds(tmp_path):
                         output_dir=str(tmp_path), doc_id="d", page_no=2, idx=3)
     assert (tmp_path / fname).exists()
     assert Image.open(tmp_path / fname).size == (10, 10)
+
+
+def test_figure_has_overlaid_title_detects_banner():
+    from backend.app.services.extractor import _figure_has_overlaid_title
+    fb = [0, 0, 595, 192]                       # full-width banner
+    blocks = [{"bbox": [36, 146, 182, 43]}]     # title sitting on the banner
+    assert _figure_has_overlaid_title(blocks, fb) is True
+
+
+def test_figure_has_overlaid_title_ignores_block_outside():
+    from backend.app.services.extractor import _figure_has_overlaid_title
+    fb = [0, 0, 595, 192]
+    blocks = [{"bbox": [60, 400, 400, 20]}]     # body text well below the figure
+    assert _figure_has_overlaid_title(blocks, fb) is False
+
+
+def test_figure_has_overlaid_title_rejects_content_region():
+    from backend.app.services.extractor import _figure_has_overlaid_title
+    fb = [0, 0, 595, 800]                       # large region overlapping many blocks
+    blocks = [{"bbox": [60, 40 + i * 40, 400, 20]} for i in range(8)]
+    assert _figure_has_overlaid_title(blocks, fb) is False
