@@ -22,7 +22,22 @@ _DESIGN_MAX_TEXT_BLOCKS = 4
 # A banner-with-title overlay is only safe when the figure background has been
 # text-cleaned (else we'd double the baked-in text) and it holds at most a title
 # or two (a figure overlapping many text blocks is a content region, not a banner).
+# A real banner also spans most of the page width and carries a large title — this
+# excludes example images, icons and captions that merely overlap a small label.
 _BANNER_MAX_BLOCKS = 2
+_BANNER_MIN_WIDTH_FRAC = 0.8
+_BANNER_MIN_TITLE_SIZE = 16.0
+
+
+def _is_banner_title(block, fig, page_w: float) -> bool:
+    """A figure is a banner (with an overlaid section title) only when it is wide
+    (spans most of the page) and the overlaid block is a large title."""
+    if not fig.clean_img:
+        return False                       # background not text-cleaned → would double
+    if (fig.bbox[2] or 0) < _BANNER_MIN_WIDTH_FRAC * page_w:
+        return False                       # narrow figure → example image/icon, not banner
+    size = block.font.size if block.font and block.font.size else 0
+    return size >= _BANNER_MIN_TITLE_SIZE
 
 
 @dataclass
@@ -172,12 +187,14 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
             # Overlay only on a text-cleaned banner holding a title or two — never
             # on a raw figure (would double its baked text) nor on a figure that
             # overlaps many text blocks (that is a content region, not a banner).
-            if not contained or not f.clean_img or len(contained) > _BANNER_MAX_BLOCKS:
+            if not contained or len(contained) > _BANNER_MAX_BLOCKS:
                 continue
             headings = [b for b in contained if _is_heading(b, body_size)]
             primary = (headings or sorted(
                 contained,
                 key=lambda b: -(b.font.size if b.font and b.font.size else 0)))[0]
+            if not _is_banner_title(primary, f, p.page_w):
+                continue                    # not a wide titled banner → leave as figure
             overlay_for[id(primary)] = _make_overlay(primary, f, f.clean_img)
             consumed_figs.add(id(f))
 
@@ -186,7 +203,9 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
         items.sort(key=lambda it: it[2])
         for tag, obj, _top in items:
             if tag == "fig":
-                flow.append(FlowElement(kind="figure", src=(obj.clean_img or obj.img)))
+                # Standalone (non-banner) figures keep their ORIGINAL image — never
+                # the AI-cleaned one, which can lose content (faces, labels).
+                flow.append(FlowElement(kind="figure", src=obj.img))
                 continue
             # span_id is only unique within a page; namespace by page_num so anchors
             # and translation keys never collide across the flattened document.

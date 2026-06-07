@@ -169,14 +169,29 @@ def test_figure_overlapping_many_blocks_is_not_a_banner():
     assert any(e.kind == "figure" for e in flow)
 
 
-def test_block_outside_figure_keeps_separate_figure():
-    # A block whose center is NOT inside the figure leaves the figure standalone.
+def test_narrow_figure_with_label_is_not_a_banner():
+    # A narrow example image / icon with a small label must NOT become a banner,
+    # even if cleaned — it stays a standalone figure showing its ORIGINAL image.
+    icon = Figure(bbox=[40, 100, 120, 120], img="icon.png", clean_img="icon.clean.png")  # ~20% wide
+    label = Block(span_id="t", role="heading", bbox=[60, 150, 40, 20], text="",
+                  font=FontSpec(18, 700, False, "#fff", "left", "sans"))
+    page = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                     background={"color": "#fff", "image": None},
+                     blocks=[label], figures=[icon],
+                     page_class="text", cover="none", page_num=26)
+    flow = build_document_flow([page])
+    assert all(e.overlay is None for e in flow)
+    assert any(e.kind == "figure" and e.src == "icon.png" for e in flow)   # original, not clean
+
+
+def test_block_outside_figure_keeps_separate_figure_with_original_image():
+    # Standalone figures always render the ORIGINAL image, never the cleaned one.
     fig = Figure(bbox=[72, 120, 100, 50], img="f.png", clean_img="f.clean.png")
     page = PageModel(page_w=595.0, page_h=842.0, kind="text",
                      background={"color": "#fff", "image": None},
                      blocks=[_txt("h", "heading", 40, 28)], figures=[fig],
                      page_class="text", cover="none", page_num=1)
     flow = build_document_flow([page])
-    assert any(e.kind == "figure" and e.src == "f.clean.png" for e in flow)
+    assert any(e.kind == "figure" and e.src == "f.png" for e in flow)   # original image
     h = next(e for e in flow if e.kind == "heading")
     assert h.overlay is None
