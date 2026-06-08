@@ -2,7 +2,16 @@
 
 Ngày: 2026-06-07
 Nhánh: `feat/figure-group-layout` (từ `main` sau khi merge document-flow)
-Trạng thái: đã duyệt thiết kế (hybrid 2 phương án) — sẵn sàng viết plan
+Trạng thái: **ĐÃ TRIỂN KHAI — chuyển hướng so với thiết kế ban đầu.**
+
+> **CẬP NHẬT (khi triển khai):** Phương án **CSS-grid** (mục D) đã bị **BỎ** vì dữ
+> liệu thật không hỗ trợ: nhãn per-figure không trích xuất sạch (p9: "Traditional
+> Programming" là 1 block rộng, "Artificial Intelligence (AI)" baked/mất). Thay vào
+> đó dùng **merge-crop cho mọi cụm image-like**: cluster chỉ figure image-like (loại
+> icon/content-region), guard chỉ chặn body **nhiều dòng** (nhãn 1-dòng được baked),
+> bỏ `decide_mode`/phụ thuộc PDF. Kết quả: p9 (2 sơ đồ cạnh nhau + nhãn) gộp thành 1
+> ảnh trung thực; p27/p28 (content-region + body) đúng là không gộp. Xem
+> `figure_grouper.plan_merge_groups` + `scripts/merge_figure_groups.py`.
 
 ## Bối cảnh & vấn đề
 
