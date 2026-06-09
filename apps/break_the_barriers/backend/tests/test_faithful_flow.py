@@ -24,3 +24,19 @@ def test_escapes_base_url():
     html = render_faithful_flow([1], 'http://a/x"onerror')
     assert 'x"onerror' not in html
     assert "&quot;" in html
+
+
+def test_flow_endpoint_serves_raster_stack(client, db_session):
+    from backend.app.models_db import DBDocument, DBPage
+    db_session.add(DBDocument(id="frdoc", filename="f.pdf", total_pages=2, status="extracted"))
+    db_session.add(DBPage(document_id="frdoc", page_num=1))
+    db_session.add(DBPage(document_id="frdoc", page_num=2))
+    db_session.commit()
+    r = client.get("/api/docs/frdoc/flow")
+    assert r.status_code == 200
+    assert "page-1.png" in r.text and "page-2.png" in r.text
+    assert r.text.count('class="fr-img"') == 2
+
+
+def test_flow_endpoint_unknown_doc_404(client):
+    assert client.get("/api/docs/nope-doc/flow").status_code == 404
