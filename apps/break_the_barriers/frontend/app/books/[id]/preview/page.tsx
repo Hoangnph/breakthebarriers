@@ -11,7 +11,7 @@ import LayoutSplit from "./LayoutSplit"
 import LayoutFlow from "./LayoutFlow"
 
 type Layout = "flow" | "reader" | "sidebar" | "split"
-type Lang = "pdf" | "en" | "vi"
+type Lang = "pdf" | "vi"
 
 interface PageMeta {
   page_class?: string
@@ -37,9 +37,10 @@ const LAYOUT_ICONS: Record<Layout, { icon: LucideIcon; label: string }> = {
   split:   { icon: Columns2,       label: "Split" },
 }
 
-// Whole-document flow only renders en|vi (no per-page PDF). Coerce pdf -> vi.
+// Flow has no whole-document PDF, so "Gốc" in flow = the faithful original render
+// (raster + original-text overlay = lang "en"); "Dịch" = "vi".
 function flowLang(l: Lang): "en" | "vi" {
-  return l === "pdf" ? "vi" : l
+  return l === "pdf" ? "en" : "vi"
 }
 
 export default function PreviewPage() {
@@ -50,7 +51,7 @@ export default function PreviewPage() {
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [layout, setLayout] = useState<Layout>("flow")
-  const [lang, setLang] = useState<Lang>("en")
+  const [lang, setLang] = useState<Lang>("vi")
   const [zoom, setZoom] = useState(1)
   const [pageMeta, setPageMeta] = useState<PageMeta>({})
   const [cleanStatus, setCleanStatus] = useState<Record<"full" | "inpaint", "idle" | "running" | "error">>({ full: "idle", inpaint: "idle" })
@@ -166,9 +167,10 @@ export default function PreviewPage() {
   // Restore preferences from localStorage
   useEffect(() => {
     const savedLayout = localStorage.getItem(LAYOUT_KEY) as Layout | null
-    const savedLang = localStorage.getItem(LANG_KEY) as Lang | null
+    const savedLang = localStorage.getItem(LANG_KEY)   // raw string (may be legacy "en")
     if (savedLayout && ["flow", "reader", "sidebar", "split"].includes(savedLayout)) setLayout(savedLayout)
-    if (savedLang && ["pdf", "en", "vi"].includes(savedLang)) setLang(savedLang as Lang)
+    if (savedLang === "en") setLang("pdf")           // legacy HTML mode → Gốc
+    else if (savedLang && ["pdf", "vi"].includes(savedLang)) setLang(savedLang as Lang)
   }, [])
 
   // Load document + page list on mount
@@ -194,8 +196,6 @@ export default function PreviewPage() {
   function changeLayout(l: Layout) {
     setLayout(l)
     localStorage.setItem(LAYOUT_KEY, l)
-    // Flow can't show the original PDF; if Gốc was selected, fall back to Dịch.
-    if (l === "flow" && lang === "pdf") changeLang("vi")
   }
 
   function changeLang(l: Lang) {
@@ -292,13 +292,8 @@ export default function PreviewPage() {
         {layout !== "split" && (
           <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
             <button onClick={() => changeLang("pdf")}
-                    disabled={layout === "flow"}
-                    className={`px-3 py-1 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed ${lang === "pdf" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    className={`px-3 py-1 text-xs font-medium ${lang === "pdf" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
               Gốc
-            </button>
-            <button onClick={() => changeLang("en")}
-                    className={`px-3 py-1 text-xs font-medium ${lang === "en" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-              HTML
             </button>
             <button onClick={() => changeLang("vi")}
                     disabled={!canTranslated}
