@@ -4,9 +4,7 @@ reflowed text — and infer per-figure horizontal alignment. Pure geometry; the 
 cropping/IO happens in the caller (extractor / backfill). bbox = [x0, y0, w, h] pts."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Set, Tuple
-
-from backend.app.services.figure_grouper import cluster_figures  # noqa: F401 (used later)
+from typing import List, Set
 
 _ICON_MAX_FRAC = 0.15      # icon: small in BOTH dims relative to the page
 
