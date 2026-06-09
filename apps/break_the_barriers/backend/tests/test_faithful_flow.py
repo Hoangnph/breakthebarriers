@@ -72,3 +72,16 @@ def test_flow_endpoint_overlays_translation(client, db_session):
 
 def test_flow_endpoint_unknown_doc_404(client):
     assert client.get("/api/docs/nope-doc/flow").status_code == 404
+
+
+def test_flow_renders_nav_when_provided():
+    html = render_faithful_flow([_text_page(8)], {8: {"s1": "x"}}, "http://x/a",
+                                nav=[("Mục A", 8), ("Mục B", 12)])
+    assert '<details class="ff-nav"' in html
+    assert 'href="#pg-8"' in html and "Mục A" in html
+    assert 'href="#pg-12"' in html and "Mục B" in html
+
+
+def test_flow_no_nav_by_default():
+    html = render_faithful_flow([_text_page(1)], {1: {"s1": "x"}}, "http://x/a")
+    assert 'class="ff-nav"' not in html

@@ -30,6 +30,13 @@ body { margin: 0; background: #f4f4f5; }
 .ff-toc-leader { flex: 1 1 8px; min-width: 8px; margin: 0 4px 3px;
                  border-bottom: 1px dotted currentColor; }
 .ff-toc-num { flex: 0 0 auto; }
+.ff-nav { max-width: 900px; margin: 0 auto 16px; background: #fff; border-radius: 2px;
+          box-shadow: 0 2px 14px rgba(0,0,0,.25); padding: 12px 18px;
+          font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #1a1a1a; }
+.ff-nav summary { cursor: pointer; font-weight: 700; margin-bottom: 6px; }
+.ff-nav-link { display: block; color: #1a1a1a; text-decoration: none; padding: 3px 0;
+               border-bottom: 1px solid #f0f0f0; }
+.ff-nav-link:hover { text-decoration: underline; }
 """
 
 _SCRIPT = (
@@ -112,7 +119,14 @@ def render_faithful_page(model: PageModel, translations: dict, image_url_base: s
 
 
 def render_faithful_flow(pages: List[PageModel], translations: Dict[int, dict],
-                         image_url_base: str) -> str:
+                         image_url_base: str, nav=None) -> str:
+    nav_html = ""
+    if nav:
+        links = "".join(
+            f'<a class="ff-nav-link" href="#pg-{int(tp)}">{html_lib.escape(label)}</a>'
+            for label, tp in nav)
+        nav_html = ('<details class="ff-nav" open><summary>Mục lục</summary>'
+                    f'{links}</details>')
     body = "".join(
         render_faithful_page(p, (translations or {}).get(p.page_num, {}), image_url_base)
         for p in sorted(pages, key=lambda m: m.page_num))
@@ -120,5 +134,5 @@ def render_faithful_flow(pages: List[PageModel], translations: Dict[int, dict],
         '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         f'{_GOOGLE_FONTS}<style>{_CSS}</style></head><body>'
-        f'<article class="ff-doc">{body}</article>{_SCRIPT}</body></html>'
+        f'<article class="ff-doc">{nav_html}{body}</article>{_SCRIPT}</body></html>'
     )
