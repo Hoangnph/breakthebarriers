@@ -69,6 +69,7 @@ class FlowElement:
     # design had the text on top of the figure). Keys: src (figure file), left/top/
     # width (% of figure box), color, weight, align, size_cqw (font-size in cqw).
     overlay: Optional[dict] = None
+    align: str = "left"            # figure horizontal align: left|center|right
 
 
 def flow_span_id(page_num: int, span_id: Optional[str]) -> Optional[str]:
@@ -230,7 +231,8 @@ def build_document_flow(pages: List[PageModel]) -> List[FlowElement]:
             if tag == "fig":
                 # Standalone (non-banner) figures keep their ORIGINAL image — never
                 # the AI-cleaned one, which can lose content (faces, labels).
-                flow.append(FlowElement(kind="figure", src=obj.img))
+                flow.append(FlowElement(kind="figure", src=obj.img,
+                                        align=getattr(obj, "align", "left")))
                 continue
             ov = overlay_for.get(id(obj))
             if id(obj) in covered and ov is None:
