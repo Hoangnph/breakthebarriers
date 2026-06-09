@@ -23,7 +23,7 @@ body { margin: 0; background: #f4f4f5; font-family: 'Be Vietnam Pro', system-ui,
 .fl-doc p.cap { font-size: .9rem; color: #666; }
 .fl-doc p.li { padding-left: 1.25em; text-indent: -1.1em; }
 .fl-doc figure { margin: 1.5em 0; }
-.fl-fig { max-width: 100%; height: auto; display: block; }
+.fl-fig { max-width: 100%; height: auto; display: inline-block; }
 .fl-banner { position: relative; container-type: inline-size; margin: 1.5em 0; }
 .fl-banner > .fl-fig { width: 100%; max-width: 100%; }
 .fl-ov { position: absolute; margin: 0; line-height: 1.1;
@@ -151,7 +151,9 @@ def render_flow_html(flow: List[FlowElement], translations: dict,
         if el.kind == "figure" and el.src:
             ensure_section()
             src = html_lib.escape(f"{image_url_base}/{el.src}", quote=True)
-            parts.append(f'<figure><img class="fl-fig" src="{src}" alt="figure"/></figure>')
+            align = el.align if el.align in ("left", "center", "right") else "left"
+            parts.append(f'<figure style="text-align:{align}">'
+                         f'<img class="fl-fig" src="{src}" alt="figure"/></figure>')
             continue
         if not text:
             continue
