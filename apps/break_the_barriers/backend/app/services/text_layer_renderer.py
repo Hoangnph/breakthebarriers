@@ -5,6 +5,7 @@ SP-A uses absolute positioning (faithful to source coordinates) with a
 client-side shrink-to-fit refinement. Flow mode is reserved for SP-B export."""
 from __future__ import annotations
 import html as html_lib
+import re
 
 from backend.app.services.page_model import PageModel
 from backend.app.services.text_fitter import fit_font_size
@@ -47,6 +48,29 @@ body { background: #525659; }
                  border-bottom: 1px dotted currentColor; }
 .tl-toc-num { flex: 0 0 auto; }
 """
+
+
+def _opaque_fill(fill: str, min_alpha: float = 0.9) -> str:
+    """Raise an rgba fill's alpha to at least min_alpha so the mask hides the
+    baked-in original text under an overlaid translation. Solid/hex colors (already
+    opaque) pass through unchanged."""
+    m = re.match(
+        r"\s*rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)\s*$",
+        fill)
+    if not m:
+        return fill
+    r, g, b, a = m.groups()
+    return f"rgba({r},{g},{b},{max(float(a), min_alpha)})"
+
+
+def _mask_css(box) -> str:
+    """CSS background that masks the original text region behind an overlaid block.
+    Empty string when there is no box fill."""
+    if not box or not box.get("fill"):
+        return ""
+    fill = _opaque_fill(box["fill"])
+    pad = "padding:0 2px;" if box.get("mode") == "scrim" else ""
+    return f"background:{fill};{pad}"
 
 
 def _pct(v: float, total: float) -> float:
