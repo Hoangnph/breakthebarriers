@@ -118,18 +118,19 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
 
     policy = effective_policy(model.page_class, model.cover,
                               (model.background or {}).get("policy_override"))
-    draw_raster = policy != "base-color"
-    # On a base-color page the original raster is dropped, so render on a clean
-    # WHITE page — not the dark color sampled from the discarded photo.
-    if policy == "base-color":
-        bg = "#ffffff"
 
     parts = []
     bgd = model.background or {}
+    # Faithfulness-first: ALWAYS draw the page raster as the truth layer. The raster
+    # page-{n}.png exists for every page; background.image is nulled for text pages,
+    # so fall back to it by page number. The baked-in original text is hidden per
+    # block by _mask_css so the translated overlay reads cleanly.
     image_name = bgd.get("image")
     if policy == "clean-photo" and bgd.get("clean_image"):
         image_name = bgd.get("clean_image")
-    if image_name and draw_raster:
+    if not image_name and model.page_num:
+        image_name = f"page-{model.page_num}.png"
+    if image_name:
         bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
         parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')
     # Figures first (z-order below text).
@@ -171,13 +172,9 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         base = (f.size if f and f.size else max(8.0, h * 0.8))
         size = fit_font_size(text, w, fit_h, max_size=base, min_size=6.0,
                              height_growth=1.0)
-        box = blk.box or None
-        box_css = ""
-        if box and box.get("fill") and policy == "keep-raster":
-            if box.get("mode") == "scrim":
-                box_css = f"background:{box['fill']};padding:0 2px;"
-            else:
-                box_css = f"background:{box['fill']};"
+        # Always mask the baked-in original text under the translation (raster is
+        # now always drawn). _mask_css raises the fill to an opaque level.
+        box_css = _mask_css(blk.box)
         entry = parse_toc_entry(text) if toc_page else None
         if entry:
             _title, _num = entry
