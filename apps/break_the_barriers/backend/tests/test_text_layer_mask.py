@@ -42,3 +42,24 @@ def test_text_page_always_draws_raster_and_masks():
     assert '<img class="tl-bg" src="http://x/assets/page-38.png"' in html
     assert "đoạn dịch" in html
     assert "background:rgba(255,255,255,0.9)" in html
+
+
+def test_pages_endpoint_sets_page_num_for_raster(client, db_session):
+    import json
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    db_session.add(DBDocument(id="tldoc", filename="f.pdf", total_pages=5, status="translated"))
+    m = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+         "background": {"color": "#ffffff", "image": None},
+         "blocks": [{"span_id": "s1", "role": "body", "bbox": [72, 100, 300, 40], "text": "",
+                     "font": {"size": 11, "weight": 400, "italic": False, "color": "#000000",
+                              "align": "left", "family_class": "sans"},
+                     "box": {"mode": "scrim", "fill": "rgba(255,255,255,0.55)"}}],
+         "figures": [], "page_class": "text", "cover": "none"}
+    db_session.add(DBPage(document_id="tldoc", page_num=5, original_html="<p/>",
+                          status="translated", model_json=json.dumps(m)))
+    db_session.add(DBTranslation(document_id="tldoc", page_num=5, span_id="s1",
+                                 original_text="x", translated_text="dịch"))
+    db_session.commit()
+    r = client.get("/api/docs/tldoc/pages/5?lang=vi&raw=true")
+    assert r.status_code == 200
+    assert "page-5.png" in r.text

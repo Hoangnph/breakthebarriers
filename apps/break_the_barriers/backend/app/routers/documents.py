@@ -253,6 +253,7 @@ def get_page_content(
             from backend.app.services.page_model import PageModel
             from backend.app.services.page_renderer import render_page
             pm = PageModel.from_json(page.model_json)
+            pm.page_num = page_num
             image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
             rows = db.query(DBTranslation).filter(
                 DBTranslation.document_id == doc_id,
