@@ -73,6 +73,24 @@ def _mask_css(box) -> str:
     return f"background:{fill};{pad}"
 
 
+def resolve_page_raster(model):
+    """Decide a page's background raster and whether to mask the baked-in text.
+    Returns (image_name | None, mask_original: bool, force_white: bool).
+
+    Faithfulness-first: draw the ORIGINAL raster (page-{n}.png fallback) and mask text
+    per block. Exceptions: a manual base-color override drops the raster (clean white
+    page — escape hatch); a clean-photo page uses its AI-cleaned image (no mask)."""
+    bgd = model.background or {}
+    if bgd.get("policy_override") == "base-color":
+        return None, False, True
+    policy = effective_policy(model.page_class, model.cover, bgd.get("policy_override"))
+    if policy == "clean-photo" and bgd.get("clean_image"):
+        return bgd["clean_image"], False, False
+    image_name = bgd.get("image") or (
+        f"page-{model.page_num}.png" if model.page_num else None)
+    return image_name, image_name is not None, False
+
+
 def _pct(v: float, total: float) -> float:
     return v / total * 100.0 if total else 0.0
 
@@ -116,30 +134,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
     ph = model.page_h or 1.0
     bg = (model.background or {}).get("color") or "#ffffff"
 
-    policy = effective_policy(model.page_class, model.cover,
-                              (model.background or {}).get("policy_override"))
-
     parts = []
-    bgd = model.background or {}
-    # Faithfulness-first: draw the ORIGINAL page raster as the truth layer (it holds
-    # tables/diagrams/full-page design) and mask the baked-in text per block under the
-    # translated overlay. The raster page-{n}.png exists for every page; background.image
-    # is nulled for text pages, so fall back to it by page number. Two exceptions:
-    #   * an explicit base-color override is the manual "drop this raster" escape hatch
-    #     → clean white page, no raster;
-    #   * a clean-photo page uses its AI-cleaned image (original text already removed)
-    #     → no per-block mask needed.
-    force_base_color = bgd.get("policy_override") == "base-color"
-    image_name = None
-    mask_original = False
-    if force_base_color:
+    image_name, mask_original, force_white = resolve_page_raster(model)
+    if force_white:
         bg = "#ffffff"
-    elif policy == "clean-photo" and bgd.get("clean_image"):
-        image_name = bgd.get("clean_image")
-    else:
-        image_name = bgd.get("image") or (
-            f"page-{model.page_num}.png" if model.page_num else None)
-        mask_original = image_name is not None
     if image_name:
         bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
         parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')

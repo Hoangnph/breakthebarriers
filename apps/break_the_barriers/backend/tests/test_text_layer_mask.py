@@ -44,6 +44,32 @@ def test_text_page_always_draws_raster_and_masks():
     assert "background:rgba(255,255,255,0.9)" in html
 
 
+def test_resolve_text_page_falls_back_to_page_raster():
+    from backend.app.services.page_model import PageModel
+    from backend.app.services.text_layer_renderer import resolve_page_raster
+    pm = PageModel(595.0, 842.0, "text", {"color": "#fff", "image": None}, [], [],
+                   page_class="text", cover="none", page_num=5)
+    assert resolve_page_raster(pm) == ("page-5.png", True, False)
+
+
+def test_resolve_override_base_color_drops_raster():
+    from backend.app.services.page_model import PageModel
+    from backend.app.services.text_layer_renderer import resolve_page_raster
+    pm = PageModel(595.0, 842.0, "mixed",
+                   {"color": "#000", "image": "page-1.png", "policy_override": "base-color"},
+                   [], [], page_class="preserve", cover="none", page_num=1)
+    assert resolve_page_raster(pm) == (None, False, True)
+
+
+def test_resolve_clean_photo_uses_clean_image_no_mask():
+    from backend.app.services.page_model import PageModel
+    from backend.app.services.text_layer_renderer import resolve_page_raster
+    pm = PageModel(595.0, 842.0, "mixed",
+                   {"color": "#000", "image": "page-1.png", "clean_image": "page-1.clean.png"},
+                   [], [], page_class="regenerable", cover="front", page_num=1)
+    assert resolve_page_raster(pm) == ("page-1.clean.png", False, False)
+
+
 def test_pages_endpoint_sets_page_num_for_raster(client, db_session):
     import json
     from backend.app.models_db import DBDocument, DBPage, DBTranslation
