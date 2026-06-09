@@ -65,12 +65,14 @@ def _opaque_fill(fill: str, min_alpha: float = 0.9) -> str:
 
 def _mask_css(box) -> str:
     """CSS background that masks the original text region behind an overlaid block.
-    Empty string when there is no box fill."""
+    A 3px box-shadow ring of the same fill extends the mask just past the block edge
+    so baked-in glyphs that overhang the bbox do not ghost through. Empty string when
+    there is no box fill."""
     if not box or not box.get("fill"):
         return ""
     fill = _opaque_fill(box["fill"])
     pad = "padding:0 2px;" if box.get("mode") == "scrim" else ""
-    return f"background:{fill};{pad}"
+    return f"background:{fill};box-shadow:0 0 0 3px {fill};{pad}"
 
 
 def resolve_page_raster(model):

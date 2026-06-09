@@ -20,7 +20,9 @@ def test_mask_css_scrim_has_padding():
 
 
 def test_mask_css_fill_no_padding():
-    assert _mask_css({"mode": "fill", "fill": "#010203"}) == "background:#010203;"
+    css = _mask_css({"mode": "fill", "fill": "#010203"})
+    assert "background:#010203" in css
+    assert "padding" not in css
 
 
 def test_mask_css_empty_without_fill():
@@ -68,6 +70,11 @@ def test_resolve_clean_photo_uses_clean_image_no_mask():
                    {"color": "#000", "image": "page-1.png", "clean_image": "page-1.clean.png"},
                    [], [], page_class="regenerable", cover="front", page_num=1)
     assert resolve_page_raster(pm) == ("page-1.clean.png", False, False)
+
+
+def test_mask_css_adds_box_shadow_ring():
+    css = _mask_css({"mode": "scrim", "fill": "rgba(255,255,255,0.55)"})
+    assert "box-shadow:0 0 0 3px rgba(255,255,255,0.9)" in css
 
 
 def test_pages_endpoint_sets_page_num_for_raster(client, db_session):
