@@ -62,3 +62,12 @@ def test_map_falls_back_to_printed_number():
 
 def test_map_returns_none_when_no_match_no_number():
     assert map_entry_to_page("Nope", [(8, "Something else")]) is None
+
+
+def test_extract_splits_merged_block_into_multiple_entries():
+    # A single block that merged several TOC lines (dotted leaders) → one entry each.
+    entries = extract_toc_entries(
+        ["QUIZ.................34 ANNEX : AI TERMINOLOGY.........35 ENDNOTES....42"])
+    assert entries == [("QUIZ", "34"),
+                       ("ANNEX : AI TERMINOLOGY", "35"),
+                       ("ENDNOTES", "42")]

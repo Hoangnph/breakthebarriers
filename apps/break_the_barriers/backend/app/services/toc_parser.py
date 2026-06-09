@@ -31,21 +31,35 @@ def is_toc_page(block_texts, *, min_entries: int = 3) -> bool:
 _TOC_LOOSE_RE = re.compile(
     r'^(?P<title>.*?\S)\s*(?:\.{2,}|…+|\t|\s{2,})\s*(?P<num>\d+)\s*$')
 
+# One "Title <dotted/ellipsis/tab leader> number" segment. Used with finditer so a
+# single block that merged several TOC lines splits into one entry per line. The
+# title excludes dot/ellipsis/tab so a match cannot swallow the next entry's leader.
+_TOC_SEGMENT_RE = re.compile(
+    r'(?P<title>[^\t.…]*?[^\t.…\d\s])\s*(?:\.{2,}|…+|\t)\s*(?P<num>\d{1,4})')
+
 
 def extract_toc_entries(block_texts):
     """Ordered (title, page_num) entries from a TOC page's block texts. Looser than
-    parse_toc_entry (also accepts a run of 2+ spaces as a leader) — safe because
-    callers only use it on a confirmed TOC page (is_toc_page)."""
+    parse_toc_entry — safe because callers only use it on a confirmed TOC page
+    (is_toc_page). A block that merged several TOC lines (dotted leaders) is split
+    into one entry per line; a single-line block whose leader is just spaces falls
+    back to the whole-line match."""
     out = []
     for t in block_texts:
         if not t:
             continue
-        m = _TOC_LOOSE_RE.match(t)
-        if not m:
-            continue
-        title = m.group("title").strip(" .…\t")
-        if title:
-            out.append((title, m.group("num")))
+        found = False
+        for m in _TOC_SEGMENT_RE.finditer(t):
+            title = m.group("title").strip(" .…\t")
+            if title:
+                out.append((title, m.group("num")))
+                found = True
+        if not found:
+            m = _TOC_LOOSE_RE.match(t)
+            if m:
+                title = m.group("title").strip(" .…\t")
+                if title:
+                    out.append((title, m.group("num")))
     return out
 
 
