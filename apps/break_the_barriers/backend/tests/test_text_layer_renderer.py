@@ -89,12 +89,14 @@ def _raster_model(page_class, cover):
     )
 
 
-def test_base_color_page_omits_raster_and_box():
+def test_auto_base_color_page_keeps_raster_and_masks():
+    # Faithfulness-first: an AUTO base-color page (regenerable, no manual override)
+    # now keeps the original raster as the truth layer and masks the baked-in text.
     html = render_text_layer(_raster_model("regenerable", "none"),
                              {"s1": "Mục lục"}, image_url_base="http://api/assets")
-    assert 'class="tl-bg"' not in html
-    assert "page-2.png" not in html
-    assert "rgba(255,255,255,0.55)" not in html
+    assert 'class="tl-bg"' in html
+    assert "page-2.png" in html
+    assert "rgba(255,255,255,0.9)" in html   # mask raised to opaque to hide original
     assert "Mục lục" in html
 
 
@@ -103,7 +105,7 @@ def test_preserve_page_keeps_raster_and_box():
                              {"s1": "X"}, image_url_base="http://api/assets")
     assert 'class="tl-bg"' in html
     assert "page-2.png" in html
-    assert "rgba(255,255,255,0.55)" in html
+    assert "rgba(255,255,255,0.9)" in html   # mask opacity raised from sampled 0.55
 
 
 def test_front_cover_keeps_raster_phase1():
@@ -177,14 +179,17 @@ def test_blocks_carry_data_span_and_edit_script():
     assert "btb-edit" in html
 
 
-def test_base_color_renders_on_white_not_sampled_color():
-    # A base-color content page must use a WHITE page background, not the dark
-    # sampled photo color (e.g. #3c84bf) left over from the original raster.
+def test_manual_base_color_override_renders_on_white_without_raster():
+    # The manual base-color override is the escape hatch to drop a bad raster:
+    # clean WHITE page, no raster, sampled photo color discarded. (Auto base-color
+    # pages instead keep the raster — see test_auto_base_color_page_keeps_raster_and_masks.)
     pm = PageModel(
         page_w=595.0, page_h=842.0, kind="mixed",
-        background={"color": "#3c84bf", "image": "page-2.png"},
+        background={"color": "#3c84bf", "image": "page-2.png",
+                    "policy_override": "base-color"},
         blocks=[], figures=[], page_class="regenerable", cover="none")
     html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' not in html
     assert "background:#ffffff" in html
     assert "#3c84bf" not in html
 

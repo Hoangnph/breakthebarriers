@@ -29,7 +29,8 @@ def test_block_fill_box_applies_solid_background():
 def test_block_scrim_box_applies_rgba_background():
     html = render_text_layer(_img_model({"mode": "scrim", "fill": "rgba(0,0,0,0.45)"}),
                              {"s1": "X"}, "http://api/assets")
-    assert "rgba(0,0,0,0.45)" in html
+    # B2.1: the mask alpha is raised to opaque so the original text cannot ghost through.
+    assert "rgba(0,0,0,0.9)" in html
 
 
 def test_text_page_unchanged_no_raster():

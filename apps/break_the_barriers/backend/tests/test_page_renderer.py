@@ -28,5 +28,5 @@ def test_image_kind_uses_unified_renderer_with_raster():
     assert 'class="tl-page"' in html
     assert 'class="tl-bg"' in html
     assert "page-1.png" in html
-    assert "rgba(0,0,0,0.45)" in html
+    assert "rgba(0,0,0,0.9)" in html   # B2.1: mask alpha raised to opaque
     assert "DỊCH" in html

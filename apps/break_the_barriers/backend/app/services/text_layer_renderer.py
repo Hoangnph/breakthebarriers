@@ -121,15 +121,25 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
 
     parts = []
     bgd = model.background or {}
-    # Faithfulness-first: ALWAYS draw the page raster as the truth layer. The raster
-    # page-{n}.png exists for every page; background.image is nulled for text pages,
-    # so fall back to it by page number. The baked-in original text is hidden per
-    # block by _mask_css so the translated overlay reads cleanly.
-    image_name = bgd.get("image")
-    if policy == "clean-photo" and bgd.get("clean_image"):
+    # Faithfulness-first: draw the ORIGINAL page raster as the truth layer (it holds
+    # tables/diagrams/full-page design) and mask the baked-in text per block under the
+    # translated overlay. The raster page-{n}.png exists for every page; background.image
+    # is nulled for text pages, so fall back to it by page number. Two exceptions:
+    #   * an explicit base-color override is the manual "drop this raster" escape hatch
+    #     → clean white page, no raster;
+    #   * a clean-photo page uses its AI-cleaned image (original text already removed)
+    #     → no per-block mask needed.
+    force_base_color = bgd.get("policy_override") == "base-color"
+    image_name = None
+    mask_original = False
+    if force_base_color:
+        bg = "#ffffff"
+    elif policy == "clean-photo" and bgd.get("clean_image"):
         image_name = bgd.get("clean_image")
-    if not image_name and model.page_num:
-        image_name = f"page-{model.page_num}.png"
+    else:
+        image_name = bgd.get("image") or (
+            f"page-{model.page_num}.png" if model.page_num else None)
+        mask_original = image_name is not None
     if image_name:
         bg_src = html_lib.escape(f"{image_url_base}/{image_name}", quote=True)
         parts.append(f'<img class="tl-bg" src="{bg_src}" alt="page"/>')
@@ -172,9 +182,10 @@ def render_text_layer(model: PageModel, translations: dict, image_url_base: str)
         base = (f.size if f and f.size else max(8.0, h * 0.8))
         size = fit_font_size(text, w, fit_h, max_size=base, min_size=6.0,
                              height_growth=1.0)
-        # Always mask the baked-in original text under the translation (raster is
-        # now always drawn). _mask_css raises the fill to an opaque level.
-        box_css = _mask_css(blk.box)
+        # Mask the baked-in original text under the translation when the ORIGINAL
+        # raster is drawn (not on cleaned/base-color pages). _mask_css raises the
+        # fill to an opaque level so the original text does not ghost through.
+        box_css = _mask_css(blk.box) if mask_original else ""
         entry = parse_toc_entry(text) if toc_page else None
         if entry:
             _title, _num = entry
