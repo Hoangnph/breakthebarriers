@@ -44,3 +44,31 @@ def test_flow_empty_pages_valid_shell():
     html = render_faithful_flow([], {}, "http://x/a")
     assert '<article class="ff-doc">' in html
     assert html.count('class="ff-page"') == 0
+
+
+def test_flow_endpoint_overlays_translation(client, db_session):
+    import json
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    db_session.add(DBDocument(id="ffdoc", filename="f.pdf", total_pages=2, status="translated"))
+    m = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+         "background": {"color": "#fff", "image": None},
+         "blocks": [{"span_id": "s1", "role": "body", "bbox": [72, 100, 300, 40], "text": "",
+                     "font": {"size": 11, "weight": 400, "italic": False, "color": "#000000",
+                              "align": "left", "family_class": "sans"},
+                     "box": {"mode": "scrim", "fill": "rgba(255,255,255,0.55)"}}],
+         "figures": [], "page_class": "text", "cover": "none"}
+    for n in (1, 2):
+        db_session.add(DBPage(document_id="ffdoc", page_num=n, original_html="<p/>",
+                              status="translated", model_json=json.dumps(m)))
+    db_session.add(DBTranslation(document_id="ffdoc", page_num=1, span_id="s1",
+                                 original_text="a", translated_text="dịch một"))
+    db_session.commit()
+    r = client.get("/api/docs/ffdoc/flow?lang=vi")
+    assert r.status_code == 200
+    assert r.text.count('class="ff-page"') == 2
+    assert "page-1.png" in r.text and "page-2.png" in r.text
+    assert "dịch một" in r.text
+
+
+def test_flow_endpoint_unknown_doc_404(client):
+    assert client.get("/api/docs/nope-doc/flow").status_code == 404

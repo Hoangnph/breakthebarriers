@@ -359,20 +359,33 @@ window.addEventListener('load', () => {
 def get_document_flow(doc_id: str, request: Request,
                       lang: str = Query("vi", pattern="^(en|vi)$"),
                       db: Session = Depends(get_db)):
-    # B1 — faithful raster view: render the document as a vertical stack of the
-    # original page rasters (page-{n}.png). Pixel-faithful to the source for any
-    # document. `lang` is accepted for API compatibility but B1 always serves the
-    # original rasters; translated overlay is sub-project B2.
+    # B2.2 — faithful flow: a vertical stack of per-page fragments (original raster +
+    # masked translated overlay). `lang` selects original vs translated text.
+    from backend.app.services.page_model import PageModel
     from backend.app.services.faithful_flow_renderer import render_faithful_flow
+    from backend.app.models_db import DBTranslation
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     page_rows = (db.query(DBPage).filter(DBPage.document_id == doc_id)
                  .order_by(DBPage.page_num).all())
-    page_nums = [r.page_num for r in page_rows]
+    pages = []
+    for pr in page_rows:
+        if pr.model_json:
+            try:
+                pm = PageModel.from_json(pr.model_json)
+                pm.page_num = pr.page_num
+                pages.append(pm)
+            except Exception:
+                pass
+    rows = db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).all()
+    translations: dict = {}
+    for t in rows:
+        txt = (t.original_text if lang == "en" else t.translated_text) or ""
+        translations.setdefault(t.page_num, {})[t.span_id] = txt
     image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
-    html = render_faithful_flow(page_nums, image_base)
+    html = render_faithful_flow(pages, translations, image_base)
     return HTMLResponse(content=html)
 
 

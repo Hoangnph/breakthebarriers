@@ -229,7 +229,7 @@ def test_flow_endpoint_returns_document_html(client, db_session):
     db_session.commit()
     r = client.get("/api/docs/fl_doc/flow?lang=vi")
     assert r.status_code == 200
-    # B1: /flow now serves a faithful vertical stack of the original page rasters
-    # (translated text overlay is sub-project B2), so it references page-{n}.png.
-    assert 'class="fr-img"' in r.text
+    # B2.2: /flow is a faithful stack of per-page fragments (raster + translated overlay).
+    assert r.text.count('class="ff-page"') == 2
     assert "page-1.png" in r.text and "page-2.png" in r.text
+    assert "TIÊU ĐỀ" in r.text          # translated heading overlaid
