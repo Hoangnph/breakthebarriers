@@ -85,3 +85,45 @@ def test_flow_renders_nav_when_provided():
 def test_flow_no_nav_by_default():
     html = render_faithful_flow([_text_page(1)], {1: {"s1": "x"}}, "http://x/a")
     assert 'class="ff-nav"' not in html
+
+
+def test_flow_endpoint_builds_toc_nav(client, db_session):
+    import json
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    db_session.add(DBDocument(id="navdoc", filename="f.pdf", total_pages=3, status="translated"))
+    toc = {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+           "background": {"color": "#fff", "image": None},
+           "blocks": [{"span_id": f"e{i}", "role": "body", "bbox": [72, 100 + i * 20, 300, 14],
+                       "text": "", "font": {"size": 11, "weight": 400, "italic": False,
+                                            "color": "#000", "align": "left", "family_class": "sans"}}
+                      for i in range(3)],   # >=3 entries so is_toc_page detects it
+           "figures": [], "page_class": "text", "cover": "none"}
+    def content(hid):
+        return {"page_w": 595.0, "page_h": 842.0, "kind": "text",
+                "background": {"color": "#fff", "image": None},
+                "blocks": [{"span_id": hid, "role": "heading", "bbox": [72, 40, 300, 28],
+                            "text": "", "font": {"size": 28, "weight": 700, "italic": False,
+                                                 "color": "#000", "align": "left", "family_class": "sans"}}],
+                "figures": [], "page_class": "text", "cover": "none"}
+    db_session.add(DBPage(document_id="navdoc", page_num=1, status="translated", model_json=json.dumps(toc)))
+    db_session.add(DBPage(document_id="navdoc", page_num=2, status="translated", model_json=json.dumps(content("h2"))))
+    db_session.add(DBPage(document_id="navdoc", page_num=3, status="translated", model_json=json.dumps(content("h3"))))
+    db_session.add(DBPage(document_id="navdoc", page_num=4, status="translated", model_json=json.dumps(content("h4"))))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=1, span_id="e0",
+                                 original_text="Alpha Section.....2", translated_text="Phần Alpha....2"))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=1, span_id="e1",
+                                 original_text="Beta Section.....3", translated_text="Phần Beta....3"))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=1, span_id="e2",
+                                 original_text="Gamma Section.....4", translated_text="Phần Gamma....4"))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=2, span_id="h2",
+                                 original_text="Alpha Section", translated_text="Phần Alpha"))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=3, span_id="h3",
+                                 original_text="Beta Section", translated_text="Phần Beta"))
+    db_session.add(DBTranslation(document_id="navdoc", page_num=4, span_id="h4",
+                                 original_text="Gamma Section", translated_text="Phần Gamma"))
+    db_session.commit()
+    r = client.get("/api/docs/navdoc/flow?lang=vi")
+    assert r.status_code == 200
+    assert '<details class="ff-nav"' in r.text
+    assert 'href="#pg-2"' in r.text and 'href="#pg-3"' in r.text
+    assert "Phần Alpha" in r.text and "Phần Beta" in r.text

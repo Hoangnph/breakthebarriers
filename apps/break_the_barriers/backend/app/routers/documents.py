@@ -379,13 +379,46 @@ def get_document_flow(doc_id: str, request: Request,
                 pages.append(pm)
             except Exception:
                 pass
+    from backend.app.services.toc_parser import (
+        is_toc_page, extract_toc_entries, map_entry_to_page)
+
     rows = db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).all()
     translations: dict = {}
+    orig: dict = {}
     for t in rows:
         txt = (t.original_text if lang == "en" else t.translated_text) or ""
         translations.setdefault(t.page_num, {})[t.span_id] = txt
+        orig.setdefault(t.page_num, {})[t.span_id] = t.original_text or ""
+
+    # Hybrid TOC nav: list from the printed TOC, target page resolved by heading match.
+    page_headings: list = []          # (page_num, original heading text)
+    thead: dict = {}                  # page_num -> translated heading (nav label)
+    for pm in pages:
+        o = orig.get(pm.page_num, {})
+        tm = translations.get(pm.page_num, {})
+        for b in pm.blocks:
+            if b.role == "heading":
+                oh = o.get(b.span_id, "")
+                if oh:
+                    page_headings.append((pm.page_num, oh))
+                if pm.page_num not in thead:
+                    th = tm.get(b.span_id, "") or oh
+                    if th:
+                        thead[pm.page_num] = th
+    nav = None
+    for pm in pages:
+        o = orig.get(pm.page_num, {})
+        texts = [o.get(b.span_id, "") for b in pm.blocks]
+        if is_toc_page(texts):
+            nav = []
+            for title, num in extract_toc_entries(texts):
+                target = map_entry_to_page(title, page_headings, num)
+                if target is not None:
+                    nav.append((thead.get(target, title), target))
+            break
+
     image_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
-    html = render_faithful_flow(pages, translations, image_base)
+    html = render_faithful_flow(pages, translations, image_base, nav=nav)
     return HTMLResponse(content=html)
 
 
