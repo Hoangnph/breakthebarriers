@@ -499,6 +499,41 @@ class DoclingExtractor:
                 except Exception as _e:
                     logger.warning(f"Figure grouping failed p{page_no}: {_e}")
 
+            # ── Faithful figures: per-figure alignment + composite design-region
+            # crop (chat-like icon+text bands → one image, kept centered). ──
+            if page_size is not None:
+                from backend.app.services.design_region import (
+                    infer_figure_align, detect_design_regions)
+                for _f in figures:
+                    _f.align = infer_figure_align(list(_f.bbox), page_size.width)
+                if pil_img is not None and figures:
+                    try:
+                        from backend.app.services.figure_grouper import crop_group_region
+                        _figbb = [list(f.bbox) for f in figures]
+                        _blk = [(b["span_id"], list(b["bbox"])) for b in blocks]
+                        _regs = detect_design_regions(
+                            _figbb, _blk, page_size.width, page_size.height)
+                        if _regs:
+                            _rm_fig: set = set()
+                            _rm_blk: set = set()
+                            _newr: list = []
+                            for _ri, _rg in enumerate(_regs, start=1):
+                                _rm_fig.update(_rg.figure_idx)
+                                _rm_blk.update(_rg.block_ids)
+                                _rname = f"{doc_id}-{page_no}-region{_ri}.png"
+                                crop_group_region(
+                                    pil_img, _rg.bbox,
+                                    page_size.width, page_size.height
+                                ).save(os.path.join(output_dir, _rname))
+                                _newr.append(Figure(bbox=_rg.bbox, img=_rname,
+                                                    kind="content-region", align="center"))
+                            figures = [f for _k, f in enumerate(figures)
+                                       if _k not in _rm_fig] + _newr
+                            blocks = [b for b in blocks
+                                      if b["span_id"] not in _rm_blk]
+                    except Exception as _e:
+                        logger.warning(f"Design-region crop failed p{page_no}: {_e}")
+
             boxes = {}
             if image_name and pil_img is not None and page_size is not None:
                 from backend.app.services.page_image import analyze_block_box
