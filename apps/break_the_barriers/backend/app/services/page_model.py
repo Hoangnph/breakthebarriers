@@ -32,6 +32,7 @@ class Figure:
     img: str               # filename only
     clean_img: Optional[str] = None   # AI-cleaned (text-removed) variant filename
     kind: str = "illustration"        # banner | icon | illustration | content-region
+    align: str = "left"               # left | center | right (flow horizontal align)
 
 
 @dataclass
@@ -73,7 +74,8 @@ class PageModel:
             ))
         figures = [Figure(bbox=list(f["bbox"]), img=f["img"],
                           clean_img=f.get("clean_img"),
-                          kind=f.get("kind", "illustration"))
+                          kind=f.get("kind", "illustration"),
+                          align=f.get("align", "left"))
                    for f in d.get("figures", [])]
         return cls(
             page_w=d["page_w"], page_h=d["page_h"], kind=d.get("kind", "text"),
