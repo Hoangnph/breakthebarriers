@@ -26,3 +26,46 @@ def parse_toc_entry(text: str):
 def is_toc_page(block_texts, *, min_entries: int = 3) -> bool:
     """True when at least `min_entries` of the block texts parse as TOC lines."""
     return sum(1 for t in block_texts if parse_toc_entry(t)) >= min_entries
+
+
+_TOC_LOOSE_RE = re.compile(
+    r'^(?P<title>.*?\S)\s*(?:\.{2,}|…+|\t|\s{2,})\s*(?P<num>\d+)\s*$')
+
+
+def extract_toc_entries(block_texts):
+    """Ordered (title, page_num) entries from a TOC page's block texts. Looser than
+    parse_toc_entry (also accepts a run of 2+ spaces as a leader) — safe because
+    callers only use it on a confirmed TOC page (is_toc_page)."""
+    out = []
+    for t in block_texts:
+        if not t:
+            continue
+        m = _TOC_LOOSE_RE.match(t)
+        if not m:
+            continue
+        title = m.group("title").strip(" .…\t")
+        if title:
+            out.append((title, m.group("num")))
+    return out
+
+
+def _norm_title(s):
+    return re.sub(r'[^a-z0-9]+', ' ', (s or '').lower()).strip()
+
+
+def map_entry_to_page(title, page_headings, printed_num=None):
+    """Map a TOC title to a raster page_num by matching against page headings
+    (normalized equality / two-way prefix). Fallback: the printed number. Else None.
+    page_headings: list[(page_num, heading_text)]."""
+    nt = _norm_title(title)
+    if nt:
+        for pnum, htext in page_headings:
+            nh = _norm_title(htext)
+            if nh and (nh == nt or nh.startswith(nt) or nt.startswith(nh)):
+                return pnum
+    if printed_num is not None:
+        try:
+            return int(printed_num)
+        except (TypeError, ValueError):
+            return None
+    return None

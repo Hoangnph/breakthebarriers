@@ -1,4 +1,4 @@
-from backend.app.services.toc_parser import parse_toc_entry, is_toc_page
+from backend.app.services.toc_parser import parse_toc_entry, is_toc_page, extract_toc_entries, map_entry_to_page
 
 
 def test_dotted_entry():
@@ -33,3 +33,32 @@ def test_is_toc_page_true_when_three_plus():
 def test_is_toc_page_false_for_normal_body():
     texts = ["Một đoạn văn bình thường.", "Đoạn nữa kết thúc 2023.", "MỤC LỤC"]
     assert is_toc_page(texts) is False
+
+
+def test_extract_accepts_dots_and_spaces_skips_plain_lines():
+    entries = extract_toc_entries([
+        "Algorithms : The Brains of AI    8",
+        "FOREWORD....3",
+        "Body text with no trailing number",
+        "Sub item ……  7",
+    ])
+    assert entries == [("Algorithms : The Brains of AI", "8"),
+                       ("FOREWORD", "3"), ("Sub item", "7")]
+
+
+def test_map_matches_heading_case_insensitive():
+    assert map_entry_to_page("Algorithms : The Brains of AI",
+                             [(8, "ALGORITHMS : THE BRAINS OF AI")]) == 8
+
+
+def test_map_two_way_prefix():
+    assert map_entry_to_page("Generative AI",
+                             [(24, "GENERATIVE AI : MAKING THINGS UP")]) == 24
+
+
+def test_map_falls_back_to_printed_number():
+    assert map_entry_to_page("Nope", [(8, "Something else")], printed_num="12") == 12
+
+
+def test_map_returns_none_when_no_match_no_number():
+    assert map_entry_to_page("Nope", [(8, "Something else")]) is None
