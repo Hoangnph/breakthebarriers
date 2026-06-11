@@ -235,7 +235,8 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
     Render on-the-fly từ PDF bằng PyMuPDF — không cần re-extract/DB."""
     import fitz
     from backend.app.services.text_layer import build_blocks
-    from backend.app.services.faithful_html_renderer import render_blocks_flow
+    from backend.app.services.layout_analyzer import analyze_layout
+    from backend.app.services.faithful_html_renderer import render_analyzed_flow
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
@@ -265,10 +266,10 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
                 except Exception:
                     name = ""
             im["name"] = name
-        pages.append(el)
+        pages.append(analyze_layout(el))
     fdoc.close()
 
-    html = render_blocks_flow(pages, asset_base)
+    html = render_analyzed_flow(pages, asset_base)
     zoom_script = (
         "<script>window.addEventListener('message',e=>{"
         "if(e.data&&e.data.type==='btb-zoom')document.body.style.zoom=String(e.data.zoom);"

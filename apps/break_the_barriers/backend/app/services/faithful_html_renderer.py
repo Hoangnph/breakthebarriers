@@ -11,6 +11,9 @@ body{margin:0;background:#8a8d91}
 .pf{position:relative;width:96%;max-width:880px;margin:18px auto;background:#fff;
     container-type:inline-size;box-shadow:0 2px 10px rgba(0,0,0,.35);overflow:hidden}
 .pf .bk{position:absolute}
+.pf .sec{position:absolute}
+.pf .col{position:absolute}
+.pf .fb{}
 .pf .ln{white-space:nowrap;line-height:1.04}
 .pf .ln span{white-space:pre}
 .pf img{position:absolute;display:block}
@@ -85,6 +88,92 @@ def render_blocks_page(el: Dict[str, Any], asset_base: str = "") -> str:
 def render_blocks_flow(pages: List[Dict[str, Any]], asset_base: str = "") -> str:
     """Nhiều trang xếp dọc (flow) → 1 tài liệu HTML responsive hoàn chỉnh."""
     body = "\n".join(render_blocks_page(el, asset_base) for el in pages)
+    return (
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        f"<style>{_FLOW_CSS}</style></head><body>{body}</body></html>")
+
+
+# ── Renderer theo cây layout (section/band/cột nối tiếp + lồng nhau) ──────────
+
+def _render_block_flow(blk: Dict[str, Any], page_w: float, gap_cqw: float) -> str:
+    """1 block trong luồng (flow): margin-top = khoảng cách block trước (cqw)."""
+    out = [f'<div class="fb" style="margin-top:{gap_cqw:.3f}cqw">']
+    for line in blk["lines"]:
+        out.append('<div class="ln">')
+        for s in line:
+            style = (f'font-size:{s["size"] / page_w * 100:.3f}cqw;'
+                     f'font-family:{s["font"]};color:{s["color"]};')
+            if s.get("bold"):
+                style += "font-weight:bold;"
+            if s.get("italic"):
+                style += "font-style:italic;"
+            out.append(f'<span style="{style}">{_esc(s["text"])}</span>')
+        out.append('</div>')
+    out.append('</div>')
+    return "".join(out)
+
+
+def _render_blocks_seq(blocks: List[Dict[str, Any]], top0: float, page_w: float) -> str:
+    """Các block xếp NỐI TIẾP theo chiều dọc, khoảng cách giữ tỉ lệ gốc (cqw)."""
+    out = []
+    prev_bottom = top0
+    for b in blocks:
+        by, bh = b["bbox"][1], b["bbox"][3]
+        gap = max(by - prev_bottom, 0.0) / page_w * 100
+        out.append(_render_block_flow(b, page_w, gap))
+        prev_bottom = by + bh
+    return "".join(out)
+
+
+def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
+    """Render cây layout: section định vị relative TRANG; band→cột LỒNG NHAU
+    (cột relative band); block trong cột xếp nối tiếp. Vector/ảnh ở mức trang."""
+    w = t.get("page_w") or 900.0
+    h = t.get("page_h") or 1260.0
+    if w <= 0:
+        w = 900.0
+    parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
+
+    vec = _vector_svg(t.get("drawings", []), w, h)
+    if vec:
+        parts.append(vec)
+    for im in t.get("images", []):
+        x, y, iw, ih = im["bbox"]
+        name = im.get("name", "")
+        if not name:
+            continue
+        src = f"{asset_base}/{name}" if asset_base else name
+        parts.append(
+            f'<img src="{_esc(src)}" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
+            f'width:{iw / w * 100:.3f}%;height:{ih / h * 100:.3f}%">')
+
+    for sec in t.get("sections", []):
+        sx, sy, sw, sh = sec["bbox"]
+        sw = max(sw, 1.0)
+        sh = max(sh, 1.0)
+        parts.append(
+            f'<div class="sec" style="left:{sx / w * 100:.3f}%;top:{sy / h * 100:.3f}%;'
+            f'width:{sw / w * 100:.3f}%">')
+        if sec.get("kind") == "band":
+            for col in sec["columns"]:
+                cx, cy, cw, _ch = col["bbox"]
+                parts.append(
+                    f'<div class="col" style="left:{(cx - sx) / sw * 100:.3f}%;'
+                    f'top:{(cy - sy) / sh * 100:.3f}%;width:{cw / sw * 100:.3f}%">')
+                parts.append(_render_blocks_seq(col["blocks"], cy, w))
+                parts.append('</div>')
+        else:
+            parts.append(_render_blocks_seq(sec["blocks"], sy, w))
+        parts.append('</div>')
+
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def render_analyzed_flow(trees: List[Dict[str, Any]], asset_base: str = "") -> str:
+    """Nhiều trang (đã phân tích layout) xếp dọc → 1 tài liệu HTML responsive."""
+    body = "\n".join(render_analyzed_page(t, asset_base) for t in trees)
     return (
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"

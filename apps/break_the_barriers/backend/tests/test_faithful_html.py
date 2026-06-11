@@ -74,3 +74,38 @@ def test_htmlflow_404_when_no_pdf(client, db_session):
     db_session.commit()
     r = client.get("/api/docs/nopdf/htmlflow")
     assert r.status_code == 404
+
+
+def _blk(x, y, w, h, text):
+    return {"bbox": [x, y, w, h], "lines": [[{
+        "text": text, "size": 10, "font": "sans-serif",
+        "color": "#000000", "bold": False, "italic": False}]]}
+
+
+def _two_col_el():
+    """el thủ công (không qua PyMuPDF grouping): title full-width + 2 cột tách bbox."""
+    return {"page_w": 600, "page_h": 400, "images": [], "drawings": [],
+            "blocks": [
+                _blk(40, 30, 500, 24, "Full Width Title"),   # full-width
+                _blk(40, 90, 180, 120, "left column body"),  # cột trái
+                _blk(360, 90, 180, 120, "right column body"),  # cột phải
+            ]}
+
+
+def test_analyze_detects_band_and_columns():
+    from backend.app.services.layout_analyzer import analyze_layout
+    t = analyze_layout(_two_col_el())
+    kinds = [s["kind"] for s in t["sections"]]
+    assert "band" in kinds, f"expected a multi-column band, got {kinds}"
+    band = next(s for s in t["sections"] if s["kind"] == "band")
+    assert len(band["columns"]) >= 2
+    assert "full" in kinds                      # full-width title section
+
+
+def test_render_analyzed_page_nests_relative():
+    from backend.app.services.layout_analyzer import analyze_layout
+    from backend.app.services.faithful_html_renderer import render_analyzed_page
+    html = render_analyzed_page(analyze_layout(_two_col_el()))
+    assert 'class="sec"' in html and 'class="col"' in html and 'class="fb"' in html
+    assert "cqw" in html and "%" in html
+    assert "px" not in html                      # toàn relative
