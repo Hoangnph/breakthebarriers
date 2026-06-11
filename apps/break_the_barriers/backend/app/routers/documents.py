@@ -227,12 +227,26 @@ def get_document_asset(doc_id: str, filename: str):
     return FileResponse(file_path, media_type=media_type)
 
 
+def _inject_page_size(html: str, page_num: int, w, h) -> str:
+    script = (
+        "<script>window.addEventListener('load',()=>{"
+        "window.parent.postMessage({type:'page_size',width:%d,height:%d,page_num:%d},'*');"
+        "});</script>" % (int(w), int(h), page_num))
+    low = (html or "").lower()
+    if "</head>" in low:
+        return html.replace("</head>", script + "</head>", 1)
+    if "</body>" in low:
+        return html.replace("</body>", script + "</body>", 1)
+    return (html or "") + script
+
+
 @router.get("/api/docs/{doc_id}/pages/{page_num}")
 def get_page_content(
     doc_id: str, page_num: int,
     request: Request,
     lang: str = Query("en", pattern="^(en|vi)$"),
     raw: bool = Query(False),
+    view: Optional[str] = Query(None, pattern="^(goc|dich)$"),
     db: Session = Depends(get_db)
 ):
     from backend.app.services.compiler import Compiler
@@ -245,6 +259,37 @@ def get_page_content(
     page = db.query(DBPage).filter(DBPage.document_id == doc_id, DBPage.page_num == page_num).first()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
+
+    if view is not None:
+        if view == "goc":
+            import json as _json
+            import os as _os
+            from backend.app.core import DATA_DIR as _DATA
+            from backend.app.services.faithful_renderer import render_faithful_page
+            tl = _json.loads(page.text_layer_json) if page.text_layer_json else {"spans": []}
+            pw = tl.get("page_w") or 900.0
+            ph = tl.get("page_h") or 1260.0
+            visual = page.svg_path or ""
+            asset_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
+            if visual.endswith(".svg"):
+                svg_file = _os.path.join(_DATA, "extracted_html", doc_id, visual)
+                svg = open(svg_file, "r", encoding="utf-8").read() if _os.path.exists(svg_file) else "<svg></svg>"
+                html = render_faithful_page(svg, "svg", tl, pw, ph)
+            else:
+                html = render_faithful_page(visual, "image", tl, pw, ph, asset_base)
+            if raw:
+                return HTMLResponse(content=_inject_page_size(html, page_num, pw, ph))
+        else:  # view == "dich"
+            from backend.app.services.compiler import Compiler
+            rows = db.query(DBTranslation).filter(
+                DBTranslation.document_id == doc_id, DBTranslation.page_num == page_num).all()
+            trans_dict = {t.span_id: (t.translated_text or t.original_text or "") for t in rows}
+            html = Compiler.inject_translation(page.original_html or "", trans_dict)
+            if raw:
+                return HTMLResponse(content=_inject_page_size(html, page_num, 900, 1260))
+        return {"doc_id": doc_id, "page_num": page_num, "lang": lang, "view": view,
+                "html": html, "page_class": "text", "cover": "none",
+                "policy_override": None, "has_clean_image": False}
 
     # Prefer the rich PageModel when present (SP-A). Falls back to layout_json below.
     html = None
