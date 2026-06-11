@@ -230,9 +230,13 @@ def get_document_asset(doc_id: str, filename: str):
 
 
 def _inject_page_size(html: str, page_num: int, w, h) -> str:
+    # page_size → parent (sizing); btb-zoom ← parent (CSS zoom) cho view Gốc/Dịch.
     script = (
         "<script>window.addEventListener('load',()=>{"
         "window.parent.postMessage({type:'page_size',width:%d,height:%d,page_num:%d},'*');"
+        "});"
+        "window.addEventListener('message',(e)=>{"
+        "if(e.data&&e.data.type==='btb-zoom'){document.body.style.zoom=String(e.data.zoom);}"
         "});</script>" % (int(w), int(h), page_num))
     low = (html or "").lower()
     if "</head>" in low:

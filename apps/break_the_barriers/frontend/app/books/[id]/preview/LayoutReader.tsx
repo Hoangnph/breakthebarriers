@@ -24,11 +24,11 @@ export default function LayoutReader({
   const idx = pages.findIndex((p) => p.page_num === currentPage)
   const prev = idx > 0 ? pages[idx - 1].page_num : null
   const next = idx < pages.length - 1 ? pages[idx + 1].page_num : null
-  const isPdf = lang === "pdf"
+  // Faithful SVG reader: Gốc (pdf/en) → view=goc (SVG + lớp text vô hình),
+  // Dịch (vi) → view=dich (reflow + bản dịch). Cả hai đều là HTML raw cho iframe.
+  const view = lang === "vi" ? "dich" : "goc"
   const bustParam = cleanBust ? `&t=${cleanBust}` : ""
-  const src = isPdf
-    ? `${apiUrl}/api/docs/${docId}/pdf?page=${currentPage}`
-    : `${apiUrl}/api/docs/${docId}/pages/${currentPage}?lang=${lang}&raw=true${bustParam}`
+  const src = `${apiUrl}/api/docs/${docId}/pages/${currentPage}?view=${view}&raw=true${bustParam}`
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -39,7 +39,7 @@ export default function LayoutReader({
           className="w-full h-full border-none block"
           title={`Trang ${currentPage}`}
           sandbox="allow-same-origin allow-scripts"
-          onLoad={isPdf ? undefined : (e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
+          onLoad={(e) => e.currentTarget.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")}
         />
       </main>
 

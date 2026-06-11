@@ -50,7 +50,7 @@ export default function PreviewPage() {
   const [doc, setDoc] = useState<Doc | null>(null)
   const [pages, setPages] = useState<PageInfo[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [layout, setLayout] = useState<Layout>("flow")
+  const [layout, setLayout] = useState<Layout>("reader")
   const [lang, setLang] = useState<Lang>("vi")
   const [zoom, setZoom] = useState(1)
   const [pageMeta, setPageMeta] = useState<PageMeta>({})
