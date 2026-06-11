@@ -106,6 +106,37 @@ def test_render_analyzed_page_nests_relative():
     from backend.app.services.layout_analyzer import analyze_layout
     from backend.app.services.faithful_html_renderer import render_analyzed_page
     html = render_analyzed_page(analyze_layout(_two_col_el()))
-    assert 'class="sec"' in html and 'class="col"' in html and 'class="fb"' in html
+    assert 'class="sec"' in html and 'class="col"' in html and 'class="bk"' in html
     assert "cqw" in html and "%" in html
     assert "px" not in html                      # toàn relative
+
+
+def test_analyze_detects_header_footer():
+    from backend.app.services.layout_analyzer import analyze_layout
+    el = {"page_w": 600, "page_h": 800, "images": [], "drawings": [],
+          "blocks": [
+              _blk(40, 20, 200, 12, "Header Left"),       # dải trên → header
+              _blk(450, 20, 100, 12, "Page 1"),            # cùng hàng, bên phải
+              _blk(40, 400, 400, 20, "body paragraph"),    # body
+              _blk(40, 770, 300, 12, "Footer text"),       # dải dưới → footer
+          ]}
+    t = analyze_layout(el)
+    roles = [s.get("role") for s in t["sections"]]
+    assert "header" in roles and "footer" in roles
+    header = next(s for s in t["sections"] if s.get("role") == "header")
+    assert len(header["blocks"]) == 2            # trái + phải GIỮ trên cùng 1 hàng
+
+
+def test_header_left_right_not_stacked():
+    """Header trái/phải đặt CẠNH NHAU (left% khác nhau rõ) — không xếp chồng dọc."""
+    import re
+    from backend.app.services.layout_analyzer import analyze_layout
+    from backend.app.services.faithful_html_renderer import render_analyzed_page
+    el = {"page_w": 600, "page_h": 800, "images": [], "drawings": [],
+          "blocks": [_blk(40, 20, 200, 12, "Left"), _blk(450, 22, 100, 12, "Right")]}
+    t = analyze_layout(el)
+    header = next(s for s in t["sections"] if s.get("role") == "header")
+    assert len(header["blocks"]) == 2          # cùng 1 section header (1 hàng)
+    html = render_analyzed_page(t)
+    lefts = [float(m) for m in re.findall(r'class="bk" style="left:([0-9.]+)%', html)]
+    assert len(lefts) == 2 and abs(lefts[0] - lefts[1]) > 20.0   # tách ngang → cạnh nhau

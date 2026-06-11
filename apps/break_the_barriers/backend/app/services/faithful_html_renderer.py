@@ -13,7 +13,6 @@ body{margin:0;background:#8a8d91}
 .pf .bk{position:absolute}
 .pf .sec{position:absolute}
 .pf .col{position:absolute}
-.pf .fb{}
 .pf .ln{white-space:nowrap;line-height:1.04}
 .pf .ln span{white-space:pre}
 .pf img{position:absolute;display:block}
@@ -94,11 +93,10 @@ def render_blocks_flow(pages: List[Dict[str, Any]], asset_base: str = "") -> str
         f"<style>{_FLOW_CSS}</style></head><body>{body}</body></html>")
 
 
-# ── Renderer theo cây layout (section/band/cột nối tiếp + lồng nhau) ──────────
+# ── Renderer theo cây layout (section/band/cột lồng nhau, ĐỊNH VỊ vị trí thật) ──
 
-def _render_block_flow(blk: Dict[str, Any], page_w: float, gap_cqw: float) -> str:
-    """1 block trong luồng (flow): margin-top = khoảng cách block trước (cqw)."""
-    out = [f'<div class="fb" style="margin-top:{gap_cqw:.3f}cqw">']
+def _render_lines(blk: Dict[str, Any], page_w: float) -> str:
+    out = []
     for line in blk["lines"]:
         out.append('<div class="ln">')
         for s in line:
@@ -110,25 +108,24 @@ def _render_block_flow(blk: Dict[str, Any], page_w: float, gap_cqw: float) -> st
                 style += "font-style:italic;"
             out.append(f'<span style="{style}">{_esc(s["text"])}</span>')
         out.append('</div>')
-    out.append('</div>')
     return "".join(out)
 
 
-def _render_blocks_seq(blocks: List[Dict[str, Any]], top0: float, page_w: float) -> str:
-    """Các block xếp NỐI TIẾP theo chiều dọc, khoảng cách giữ tỉ lệ gốc (cqw)."""
-    out = []
-    prev_bottom = top0
-    for b in blocks:
-        by, bh = b["bbox"][1], b["bbox"][3]
-        gap = max(by - prev_bottom, 0.0) / page_w * 100
-        out.append(_render_block_flow(b, page_w, gap))
-        prev_bottom = by + bh
-    return "".join(out)
+def _render_block_at(blk: Dict[str, Any], px: float, py: float, pw: float,
+                     ph: float, page_w: float) -> str:
+    """Block định vị theo vị trí THẬT (% trong parent) → giữ đúng hàng/cột gốc,
+    1 dòng vẫn là 1 dòng (không bị flow gộp/tách)."""
+    bx, by, bw, _bh = blk["bbox"]
+    left = (bx - px) / max(pw, 1.0) * 100
+    top = (by - py) / max(ph, 1.0) * 100
+    width = bw / max(pw, 1.0) * 100
+    return (f'<div class="bk" style="left:{left:.3f}%;top:{top:.3f}%;'
+            f'width:{width:.3f}%">{_render_lines(blk, page_w)}</div>')
 
 
 def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
-    """Render cây layout: section định vị relative TRANG; band→cột LỒNG NHAU
-    (cột relative band); block trong cột xếp nối tiếp. Vector/ảnh ở mức trang."""
+    """section định vị relative TRANG (role header/footer giữ 1 hàng); band→cột
+    LỒNG NHAU (cột relative band); block định vị vị trí thật trong section/cột."""
     w = t.get("page_w") or 900.0
     h = t.get("page_h") or 1260.0
     if w <= 0:
@@ -152,19 +149,26 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
         sx, sy, sw, sh = sec["bbox"]
         sw = max(sw, 1.0)
         sh = max(sh, 1.0)
+        role = sec.get("role", "")
+        cls = "sec" + (f" {role}" if role else "")
         parts.append(
-            f'<div class="sec" style="left:{sx / w * 100:.3f}%;top:{sy / h * 100:.3f}%;'
-            f'width:{sw / w * 100:.3f}%">')
+            f'<div class="{cls}" style="left:{sx / w * 100:.3f}%;top:{sy / h * 100:.3f}%;'
+            f'width:{sw / w * 100:.3f}%;height:{sh / h * 100:.3f}%">')
         if sec.get("kind") == "band":
             for col in sec["columns"]:
-                cx, cy, cw, _ch = col["bbox"]
+                cx, cy, cw, ch = col["bbox"]
+                cw = max(cw, 1.0)
+                ch = max(ch, 1.0)
                 parts.append(
                     f'<div class="col" style="left:{(cx - sx) / sw * 100:.3f}%;'
-                    f'top:{(cy - sy) / sh * 100:.3f}%;width:{cw / sw * 100:.3f}%">')
-                parts.append(_render_blocks_seq(col["blocks"], cy, w))
+                    f'top:{(cy - sy) / sh * 100:.3f}%;width:{cw / sw * 100:.3f}%;'
+                    f'height:{ch / sh * 100:.3f}%">')
+                for b in col["blocks"]:
+                    parts.append(_render_block_at(b, cx, cy, cw, ch, w))
                 parts.append('</div>')
         else:
-            parts.append(_render_blocks_seq(sec["blocks"], sy, w))
+            for b in sec["blocks"]:
+                parts.append(_render_block_at(b, sx, sy, sw, sh, w))
         parts.append('</div>')
 
     parts.append('</div>')

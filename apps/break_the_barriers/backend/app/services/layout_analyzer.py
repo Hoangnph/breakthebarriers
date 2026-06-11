@@ -39,48 +39,75 @@ def _cluster_columns(blocks: List[Dict[str, Any]], gutter_min: float) -> List[Li
     return cols
 
 
+def _analyze_body(blocks: List[Dict[str, Any]], page_w: float) -> List[Dict[str, Any]]:
+    """Body → section full-width (NỐI TIẾP) + band nhiều cột (LỒNG NHAU)."""
+    sections: List[Dict[str, Any]] = []
+    if not blocks:
+        return sections
+    content = _union([b["bbox"] for b in blocks])
+    content_w = max(content[2], 1.0)
+    full_w_th = 0.62 * content_w
+    gutter_min = 0.035 * page_w
+    ordered = sorted(blocks, key=lambda b: (round(b["bbox"][1]), b["bbox"][0]))
+    band: List[Dict[str, Any]] = []
+
+    def flush_band():
+        if not band:
+            return
+        cols = _cluster_columns(band, gutter_min)
+        bbox = _union([b["bbox"] for b in band])
+        if len(cols) >= 2:
+            sections.append({
+                "kind": "band", "bbox": bbox,
+                "columns": [{"bbox": _union([b["bbox"] for b in c]),
+                             "blocks": sorted(c, key=lambda b: b["bbox"][1])}
+                            for c in cols],
+            })
+        else:
+            sections.append({"kind": "full", "bbox": bbox,
+                             "blocks": sorted(band, key=lambda b: b["bbox"][1])})
+        band.clear()
+
+    for b in ordered:
+        if b["bbox"][2] >= full_w_th:
+            flush_band()
+            sections.append({"kind": "full", "bbox": b["bbox"], "blocks": [b]})
+        else:
+            band.append(b)
+    flush_band()
+    return sections
+
+
 def analyze_layout(el: Dict[str, Any]) -> Dict[str, Any]:
-    """build_blocks output → cây section/band/cột. images + drawings giữ ở mức trang."""
+    """build_blocks output → cây section/band/cột, có NHẬN DIỆN header/footer.
+    header (dải trên ≤10% trang) & footer (dải dưới ≥90%) tách riêng thành section
+    role="header"/"footer", giữ nguyên 1 hàng (block đặt theo vị trí ngang thật)."""
     page_w = el.get("page_w") or 900.0
     page_h = el.get("page_h") or 1260.0
     blocks = [{"bbox": list(b["bbox"]), "lines": b["lines"]} for b in el.get("blocks", [])]
 
+    head_th = 0.10 * page_h
+    foot_th = 0.90 * page_h
+    header, footer, body = [], [], []
+    for b in blocks:
+        y0, h = b["bbox"][1], b["bbox"][3]
+        if y0 + h <= head_th:
+            header.append(b)
+        elif y0 >= foot_th:
+            footer.append(b)
+        else:
+            body.append(b)
+
     sections: List[Dict[str, Any]] = []
-    if blocks:
-        content = _union([b["bbox"] for b in blocks])
-        content_w = max(content[2], 1.0)
-        full_w_th = 0.62 * content_w          # >= 62% bề ngang content = full-width
-        gutter_min = 0.035 * page_w           # khe cột tối thiểu
-
-        ordered = sorted(blocks, key=lambda b: (round(b["bbox"][1]), b["bbox"][0]))
-        band: List[Dict[str, Any]] = []
-
-        def flush_band():
-            if not band:
-                return
-            cols = _cluster_columns(band, gutter_min)
-            bbox = _union([b["bbox"] for b in band])
-            if len(cols) >= 2:
-                sections.append({
-                    "kind": "band", "bbox": bbox,
-                    "columns": [{"bbox": _union([b["bbox"] for b in c]),
-                                 "blocks": sorted(c, key=lambda b: b["bbox"][1])}
-                                for c in cols],
-                })
-            else:
-                sections.append({
-                    "kind": "full", "bbox": bbox,
-                    "blocks": sorted(band, key=lambda b: b["bbox"][1]),
-                })
-            band.clear()
-
-        for b in ordered:
-            if b["bbox"][2] >= full_w_th:
-                flush_band()
-                sections.append({"kind": "full", "bbox": b["bbox"], "blocks": [b]})
-            else:
-                band.append(b)
-        flush_band()
+    if header:
+        sections.append({"kind": "full", "role": "header",
+                         "bbox": _union([b["bbox"] for b in header]),
+                         "blocks": sorted(header, key=lambda b: b["bbox"][0])})
+    sections.extend(_analyze_body(body, page_w))
+    if footer:
+        sections.append({"kind": "full", "role": "footer",
+                         "bbox": _union([b["bbox"] for b in footer]),
+                         "blocks": sorted(footer, key=lambda b: b["bbox"][0])})
 
     return {"page_w": page_w, "page_h": page_h, "sections": sections,
             "images": el.get("images", []), "drawings": el.get("drawings", [])}
