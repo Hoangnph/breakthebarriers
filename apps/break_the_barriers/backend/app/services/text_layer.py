@@ -144,6 +144,27 @@ def build_drawings(page) -> List[Dict[str, Any]]:
     return out
 
 
+def save_pdf_image(doc, xref: int, path: str) -> bool:
+    """Lưu ảnh PDF ra PNG, ÁP soft-mask (alpha) nếu có → vùng trong suốt KHÔNG bị
+    ĐEN mà lộ nền trang. CMYK/separation → RGB. Trả True nếu lưu được."""
+    import fitz
+    try:
+        pix = fitz.Pixmap(doc, xref)
+        if pix.n - pix.alpha >= 4:                 # CMYK/separation → RGB
+            pix = fitz.Pixmap(fitz.csRGB, pix)
+        smask = 0
+        try:
+            smask = doc.extract_image(xref).get("smask", 0)
+        except Exception:
+            smask = 0
+        if smask:
+            pix = fitz.Pixmap(pix, fitz.Pixmap(doc, smask))   # gắn alpha từ smask
+        pix.save(path)
+        return True
+    except Exception:
+        return False
+
+
 def _assign_paint_order(page, images: List[Dict[str, Any]],
                         drawings: List[Dict[str, Any]]) -> None:
     """Gán 'order' = vị trí trong content-stream (get_bboxlog) cho ảnh & vector, để

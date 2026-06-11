@@ -204,6 +204,26 @@ def test_render_clipped_image_uses_overflow_container():
     assert "overflow:hidden" in html and "<img" in html        # crop bằng container
 
 
+def test_save_pdf_image_applies_smask(tmp_path):
+    """Ảnh có vùng trong suốt → PNG xuất ra phải có kênh alpha (không nền đen)."""
+    from PIL import Image
+    from backend.app.services.text_layer import save_pdf_image
+    img = Image.new("RGBA", (40, 20), (255, 0, 0, 0))           # phải: trong suốt
+    for x in range(20):
+        for y in range(20):
+            img.putpixel((x, y), (255, 0, 0, 255))              # trái: đỏ đặc
+    ip = str(tmp_path / "a.png"); img.save(ip)
+    doc = fitz.open(); pg = doc.new_page(width=100, height=100)
+    pg.insert_image(fitz.Rect(10, 10, 90, 50), filename=ip)
+    pp = str(tmp_path / "d.pdf"); doc.save(pp); doc.close()
+    doc = fitz.open(pp)
+    xref = doc.get_page_images(0)[0][0]
+    op = str(tmp_path / "out.png")
+    assert save_pdf_image(doc, xref, op)
+    doc.close()
+    assert "A" in Image.open(op).getbands()                     # có alpha
+
+
 def test_flow_includes_fit_script():
     """Flow phải kèm script co dòng khít bề rộng gốc (font web rộng/hẹp khác PDF)."""
     from backend.app.services.faithful_html_renderer import render_analyzed_flow

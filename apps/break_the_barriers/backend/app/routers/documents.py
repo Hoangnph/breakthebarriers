@@ -234,7 +234,7 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
     """Original PDF → HTML element THẬT (positioned, kiểu pdf2htmlEX), xếp dọc (flow).
     Render on-the-fly từ PDF bằng PyMuPDF — không cần re-extract/DB."""
     import fitz
-    from backend.app.services.text_layer import build_blocks
+    from backend.app.services.text_layer import build_blocks, save_pdf_image
     from backend.app.services.layout_analyzer import analyze_layout
     from backend.app.services.faithful_html_renderer import render_analyzed_flow
 
@@ -258,12 +258,7 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
             name = f"{doc_id}-hf-{xref}.png"
             fp = os.path.join(out_dir, name)
             if not os.path.exists(fp):
-                try:
-                    pix = fitz.Pixmap(fdoc, xref)
-                    if pix.n - pix.alpha >= 4:        # CMYK/separation → RGB
-                        pix = fitz.Pixmap(fitz.csRGB, pix)
-                    pix.save(fp)
-                except Exception:
+                if not save_pdf_image(fdoc, xref, fp):    # áp smask → không nền đen
                     name = ""
             im["name"] = name
         pages.append(analyze_layout(el))
