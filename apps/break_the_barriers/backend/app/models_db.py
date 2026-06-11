@@ -43,6 +43,8 @@ class DBPage(Base):
     translation_quality = Column(Float, nullable=True)
     layout_json         = Column(Text, nullable=True)
     model_json          = Column(Text, nullable=True)   # PageModel JSON (SP-A)
+    svg_path            = Column(Text, nullable=True)   # faithful visual: "{doc}-{n}.svg" hoặc ".jpg"
+    text_layer_json     = Column(Text, nullable=True)   # lớp text vô hình view Gốc
 
     document = relationship("DBDocument", back_populates="pages")
 
