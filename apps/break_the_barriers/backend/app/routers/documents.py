@@ -224,6 +224,8 @@ def get_document_asset(doc_id: str, filename: str):
         media_type = "image/jpeg"
     elif filename.lower().endswith(".gif"):
         media_type = "image/gif"
+    elif filename.lower().endswith(".svg"):
+        media_type = "image/svg+xml"
     return FileResponse(file_path, media_type=media_type)
 
 
@@ -273,14 +275,16 @@ def get_page_content(
             asset_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
             if visual.endswith(".svg"):
                 svg_file = _os.path.join(_DATA, "extracted_html", doc_id, visual)
-                svg = open(svg_file, "r", encoding="utf-8").read() if _os.path.exists(svg_file) else "<svg></svg>"
+                svg = "<svg></svg>"
+                if _os.path.exists(svg_file):
+                    with open(svg_file, "r", encoding="utf-8") as _sf:
+                        svg = _sf.read()
                 html = render_faithful_page(svg, "svg", tl, pw, ph)
             else:
                 html = render_faithful_page(visual, "image", tl, pw, ph, asset_base)
             if raw:
                 return HTMLResponse(content=_inject_page_size(html, page_num, pw, ph))
         else:  # view == "dich"
-            from backend.app.services.compiler import Compiler
             rows = db.query(DBTranslation).filter(
                 DBTranslation.document_id == doc_id, DBTranslation.page_num == page_num).all()
             trans_dict = {t.span_id: (t.translated_text or t.original_text or "") for t in rows}

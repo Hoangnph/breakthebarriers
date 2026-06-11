@@ -23,8 +23,10 @@ def render_faithful_page(visual: str, visual_kind: str, text_layer: Dict[str, An
     spans = []
     for s in text_layer.get("spans", []):
         x, y, w, h = s["bbox"]
+        # font-size từ PDF (nếu có) → highlight bôi đen khớp glyph của SVG nền.
+        fs = f"font-size:{s['size']:.2f}px;" if s.get("size") else ""
         spans.append(
-            f'<span class="ff-tl" style="left:{x:.2f}px;top:{y:.2f}px">'
+            f'<span class="ff-tl" style="left:{x:.2f}px;top:{y:.2f}px;{fs}">'
             f'{html_lib.escape(s["text"])}</span>')
 
     return (

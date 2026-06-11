@@ -43,17 +43,25 @@ class FaithfulExtractor:
             page = doc[i]
             base = os.path.join(output_dir, f"{doc_id}-{page_no}")
 
-            cls._render_visual(page, output_dir, doc_id, page_no)
+            # Per-page guard: one bad page degrades to a placeholder reflow page
+            # (no .svg/.textlayer → goc view falls back gracefully) without aborting
+            # the whole document. Always append base+".html" to keep page_num aligned.
+            try:
+                cls._render_visual(page, output_dir, doc_id, page_no)
 
-            with open(base + ".textlayer.json", "w", encoding="utf-8") as f:
-                json.dump(build_text_layer(page), f)
+                with open(base + ".textlayer.json", "w", encoding="utf-8") as f:
+                    json.dump(build_text_layer(page), f)
 
-            if docling_pages and docling_pages.get(page_no):
-                body = cls._docling_items_to_body(docling_pages[page_no])
-            else:
-                body = cls._blocks_to_body(reflow_blocks(page))
-            with open(base + ".html", "w", encoding="utf-8") as f:
-                f.write(cls._wrap_doc(body))
+                if docling_pages and docling_pages.get(page_no):
+                    body = cls._docling_items_to_body(docling_pages[page_no])
+                else:
+                    body = cls._blocks_to_body(reflow_blocks(page))
+                with open(base + ".html", "w", encoding="utf-8") as f:
+                    f.write(cls._wrap_doc(body))
+            except Exception as e:
+                logger.warning(f"Faithful extract failed p{page_no}, placeholder: {e}")
+                with open(base + ".html", "w", encoding="utf-8") as f:
+                    f.write(cls._wrap_doc(f'<p><span id="s1">[page {page_no}]</span></p>'))
             html_files.append(base + ".html")
 
         doc.close()
