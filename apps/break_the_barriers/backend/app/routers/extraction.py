@@ -12,6 +12,7 @@ from backend.app.models import ExtractionResult
 from backend.app.models_db import DBDocument, DBPage, DBTranslation
 from backend.app.core import DATA_DIR, is_mock_run
 from backend.app.services.extractor import Extractor, DoclingExtractor
+from backend.app.services.faithful_extractor import FaithfulExtractor
 from backend.app.services.epub_parser import EpubParser
 
 logger = logging.getLogger(__name__)
@@ -68,11 +69,11 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
             use_docling = False
             html_files = []
             try:
-                html_files = DoclingExtractor.extract_pdf_to_html(pdf_path, extracted_dir, doc_id)
+                html_files = FaithfulExtractor.extract_pdf(pdf_path, extracted_dir, doc_id)
                 use_docling = True
-                logger.info(f"DoclingExtractor produced {len(html_files)} pages for {doc_id}")
-            except Exception as docling_err:
-                logger.warning(f"DoclingExtractor failed ({docling_err}), falling back to pdftohtml")
+                logger.info(f"FaithfulExtractor produced {len(html_files)} pages for {doc_id}")
+            except Exception as faithful_err:
+                logger.warning(f"FaithfulExtractor failed ({faithful_err}), falling back to pdftohtml")
                 try:
                     html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
                 except Exception as e:
@@ -116,9 +117,23 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
                 with open(model_path, "r", encoding="utf-8") as mf:
                     model_json = mf.read()
 
+            # Faithful sidecars (SVG reader)
+            text_layer_json = None
+            tl_path = file_path[:-5] + ".textlayer.json"
+            if os.path.exists(tl_path):
+                with open(tl_path, "r", encoding="utf-8") as tf:
+                    text_layer_json = tf.read()
+            svg_path = None
+            for _ext in (".svg", ".jpg"):
+                _cand = file_path[:-5] + _ext
+                if os.path.exists(_cand):
+                    svg_path = os.path.basename(_cand)
+                    break
+
             spans = Extractor.extract_spans(final_html)
             db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html,
-                          status="raw", layout_json=layout_json, model_json=model_json))
+                          status="raw", layout_json=layout_json, model_json=model_json,
+                          svg_path=svg_path, text_layer_json=text_layer_json))
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
 
