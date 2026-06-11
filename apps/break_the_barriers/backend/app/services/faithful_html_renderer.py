@@ -139,28 +139,35 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
         w = 900.0
     parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
 
-    # Paint layer: vector + ảnh theo đúng Z-ORDER content-stream (vd panel trắng vẽ
-    # SAU ảnh nền phải nằm TRÊN ảnh). Text vẽ sau cùng (luôn trên, dễ đọc).
-    paints = []
-    for d in t.get("drawings", []):
-        od = d.get("order")
-        paints.append((od if od is not None else -1, 0, d))
-    for im in t.get("images", []):
-        od = im.get("order")
-        paints.append((od if od is not None else 10 ** 9, 1, im))
-    paints.sort(key=lambda p: p[0])
-    i = 0
-    while i < len(paints):
-        if paints[i][1] == 0:                       # gộp vector liền kề thành 1 svg
-            grp = []
-            while i < len(paints) and paints[i][1] == 0:
-                grp.append(paints[i][2]); i += 1
-            svg = _vector_svg(grp, w, h)
-            if svg:
-                parts.append(svg)
-        else:
-            parts.append(_render_image(paints[i][2], w, h, asset_base))
-            i += 1
+    bg = t.get("bg")
+    if bg:
+        # HYBRID: nền raster = mọi đồ hoạ (ảnh+vector+logo+icon+gradient, đã bỏ text)
+        # → trung thực 100%; text HTML thật phủ lên trên.
+        src = f"{asset_base}/{bg}" if (asset_base and "://" not in bg) else bg
+        parts.append(f'<img class="bg" src="{_esc(src)}" '
+                     f'style="position:absolute;inset:0;width:100%;height:100%">')
+    else:
+        # (fallback) dựng lại vector + ảnh theo đúng Z-ORDER content-stream.
+        paints = []
+        for d in t.get("drawings", []):
+            od = d.get("order")
+            paints.append((od if od is not None else -1, 0, d))
+        for im in t.get("images", []):
+            od = im.get("order")
+            paints.append((od if od is not None else 10 ** 9, 1, im))
+        paints.sort(key=lambda p: p[0])
+        i = 0
+        while i < len(paints):
+            if paints[i][1] == 0:                   # gộp vector liền kề thành 1 svg
+                grp = []
+                while i < len(paints) and paints[i][1] == 0:
+                    grp.append(paints[i][2]); i += 1
+                svg = _vector_svg(grp, w, h)
+                if svg:
+                    parts.append(svg)
+            else:
+                parts.append(_render_image(paints[i][2], w, h, asset_base))
+                i += 1
 
     for sec in t.get("sections", []):
         sx, sy, sw, sh = sec["bbox"]

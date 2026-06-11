@@ -67,7 +67,8 @@ def test_htmlflow_endpoint(client, db_session, tmp_path):
     r = client.get(f"/api/docs/{doc_id}/htmlflow")
     assert r.status_code == 200
     t = r.text
-    assert 'class="pf"' in t and "cqw" in t and "btb-zoom" in t and 'class="vec"' in t
+    # Hybrid: nền raster (class="bg") + text HTML (cqw); không còn lớp vector svg.
+    assert 'class="pf"' in t and "cqw" in t and "btb-zoom" in t and 'class="bg"' in t
     os.remove(os.path.join(raw, f"{doc_id}.pdf"))
 
 

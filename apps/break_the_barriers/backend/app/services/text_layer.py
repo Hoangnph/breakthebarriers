@@ -144,6 +144,29 @@ def build_drawings(page) -> List[Dict[str, Any]]:
     return out
 
 
+def render_text_free_background(page, path: str, scale: float = 2.0) -> bool:
+    """Render NỀN trang = mọi thứ TRỪ text (ảnh + vector + logo + icon + gradient),
+    bằng cách redaction CHỈ xoá text (giữ ảnh & line-art). → ảnh nền trung thực 100%
+    để overlay text HTML thật lên trên. Trả True nếu lưu được."""
+    import fitz
+    try:
+        data = page.get_text("dict")
+        for b in data.get("blocks", []):
+            if b.get("type") != 0:
+                continue
+            for ln in b.get("lines", []):
+                for s in ln.get("spans", []):
+                    if s.get("text", "").strip():
+                        page.add_redact_annot(fitz.Rect(s["bbox"]), fill=False)
+        page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE,
+                              graphics=fitz.PDF_REDACT_LINE_ART_NONE,
+                              text=fitz.PDF_REDACT_TEXT_REMOVE)
+        page.get_pixmap(matrix=fitz.Matrix(scale, scale)).save(path)
+        return True
+    except Exception:
+        return False
+
+
 def save_pdf_image(doc, xref: int, path: str) -> bool:
     """Lưu ảnh PDF ra PNG, ÁP soft-mask (alpha) nếu có → vùng trong suốt KHÔNG bị
     ĐEN mà lộ nền trang. CMYK/separation → RGB. Trả True nếu lưu được."""
