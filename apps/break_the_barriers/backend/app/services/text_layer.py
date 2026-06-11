@@ -136,11 +136,13 @@ def build_blocks(page) -> Dict[str, Any]:
         if b.get("type") != 0:
             continue
         x0, y0, x1, y1 = b["bbox"]
-        lines: List[List[Dict[str, Any]]] = []
+        lines: List[Dict[str, Any]] = []
         for line in b.get("lines", []):
             spans = [_span_style(s) for s in line.get("spans", []) if s.get("text", "").strip()]
-            if spans:
-                lines.append(spans)
+            if not spans:
+                continue
+            lx0, ly0, lx1, ly1 = line.get("bbox", [x0, y0, x1, y1])
+            lines.append({"bbox": [lx0, ly0, lx1 - lx0, ly1 - ly0], "spans": spans})
         if lines:
             blocks.append({"bbox": [x0, y0, x1 - x0, y1 - y0], "lines": lines})
     images = []

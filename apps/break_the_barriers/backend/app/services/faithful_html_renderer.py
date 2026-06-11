@@ -13,7 +13,7 @@ body{margin:0;background:#8a8d91}
 .pf .bk{position:absolute}
 .pf .sec{position:absolute}
 .pf .col{position:absolute}
-.pf .ln{white-space:nowrap;line-height:1.04}
+.pf .ln{position:absolute;white-space:nowrap;line-height:1.04}
 .pf .ln span{white-space:pre}
 .pf img{position:absolute;display:block}
 .pf .vec{position:absolute;inset:0;width:100%;height:100%}
@@ -39,67 +39,21 @@ def _esc(s: str) -> str:
     return html_lib.escape(s)
 
 
-def render_blocks_page(el: Dict[str, Any], asset_base: str = "") -> str:
-    """Một trang: container co giãn theo aspect-ratio; block %; font cqw."""
-    w = el.get("page_w") or 900.0
-    h = el.get("page_h") or 1260.0
-    if w <= 0:
-        w = 900.0
-    parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
-
-    # Lớp đồ hoạ vector (dưới cùng) — line/rect/fill/curve thật.
-    vec = _vector_svg(el.get("drawings", []), w, h)
-    if vec:
-        parts.append(vec)
-
-    for im in el.get("images", []):
-        x, y, iw, ih = im["bbox"]
-        name = im.get("name", "")
-        if not name:
-            continue
-        src = f"{asset_base}/{name}" if asset_base else name
-        parts.append(
-            f'<img src="{_esc(src)}" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
-            f'width:{iw / w * 100:.3f}%;height:{ih / h * 100:.3f}%">')
-
-    for blk in el.get("blocks", []):
-        x, y, bw, _bh = blk["bbox"]
-        parts.append(
-            f'<div class="bk" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
-            f'width:{bw / w * 100:.3f}%">')
-        for line in blk["lines"]:
-            parts.append('<div class="ln">')
-            for s in line:
-                style = (f'font-size:{s["size"] / w * 100:.3f}cqw;'
-                         f'font-family:{s["font"]};color:{s["color"]};')
-                if s.get("bold"):
-                    style += "font-weight:bold;"
-                if s.get("italic"):
-                    style += "font-style:italic;"
-                parts.append(f'<span style="{style}">{_esc(s["text"])}</span>')
-            parts.append('</div>')
-        parts.append('</div>')
-
-    parts.append('</div>')
-    return "".join(parts)
-
-
-def render_blocks_flow(pages: List[Dict[str, Any]], asset_base: str = "") -> str:
-    """Nhiều trang xếp dọc (flow) → 1 tài liệu HTML responsive hoàn chỉnh."""
-    body = "\n".join(render_blocks_page(el, asset_base) for el in pages)
-    return (
-        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-        f"<style>{_FLOW_CSS}</style></head><body>{body}</body></html>")
-
-
 # ── Renderer theo cây layout (section/band/cột lồng nhau, ĐỊNH VỊ vị trí thật) ──
 
 def _render_lines(blk: Dict[str, Any], page_w: float) -> str:
+    """Mỗi LINE định vị theo bbox thật trong block → line cùng baseline (vd
+    footer trái/giữa/phải) GIỮ CÙNG HÀNG, không xếp chồng thành nhiều dòng."""
+    bx, by, bw, bh = blk["bbox"]
+    bw = max(bw, 1.0)
+    bh = max(bh, 1.0)
     out = []
     for line in blk["lines"]:
-        out.append('<div class="ln">')
-        for s in line:
+        lx, ly, lw, _lh = line["bbox"]
+        out.append(
+            f'<div class="ln" style="left:{(lx - bx) / bw * 100:.3f}%;'
+            f'top:{(ly - by) / bh * 100:.3f}%;width:{lw / bw * 100:.3f}%">')
+        for s in line["spans"]:
             style = (f'font-size:{s["size"] / page_w * 100:.3f}cqw;'
                      f'font-family:{s["font"]};color:{s["color"]};')
             if s.get("bold"):
@@ -113,14 +67,15 @@ def _render_lines(blk: Dict[str, Any], page_w: float) -> str:
 
 def _render_block_at(blk: Dict[str, Any], px: float, py: float, pw: float,
                      ph: float, page_w: float) -> str:
-    """Block định vị theo vị trí THẬT (% trong parent) → giữ đúng hàng/cột gốc,
-    1 dòng vẫn là 1 dòng (không bị flow gộp/tách)."""
-    bx, by, bw, _bh = blk["bbox"]
+    """Block định vị theo vị trí THẬT (% trong parent), có height để line con định
+    vị đúng → giữ đúng hàng/cột gốc, 1 dòng vẫn là 1 dòng."""
+    bx, by, bw, bh = blk["bbox"]
     left = (bx - px) / max(pw, 1.0) * 100
     top = (by - py) / max(ph, 1.0) * 100
     width = bw / max(pw, 1.0) * 100
+    height = bh / max(ph, 1.0) * 100
     return (f'<div class="bk" style="left:{left:.3f}%;top:{top:.3f}%;'
-            f'width:{width:.3f}%">{_render_lines(blk, page_w)}</div>')
+            f'width:{width:.3f}%;height:{height:.3f}%">{_render_lines(blk, page_w)}</div>')
 
 
 def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:

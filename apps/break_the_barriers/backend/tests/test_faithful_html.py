@@ -1,7 +1,8 @@
 import os
 import fitz
 from backend.app.services.text_layer import build_blocks, build_drawings
-from backend.app.services.faithful_html_renderer import render_blocks_page
+from backend.app.services.layout_analyzer import analyze_layout
+from backend.app.services.faithful_html_renderer import render_analyzed_page
 
 
 def _pdf_with_shapes(path):
@@ -21,7 +22,9 @@ def test_build_blocks_structure(tmp_path):
     doc = fitz.open(p); el = build_blocks(doc[0]); doc.close()
     assert el["page_w"] == 300 and el["page_h"] == 200
     assert el["blocks"], "should group text into blocks"
-    sp = el["blocks"][0]["lines"][0][0]
+    line0 = el["blocks"][0]["lines"][0]
+    assert "bbox" in line0 and len(line0["bbox"]) == 4   # line có bbox để định vị
+    sp = line0["spans"][0]
     assert {"text", "size", "font", "color", "bold", "italic"} <= set(sp)
     assert el["drawings"], "should capture vector drawings"
 
@@ -34,10 +37,10 @@ def test_build_drawings_line_and_rect(tmp_path):
     assert any(d.get("stroke") for d in dr)       # line/rect có viền
 
 
-def test_render_blocks_page_is_relative_with_vector(tmp_path):
+def test_render_analyzed_page_is_relative_with_vector(tmp_path):
     p = str(tmp_path / "s.pdf"); _pdf_with_shapes(p)
     doc = fitz.open(p); el = build_blocks(doc[0]); doc.close()
-    html = render_blocks_page(el)
+    html = render_analyzed_page(analyze_layout(el))
     assert "aspect-ratio:300.00/200.00" in html   # trang responsive
     assert "cqw" in html and "%" in html          # size + vị trí tương đối
     assert "px" not in html                        # KHÔNG còn absolute px
@@ -46,10 +49,10 @@ def test_render_blocks_page_is_relative_with_vector(tmp_path):
 
 def test_render_escapes_text():
     el = {"page_w": 100, "page_h": 100, "images": [], "drawings": [],
-          "blocks": [{"bbox": [0, 0, 50, 10], "lines": [[{
+          "blocks": [{"bbox": [0, 0, 50, 10], "lines": [{"bbox": [0, 0, 50, 10], "spans": [{
               "text": "a<b>&c", "size": 10, "font": "serif",
-              "color": "#000", "bold": False, "italic": False}]]}]}
-    html = render_blocks_page(el)
+              "color": "#000", "bold": False, "italic": False}]}]}]}
+    html = render_analyzed_page(analyze_layout(el))
     assert "a&lt;b&gt;&amp;c" in html
 
 
@@ -77,9 +80,9 @@ def test_htmlflow_404_when_no_pdf(client, db_session):
 
 
 def _blk(x, y, w, h, text):
-    return {"bbox": [x, y, w, h], "lines": [[{
+    return {"bbox": [x, y, w, h], "lines": [{"bbox": [x, y, w, h], "spans": [{
         "text": text, "size": 10, "font": "sans-serif",
-        "color": "#000000", "bold": False, "italic": False}]]}
+        "color": "#000000", "bold": False, "italic": False}]}]}
 
 
 def _two_col_el():
