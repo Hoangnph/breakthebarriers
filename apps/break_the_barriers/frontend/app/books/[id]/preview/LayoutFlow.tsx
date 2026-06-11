@@ -1,16 +1,16 @@
 export interface FlowLayoutProps {
   docId: string
   apiUrl: string
-  lang: "en" | "vi"
   zoom: number
 }
 
-export default function LayoutFlow({ docId, apiUrl, lang, zoom }: FlowLayoutProps) {
-  const src = `${apiUrl}/api/docs/${docId}/flow?lang=${lang}`
+export default function LayoutFlow({ docId, apiUrl, zoom }: FlowLayoutProps) {
+  // Original PDF → HTML element thật (positioned), xếp dọc liền mạch.
+  const src = `${apiUrl}/api/docs/${docId}/htmlflow`
   return (
     <main className="flex-1 min-h-0 bg-[#f4f4f5]">
       <iframe
-        key={lang}
+        key="htmlflow"
         src={src}
         className="w-full h-full border-none block"
         title="Tài liệu liền mạch"

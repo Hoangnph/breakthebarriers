@@ -1,0 +1,91 @@
+"""Render PDF → HTML element THẬT, RELATIVE (responsive) giữ cấu trúc gốc.
+Trang = container co giãn (aspect-ratio + container-type:inline-size); block định vị
+theo %; cỡ chữ theo cqw (tương ứng bề rộng trang) → không còn absolute px cứng.
+Mỗi đoạn = block, mỗi dòng giữ style span thật (font/màu/đậm-nghiêng); ảnh = <img> %."""
+import html as html_lib
+from typing import Dict, Any, List
+
+_FLOW_CSS = """
+*{box-sizing:border-box}
+body{margin:0;background:#8a8d91}
+.pf{position:relative;width:96%;max-width:880px;margin:18px auto;background:#fff;
+    container-type:inline-size;box-shadow:0 2px 10px rgba(0,0,0,.35);overflow:hidden}
+.pf .bk{position:absolute}
+.pf .ln{white-space:nowrap;line-height:1.04}
+.pf .ln span{white-space:pre}
+.pf img{position:absolute;display:block}
+.pf .vec{position:absolute;inset:0;width:100%;height:100%}
+"""
+
+
+def _vector_svg(drawings: List[Dict[str, Any]], w: float, h: float) -> str:
+    """Đồ hoạ vector → 1 lớp <svg> (viewBox theo điểm PDF) co giãn cùng trang."""
+    if not drawings:
+        return ""
+    paths = []
+    for d in drawings:
+        attrs = [f'd="{d["d"]}"', f'fill="{d["fill"] or "none"}"']
+        if d.get("stroke"):
+            attrs.append(f'stroke="{d["stroke"]}"')
+            attrs.append(f'stroke-width="{max(d.get("width") or 0, 0.3):.2f}"')
+        paths.append(f'<path {" ".join(attrs)}/>')
+    return (f'<svg class="vec" viewBox="0 0 {w:.2f} {h:.2f}" '
+            f'preserveAspectRatio="none">{"".join(paths)}</svg>')
+
+
+def _esc(s: str) -> str:
+    return html_lib.escape(s)
+
+
+def render_blocks_page(el: Dict[str, Any], asset_base: str = "") -> str:
+    """Một trang: container co giãn theo aspect-ratio; block %; font cqw."""
+    w = el.get("page_w") or 900.0
+    h = el.get("page_h") or 1260.0
+    if w <= 0:
+        w = 900.0
+    parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
+
+    # Lớp đồ hoạ vector (dưới cùng) — line/rect/fill/curve thật.
+    vec = _vector_svg(el.get("drawings", []), w, h)
+    if vec:
+        parts.append(vec)
+
+    for im in el.get("images", []):
+        x, y, iw, ih = im["bbox"]
+        name = im.get("name", "")
+        if not name:
+            continue
+        src = f"{asset_base}/{name}" if asset_base else name
+        parts.append(
+            f'<img src="{_esc(src)}" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
+            f'width:{iw / w * 100:.3f}%;height:{ih / h * 100:.3f}%">')
+
+    for blk in el.get("blocks", []):
+        x, y, bw, _bh = blk["bbox"]
+        parts.append(
+            f'<div class="bk" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
+            f'width:{bw / w * 100:.3f}%">')
+        for line in blk["lines"]:
+            parts.append('<div class="ln">')
+            for s in line:
+                style = (f'font-size:{s["size"] / w * 100:.3f}cqw;'
+                         f'font-family:{s["font"]};color:{s["color"]};')
+                if s.get("bold"):
+                    style += "font-weight:bold;"
+                if s.get("italic"):
+                    style += "font-style:italic;"
+                parts.append(f'<span style="{style}">{_esc(s["text"])}</span>')
+            parts.append('</div>')
+        parts.append('</div>')
+
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def render_blocks_flow(pages: List[Dict[str, Any]], asset_base: str = "") -> str:
+    """Nhiều trang xếp dọc (flow) → 1 tài liệu HTML responsive hoàn chỉnh."""
+    body = "\n".join(render_blocks_page(el, asset_base) for el in pages)
+    return (
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        f"<style>{_FLOW_CSS}</style></head><body>{body}</body></html>")

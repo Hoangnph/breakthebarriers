@@ -229,6 +229,54 @@ def get_document_asset(doc_id: str, filename: str):
     return FileResponse(file_path, media_type=media_type)
 
 
+@router.get("/api/docs/{doc_id}/htmlflow")
+def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(get_db)):
+    """Original PDF → HTML element THẬT (positioned, kiểu pdf2htmlEX), xếp dọc (flow).
+    Render on-the-fly từ PDF bằng PyMuPDF — không cần re-extract/DB."""
+    import fitz
+    from backend.app.services.text_layer import build_blocks
+    from backend.app.services.faithful_html_renderer import render_blocks_flow
+
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
+    if not os.path.exists(pdf_path):
+        raise HTTPException(status_code=404, detail="PDF not found")
+
+    out_dir = os.path.join(DATA_DIR, "extracted_html", doc_id)
+    os.makedirs(out_dir, exist_ok=True)
+    asset_base = f"{str(request.base_url).rstrip('/')}/api/docs/{doc_id}/assets"
+
+    fdoc = fitz.open(pdf_path)
+    pages = []
+    for i in range(len(fdoc)):
+        el = build_blocks(fdoc[i])
+        for im in el["images"]:
+            xref = im["xref"]
+            name = f"{doc_id}-hf-{xref}.png"
+            fp = os.path.join(out_dir, name)
+            if not os.path.exists(fp):
+                try:
+                    pix = fitz.Pixmap(fdoc, xref)
+                    if pix.n - pix.alpha >= 4:        # CMYK/separation → RGB
+                        pix = fitz.Pixmap(fitz.csRGB, pix)
+                    pix.save(fp)
+                except Exception:
+                    name = ""
+            im["name"] = name
+        pages.append(el)
+    fdoc.close()
+
+    html = render_blocks_flow(pages, asset_base)
+    zoom_script = (
+        "<script>window.addEventListener('message',e=>{"
+        "if(e.data&&e.data.type==='btb-zoom')document.body.style.zoom=String(e.data.zoom);"
+        "});</script>")
+    html = html.replace("</body>", zoom_script + "</body>", 1)
+    return HTMLResponse(content=html)
+
+
 def _inject_page_size(html: str, page_num: int, w, h) -> str:
     # page_size → parent (sizing); btb-zoom ← parent (CSS zoom) cho view Gốc/Dịch.
     script = (
