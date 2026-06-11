@@ -114,6 +114,14 @@ def test_render_analyzed_page_nests_relative():
     assert "px" not in html                      # toàn relative
 
 
+def test_flow_includes_fit_script():
+    """Flow phải kèm script co dòng khít bề rộng gốc (font web rộng/hẹp khác PDF)."""
+    from backend.app.services.faithful_html_renderer import render_analyzed_flow
+    html = render_analyzed_flow([analyze_layout(_two_col_el())])
+    assert "scaleX(" in html and "scrollWidth" in html
+    assert "transform-origin:0 0" in html       # CSS hỗ trợ scaleX từ mép trái
+
+
 def test_analyze_detects_header_footer():
     from backend.app.services.layout_analyzer import analyze_layout
     el = {"page_w": 600, "page_h": 800, "images": [], "drawings": [],

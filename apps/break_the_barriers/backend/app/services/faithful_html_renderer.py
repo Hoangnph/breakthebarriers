@@ -13,7 +13,7 @@ body{margin:0;background:#8a8d91}
 .pf .bk{position:absolute}
 .pf .sec{position:absolute}
 .pf .col{position:absolute}
-.pf .ln{position:absolute;white-space:nowrap;line-height:1.04}
+.pf .ln{position:absolute;white-space:nowrap;line-height:1.04;transform-origin:0 0}
 .pf .ln span{white-space:pre}
 .pf img{position:absolute;display:block}
 .pf .vec{position:absolute;inset:0;width:100%;height:100%}
@@ -130,10 +130,23 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
     return "".join(parts)
 
 
+# Co mỗi dòng khít bề rộng gốc: font web (Arial…) rộng/hẹp khác font PDF → đo bề
+# rộng text thực rồi scaleX về đúng khung (lw). Chạy khi load/fonts ready/resize.
+_FIT_SCRIPT = """<script>(function(){
+function fit(){var l=document.querySelectorAll('.pf .ln');for(var i=0;i<l.length;i++){
+var e=l[i];e.style.transform='';var b=e.clientWidth,t=e.scrollWidth;
+if(b>2&&t>2){var r=b/t;if(r<0.5)r=0.5;if(r>2)r=2;
+if(Math.abs(r-1)>0.01)e.style.transform='scaleX('+r.toFixed(4)+')';}}}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+window.addEventListener('load',fit);
+window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__ft=setTimeout(fit,150);});
+})();</script>"""
+
+
 def render_analyzed_flow(trees: List[Dict[str, Any]], asset_base: str = "") -> str:
     """Nhiều trang (đã phân tích layout) xếp dọc → 1 tài liệu HTML responsive."""
     body = "\n".join(render_analyzed_page(t, asset_base) for t in trees)
     return (
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-        f"<style>{_FLOW_CSS}</style></head><body>{body}</body></html>")
+        f"<style>{_FLOW_CSS}</style></head><body>{body}{_FIT_SCRIPT}</body></html>")
