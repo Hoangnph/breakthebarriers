@@ -108,6 +108,28 @@ def _render_block_at(blk: Dict[str, Any], px: float, py: float, pw: float,
             f'width:{width:.3f}%;height:{height:.3f}%">{_render_lines(blk, page_w)}</div>')
 
 
+def _render_image(im: Dict[str, Any], w: float, h: float, asset_base: str) -> str:
+    """Ảnh định vị %; nếu bị clip → cắt bằng container overflow:hidden (giữ tỉ lệ)."""
+    fx, fy, fw, fh = im["bbox"]
+    name = im.get("name", "")
+    if not name:
+        return ""
+    src = f"{asset_base}/{name}" if asset_base else name
+    clip = im.get("clip")
+    if clip:
+        cx, cy, cw, ch = clip
+        cw = max(cw, 1.0); ch = max(ch, 1.0)
+        return (
+            f'<div style="position:absolute;overflow:hidden;'
+            f'left:{cx / w * 100:.3f}%;top:{cy / h * 100:.3f}%;'
+            f'width:{cw / w * 100:.3f}%;height:{ch / h * 100:.3f}%">'
+            f'<img src="{_esc(src)}" style="position:absolute;'
+            f'left:{(fx - cx) / cw * 100:.3f}%;top:{(fy - cy) / ch * 100:.3f}%;'
+            f'width:{fw / cw * 100:.3f}%;height:{fh / ch * 100:.3f}%"></div>')
+    return (f'<img src="{_esc(src)}" style="left:{fx / w * 100:.3f}%;'
+            f'top:{fy / h * 100:.3f}%;width:{fw / w * 100:.3f}%;height:{fh / h * 100:.3f}%">')
+
+
 def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
     """section định vị relative TRANG (role header/footer giữ 1 hàng); band→cột
     LỒNG NHAU (cột relative band); block định vị vị trí thật trong section/cột."""
@@ -117,18 +139,28 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
         w = 900.0
     parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
 
-    vec = _vector_svg(t.get("drawings", []), w, h)
-    if vec:
-        parts.append(vec)
+    # Paint layer: vector + ảnh theo đúng Z-ORDER content-stream (vd panel trắng vẽ
+    # SAU ảnh nền phải nằm TRÊN ảnh). Text vẽ sau cùng (luôn trên, dễ đọc).
+    paints = []
+    for d in t.get("drawings", []):
+        od = d.get("order")
+        paints.append((od if od is not None else -1, 0, d))
     for im in t.get("images", []):
-        x, y, iw, ih = im["bbox"]
-        name = im.get("name", "")
-        if not name:
-            continue
-        src = f"{asset_base}/{name}" if asset_base else name
-        parts.append(
-            f'<img src="{_esc(src)}" style="left:{x / w * 100:.3f}%;top:{y / h * 100:.3f}%;'
-            f'width:{iw / w * 100:.3f}%;height:{ih / h * 100:.3f}%">')
+        od = im.get("order")
+        paints.append((od if od is not None else 10 ** 9, 1, im))
+    paints.sort(key=lambda p: p[0])
+    i = 0
+    while i < len(paints):
+        if paints[i][1] == 0:                       # gộp vector liền kề thành 1 svg
+            grp = []
+            while i < len(paints) and paints[i][1] == 0:
+                grp.append(paints[i][2]); i += 1
+            svg = _vector_svg(grp, w, h)
+            if svg:
+                parts.append(svg)
+        else:
+            parts.append(_render_image(paints[i][2], w, h, asset_base))
+            i += 1
 
     for sec in t.get("sections", []):
         sx, sy, sw, sh = sec["bbox"]

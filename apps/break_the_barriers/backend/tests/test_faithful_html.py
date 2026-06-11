@@ -166,6 +166,44 @@ def test_render_alpha_and_rotation_relative():
     assert "rotate(-90" in html and "translate(-50%,-50%)" in html  # xoay quanh tâm
 
 
+def test_image_clip_intersection():
+    from backend.app.services.text_layer import _image_clip
+    assert _image_clip([0, 0, 600, 300], [[0, 0, 600, 190]], 600, 800) == [0, 0, 600, 190]
+    assert _image_clip([0, 0, 600, 300], [[0, 0, 600, 800]], 600, 800) is None   # clip full → bỏ
+
+
+def test_soften_overlay_over_image():
+    from backend.app.services.text_layer import _soften_overlays
+    images = [{"bbox": [0, 0, 600, 800], "order": 1}]
+    draws = [{"fill": "#000000", "rect": [0, 0, 600, 800], "order": 5, "fill_opacity": 1.0}]
+    _soften_overlays(images, draws)
+    assert draws[0]["fill_opacity"] <= 0.5                       # overlay phủ ảnh → mờ
+    images2 = [{"bbox": [0, 0, 600, 800], "order": 1}]
+    panel = [{"fill": "#ffffff", "rect": [0, 400, 300, 700], "order": 5, "fill_opacity": 1.0}]
+    _soften_overlays(images2, panel)
+    assert panel[0]["fill_opacity"] == 1.0                      # panel nhỏ → giữ đặc
+
+
+def test_render_interleaves_paint_z_order():
+    from backend.app.services.faithful_html_renderer import render_analyzed_page
+    t = {"page_w": 100, "page_h": 100, "sections": [],
+         "images": [{"bbox": [0, 0, 100, 100], "name": "bg.png", "order": 5, "clip": None}],
+         "drawings": [{"d": "M0 0H100V100H0Z", "fill": "#ffffff", "stroke": None,
+                       "width": 0, "fill_opacity": 1.0, "stroke_opacity": 1.0,
+                       "rect": [0, 0, 100, 100], "order": 10}]}
+    html = render_analyzed_page(t)
+    assert html.index("<img") < html.index("<svg")             # panel (order 10) vẽ SAU ảnh
+
+
+def test_render_clipped_image_uses_overflow_container():
+    from backend.app.services.faithful_html_renderer import render_analyzed_page
+    t = {"page_w": 200, "page_h": 200, "sections": [], "drawings": [],
+         "images": [{"bbox": [0, 0, 200, 120], "name": "b.png", "order": 1,
+                     "clip": [0, 0, 200, 60]}]}
+    html = render_analyzed_page(t)
+    assert "overflow:hidden" in html and "<img" in html        # crop bằng container
+
+
 def test_flow_includes_fit_script():
     """Flow phải kèm script co dòng khít bề rộng gốc (font web rộng/hẹp khác PDF)."""
     from backend.app.services.faithful_html_renderer import render_analyzed_flow
