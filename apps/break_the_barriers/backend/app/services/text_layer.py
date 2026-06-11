@@ -59,13 +59,27 @@ def build_elements(page) -> Dict[str, Any]:
     return {"page_w": rect.width, "page_h": rect.height, "texts": texts, "images": images}
 
 
+def _effective_size(s: Dict[str, Any]) -> float:
+    """Trích font-size từ HÌNH HỌC glyph: size = bbox_h / (ascender − descender).
+    PyMuPDF cho `size` danh nghĩa, nhưng khi text bị scale bởi ma trận thì `size`
+    sai — chiều cao bbox mới phản ánh cỡ THẬT. Lấy giá trị từ bbox khi lệch >5%."""
+    nominal = float(s.get("size", 0.0) or 0.0)
+    bb = s.get("bbox")
+    span = (s.get("ascender", 0.0) or 0.0) - (s.get("descender", 0.0) or 0.0)
+    if bb and span > 0.1:
+        derived = (bb[3] - bb[1]) / span
+        if nominal <= 0 or abs(derived - nominal) / max(nominal, 1.0) > 0.05:
+            return round(derived, 2)
+    return round(nominal, 2)
+
+
 def _span_style(s: Dict[str, Any]) -> Dict[str, Any]:
     name = s.get("font", "") or ""
     nl = name.lower()
     flags = s.get("flags", 0)
     return {
         "text": s.get("text", ""),
-        "size": s.get("size", 0.0),
+        "size": _effective_size(s),
         "font": _font_family(name),
         "color": _hex_color(s.get("color", 0)),
         "bold": bool(flags & 16) or any(k in nl for k in ("bold", "black", "heavy", "semibold")),

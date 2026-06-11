@@ -114,6 +114,17 @@ def test_render_analyzed_page_nests_relative():
     assert "px" not in html                      # toàn relative
 
 
+def test_effective_size_from_glyph_bbox():
+    """Trích font-size từ hình học glyph: bbox_h/(asc-desc). Dùng bbox khi nominal sai."""
+    from backend.app.services.text_layer import _effective_size
+    # nominal khớp bbox (asc-desc=1.2, bbox_h=9.6 → 8.0) → giữ nominal
+    s_ok = {"size": 8.0, "bbox": [0, 0, 50, 9.6], "ascender": 0.858, "descender": -0.342}
+    assert abs(_effective_size(s_ok) - 8.0) < 0.05
+    # nominal SAI (size=10 nhưng glyph cao gấp đôi) → lấy cỡ THẬT từ bbox (~20)
+    s_scaled = {"size": 10.0, "bbox": [0, 0, 50, 24.0], "ascender": 0.858, "descender": -0.342}
+    assert _effective_size(s_scaled) > 18.0
+
+
 def test_flow_includes_fit_script():
     """Flow phải kèm script co dòng khít bề rộng gốc (font web rộng/hẹp khác PDF)."""
     from backend.app.services.faithful_html_renderer import render_analyzed_flow
