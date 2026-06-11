@@ -125,6 +125,47 @@ def test_effective_size_from_glyph_bbox():
     assert _effective_size(s_scaled) > 18.0
 
 
+def test_css_color_alpha():
+    from backend.app.services.faithful_html_renderer import _css_color
+    assert _css_color("#ff0000", 255) == "#ff0000"
+    assert _css_color("#ff0000", 128).startswith("rgba(255,0,0,")
+
+
+def test_extract_alpha_rotation_opacity_from_pdf(tmp_path):
+    """PDF có chữ mờ + chữ xoay 90° + nền trong suốt → trích đúng."""
+    p = str(tmp_path / "sp.pdf")
+    doc = fitz.open(); pg = doc.new_page(width=220, height=220)
+    pg.insert_text((20, 60), "faint red", fontsize=12, color=(1, 0, 0), fill_opacity=0.35)
+    pg.insert_text((30, 200), "rotated", fontsize=12, rotate=90)
+    pg.draw_rect(fitz.Rect(10, 10, 120, 30), fill=(1, 1, 0), fill_opacity=0.4)
+    doc.save(p); doc.close()
+    doc = fitz.open(p); el = build_blocks(doc[0]); doc.close()
+    alphas = [s["alpha"] for b in el["blocks"] for ln in b["lines"] for s in ln["spans"]]
+    rots = [ln["rot"] for b in el["blocks"] for ln in b["lines"]]
+    assert any(a < 255 for a in alphas)                        # chữ mờ
+    assert any(abs(r) > 45 for r in rots)                       # chữ xoay
+    assert any(d["fill_opacity"] < 1 for d in el["drawings"])   # nền trong suốt
+
+
+def test_render_alpha_and_rotation_relative():
+    from backend.app.services.faithful_html_renderer import render_analyzed_page
+    el = {"page_w": 200, "page_h": 200, "images": [],
+          "drawings": [{"d": "M0 0H50V50H0Z", "fill": "#ffff00", "stroke": None,
+                        "width": 0, "fill_opacity": 0.4, "stroke_opacity": 1.0}],
+          "blocks": [
+              {"bbox": [10, 80, 80, 12], "lines": [{"bbox": [10, 80, 80, 12], "rot": 0.0, "wmode": 0,
+                  "spans": [{"text": "faint", "size": 10, "font": "sans-serif",
+                             "color": "#ff0000", "alpha": 89, "bold": False, "italic": False}]}]},
+              {"bbox": [10, 100, 12, 80], "lines": [{"bbox": [10, 100, 12, 80], "rot": -90.0, "wmode": 0,
+                  "spans": [{"text": "vert", "size": 10, "font": "sans-serif",
+                             "color": "#0000ff", "alpha": 255, "bold": False, "italic": False}]}]},
+          ]}
+    html = render_analyzed_page(analyze_layout(el))
+    assert "rgba(255,0,0," in html                             # chữ mờ
+    assert 'fill-opacity="0.4' in html                          # nền trong suốt
+    assert "rotate(-90" in html and "translate(-50%,-50%)" in html  # xoay quanh tâm
+
+
 def test_flow_includes_fit_script():
     """Flow phải kèm script co dòng khít bề rộng gốc (font web rộng/hẹp khác PDF)."""
     from backend.app.services.faithful_html_renderer import render_analyzed_flow

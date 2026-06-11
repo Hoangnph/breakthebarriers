@@ -27,9 +27,15 @@ def _vector_svg(drawings: List[Dict[str, Any]], w: float, h: float) -> str:
     paths = []
     for d in drawings:
         attrs = [f'd="{d["d"]}"', f'fill="{d["fill"] or "none"}"']
+        fo = d.get("fill_opacity", 1.0)
+        if d.get("fill") and fo < 1.0:                       # nền trong suốt
+            attrs.append(f'fill-opacity="{fo:.3f}"')
         if d.get("stroke"):
             attrs.append(f'stroke="{d["stroke"]}"')
             attrs.append(f'stroke-width="{max(d.get("width") or 0, 0.3):.2f}"')
+            so = d.get("stroke_opacity", 1.0)
+            if so < 1.0:
+                attrs.append(f'stroke-opacity="{so:.3f}"')
         paths.append(f'<path {" ".join(attrs)}/>')
     return (f'<svg class="vec" viewBox="0 0 {w:.2f} {h:.2f}" '
             f'preserveAspectRatio="none">{"".join(paths)}</svg>')
@@ -37,6 +43,17 @@ def _vector_svg(drawings: List[Dict[str, Any]], w: float, h: float) -> str:
 
 def _esc(s: str) -> str:
     return html_lib.escape(s)
+
+
+def _css_color(hexc: str, alpha: int) -> str:
+    """Màu + độ trong suốt: alpha<255 → rgba(r,g,b,a)."""
+    if alpha is None or alpha >= 255:
+        return hexc
+    try:
+        r = int(hexc[1:3], 16); g = int(hexc[3:5], 16); b = int(hexc[5:7], 16)
+        return f"rgba({r},{g},{b},{max(alpha, 0) / 255:.3f})"
+    except Exception:
+        return hexc
 
 
 # ── Renderer theo cây layout (section/band/cột lồng nhau, ĐỊNH VỊ vị trí thật) ──
@@ -49,13 +66,26 @@ def _render_lines(blk: Dict[str, Any], page_w: float) -> str:
     bh = max(bh, 1.0)
     out = []
     for line in blk["lines"]:
-        lx, ly, lw, _lh = line["bbox"]
-        out.append(
-            f'<div class="ln" style="left:{(lx - bx) / bw * 100:.3f}%;'
-            f'top:{(ly - by) / bh * 100:.3f}%;width:{lw / bw * 100:.3f}%">')
+        lx, ly, lw, lh = line["bbox"]
+        rot = line.get("rot", 0.0)
+        if rot:
+            # Chữ xoay/dọc: đặt TÂM div tại tâm AABB rồi xoay quanh tâm (width auto
+            # = độ dài chữ thật) → khớp đúng vùng gốc bất kể góc xoay.
+            cx = (lx + lw / 2 - bx) / bw * 100
+            cy = (ly + lh / 2 - by) / bh * 100
+            base = f"translate(-50%,-50%) rotate({rot:.2f}deg)"
+            ln_style = (f'left:{cx:.3f}%;top:{cy:.3f}%;white-space:nowrap;'
+                        f'transform-origin:50% 50%;transform:{base}')
+            rot_attr = f' data-base="{base}"'
+        else:
+            ln_style = (f'left:{(lx - bx) / bw * 100:.3f}%;'
+                        f'top:{(ly - by) / bh * 100:.3f}%;width:{lw / bw * 100:.3f}%')
+            rot_attr = ""
+        out.append(f'<div class="ln" style="{ln_style}"{rot_attr}>')
         for s in line["spans"]:
+            color = _css_color(s["color"], s.get("alpha", 255))
             style = (f'font-size:{s["size"] / page_w * 100:.3f}cqw;'
-                     f'font-family:{s["font"]};color:{s["color"]};')
+                     f'font-family:{s["font"]};color:{color};')
             if s.get("bold"):
                 style += "font-weight:bold;"
             if s.get("italic"):
@@ -134,9 +164,10 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
 # rộng text thực rồi scaleX về đúng khung (lw). Chạy khi load/fonts ready/resize.
 _FIT_SCRIPT = """<script>(function(){
 function fit(){var l=document.querySelectorAll('.pf .ln');for(var i=0;i<l.length;i++){
-var e=l[i];e.style.transform='';var b=e.clientWidth,t=e.scrollWidth;
+var e=l[i];var base=e.getAttribute('data-base')||'';
+e.style.transform=base;var b=e.clientWidth,t=e.scrollWidth;
 if(b>2&&t>2){var r=b/t;if(r<0.5)r=0.5;if(r>2)r=2;
-if(Math.abs(r-1)>0.01)e.style.transform='scaleX('+r.toFixed(4)+')';}}}
+if(Math.abs(r-1)>0.01)e.style.transform=base+(base?' ':'')+'scaleX('+r.toFixed(4)+')';}}}
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
 window.addEventListener('load',fit);
 window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__ft=setTimeout(fit,150);});

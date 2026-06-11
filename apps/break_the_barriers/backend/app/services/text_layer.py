@@ -1,5 +1,6 @@
 """Trích text layer định vị (cho view Gốc) và reflow fallback (khi Docling lỗi)
 từ PyMuPDF. Toạ độ là PDF points, gốc top-left — cùng hệ với page.get_svg_image()."""
+import math
 from typing import List, Dict, Any
 
 
@@ -82,6 +83,7 @@ def _span_style(s: Dict[str, Any]) -> Dict[str, Any]:
         "size": _effective_size(s),
         "font": _font_family(name),
         "color": _hex_color(s.get("color", 0)),
+        "alpha": int(s.get("alpha", 255)),   # độ mờ chữ 0..255 (255 = đặc)
         "bold": bool(flags & 16) or any(k in nl for k in ("bold", "black", "heavy", "semibold")),
         "italic": bool(flags & 2) or "italic" in nl or "oblique" in nl,
     }
@@ -134,6 +136,8 @@ def build_drawings(page) -> List[Dict[str, Any]]:
             "fill": _rgb(d["fill"]) if (d.get("fill") and dtype in ("f", "fs")) else None,
             "stroke": _rgb(d["color"]) if (d.get("color") and dtype in ("s", "fs")) else None,
             "width": d.get("width") or 0.0,
+            "fill_opacity": round(float(d.get("fill_opacity", 1.0) or 1.0), 3),
+            "stroke_opacity": round(float(d.get("stroke_opacity", 1.0) or 1.0), 3),
         })
     return out
 
@@ -156,7 +160,10 @@ def build_blocks(page) -> Dict[str, Any]:
             if not spans:
                 continue
             lx0, ly0, lx1, ly1 = line.get("bbox", [x0, y0, x1, y1])
-            lines.append({"bbox": [lx0, ly0, lx1 - lx0, ly1 - ly0], "spans": spans})
+            dv = line.get("dir", (1.0, 0.0))   # vector hướng chữ → góc xoay
+            rot = round(math.degrees(math.atan2(dv[1], dv[0])), 2)
+            lines.append({"bbox": [lx0, ly0, lx1 - lx0, ly1 - ly0], "spans": spans,
+                          "rot": rot, "wmode": int(line.get("wmode", 0))})
         if lines:
             blocks.append({"bbox": [x0, y0, x1 - x0, y1 - y0], "lines": lines})
     images = []
