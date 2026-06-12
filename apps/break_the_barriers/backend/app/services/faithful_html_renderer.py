@@ -15,7 +15,7 @@ body{margin:0;background:#8a8d91}
 .pf .col{position:absolute}
 .pf .ln{position:absolute;white-space:nowrap;line-height:1.04;transform-origin:0 0}
 .pf .ln span{white-space:pre}
-.pf .tb{position:absolute;white-space:normal;overflow:visible}
+.pf .tb{position:absolute;white-space:normal;overflow:hidden}
 .pf img{position:absolute;display:block}
 .pf .vec{position:absolute;inset:0;width:100%;height:100%}
 """
@@ -140,7 +140,7 @@ def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: floa
                              ph: float, page_w: float, lang_map: Dict[str, str]) -> str:
     """Dịch mode: 1 block = 1 div định vị tại bbox; text dịch WRAP trong khung
     (font/màu từ span đầu). Bản dịch dài/ngắn khác → tự xuống dòng, không méo."""
-    bx, by, bw, _bh = blk["bbox"]
+    bx, by, bw, bh = blk["bbox"]
     spans = [s for line in blk["lines"] for s in line["spans"]]
     src = block_source_text(blk)
     txt = (lang_map or {}).get(src) or src
@@ -148,10 +148,12 @@ def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: floa
     left = (bx - px) / max(pw, 1.0) * 100
     top = (by - py) / max(ph, 1.0) * 100
     width = bw / max(pw, 1.0) * 100
+    height = bh / max(ph, 1.0) * 100
     fs = (s0.get("size", 12.0)) / page_w * 100
-    style = (f'left:{left:.3f}%;top:{top:.3f}%;width:{width:.3f}%;'
+    # height + overflow:hidden + script auto-shrink → bản dịch dài KHÔNG tràn/đè khung
+    style = (f'left:{left:.3f}%;top:{top:.3f}%;width:{width:.3f}%;height:{height:.3f}%;'
              f'font-size:{fs:.3f}cqw;color:{s0.get("color", "#000")};'
-             f'font-family:{s0.get("font", "sans-serif")};line-height:1.25')
+             f'font-family:{s0.get("font", "sans-serif")};line-height:1.2')
     if s0.get("bold"):
         style += ";font-weight:bold"
     if s0.get("italic"):
@@ -243,9 +245,13 @@ var e=l[i];var base=e.getAttribute('data-base')||'';
 e.style.transform=base;var b=e.clientWidth,t=e.scrollWidth;
 if(b>2&&t>2){var r=b/t;if(r<0.5)r=0.5;if(r>2)r=2;
 if(Math.abs(r-1)>0.01)e.style.transform=base+(base?' ':'')+'scaleX('+r.toFixed(4)+')';}}}
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
-window.addEventListener('load',fit);
-window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__ft=setTimeout(fit,150);});
+function fitTB(){var l=document.querySelectorAll('.pf .tb');for(var i=0;i<l.length;i++){
+var e=l[i];e.style.fontSize='';var fs=parseFloat(getComputedStyle(e).fontSize),g=0;
+while(e.scrollHeight>e.clientHeight+1&&fs>5&&g<60){fs*=0.95;e.style.fontSize=fs+'px';g++;}}}
+function all(){fit();fitTB();}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
+window.addEventListener('load',all);
+window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__ft=setTimeout(all,150);});
 })();</script>"""
 
 

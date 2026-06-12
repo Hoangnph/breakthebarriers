@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ZoomIn, ZoomOut } from "lucide-react"
+import { ArrowLeft, ZoomIn, ZoomOut, Languages } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
 import LayoutFlow from "./LayoutFlow"
 
@@ -21,6 +21,19 @@ export default function PreviewPage() {
   const [doc, setDoc] = useState<Doc | null>(null)
   const [zoom, setZoom] = useState(1)
   const [lang, setLang] = useState<"goc" | "vi">("goc")
+  const [transStatus, setTransStatus] = useState<"idle" | "running" | "done" | "error">("idle")
+  const [reloadKey, setReloadKey] = useState(0)
+
+  async function runTranslate() {
+    setTransStatus("running")
+    try {
+      // Dịch nền qua harness (tier max). htmlflow?lang=vi đọc TM live → bấm "Làm mới"
+      // để xem bản dịch chảy về dần.
+      await fetchAPI(`/api/docs/${id}/translate-flow?lang=vi&quality=max`, { method: "POST" })
+    } catch {
+      setTransStatus("error")
+    }
+  }
 
   useEffect(() => {
     async function init() {
@@ -90,6 +103,21 @@ export default function PreviewPage() {
           </button>
         </div>
 
+        {/* Dịch tài liệu (AI) — chỉ hiện ở chế độ Dịch */}
+        {lang === "vi" && (
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button onClick={runTranslate} disabled={transStatus === "running"}
+                    className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed">
+              <Languages size={14} />
+              {transStatus === "running" ? "Đang dịch nền…" : transStatus === "error" ? "Lỗi dịch" : "Dịch tài liệu (AI)"}
+            </button>
+            <button onClick={() => setReloadKey((k) => k + 1)} title="Tải lại bản dịch mới nhất"
+                    className="px-3 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 bg-white hover:bg-gray-50">
+              Làm mới
+            </button>
+          </div>
+        )}
+
         {/* Zoom controls */}
         <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
           <button onClick={zoomOut} title="Thu nhỏ (-)"
@@ -110,7 +138,7 @@ export default function PreviewPage() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        <LayoutFlow docId={id} apiUrl={API_URL} zoom={zoom} lang={lang} />
+        <LayoutFlow docId={id} apiUrl={API_URL} zoom={zoom} lang={lang} bust={reloadKey} />
       </div>
     </div>
   )

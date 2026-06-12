@@ -262,3 +262,55 @@ def test_header_left_right_not_stacked():
     html = render_analyzed_page(t)
     lefts = [float(m) for m in re.findall(r'class="bk" style="left:([0-9.]+)%', html)]
     assert len(lefts) == 2 and abs(lefts[0] - lefts[1]) > 20.0   # tách ngang → cạnh nhau
+
+
+def test_block_source_text_joins_spans():
+    from backend.app.services.faithful_html_renderer import block_source_text
+    blk = {"lines": [{"spans": [{"text": "Hello"}, {"text": "world"}]},
+                     {"spans": [{"text": "friend"}]}]}
+    assert block_source_text(blk) == "Hello world friend"
+
+
+def test_render_dich_block_mode_vs_goc_line_mode():
+    from backend.app.services.faithful_html_renderer import render_analyzed_page, block_source_text
+    blk = {"bbox": [10, 10, 120, 30],
+           "lines": [{"bbox": [10, 10, 120, 12], "spans": [{
+               "text": "Hello world", "size": 10, "font": "sans-serif",
+               "color": "#000000", "bold": False, "italic": False}]}]}
+    t = {"page_w": 200, "page_h": 200, "bg": "x.jpg", "images": [], "drawings": [],
+         "sections": [{"kind": "full", "bbox": [10, 10, 120, 30], "blocks": [blk]}]}
+    src = block_source_text(blk)
+    # Dịch (lang_map) → block .tb có bản dịch, không có .ln
+    dich = render_analyzed_page(t, "", {src: "Xin chào thế giới"})
+    assert 'class="tb"' in dich and "Xin chào thế giới" in dich and 'class="ln"' not in dich
+    # Gốc (no lang_map) → per-line .ln, không .tb
+    goc = render_analyzed_page(t, "")
+    assert 'class="ln"' in goc and 'class="tb"' not in goc
+
+
+def test_perform_translate_flow_via_harness(db_session, monkeypatch):
+    from backend.app.core import DATA_DIR
+    from backend.app.models_db import DBDocument
+    from backend.app.routers.documents import _perform_translate_flow
+    from backend.app.services import translation_harness as TH
+    from backend.app.services.translator_v2 import TranslatorV2
+
+    doc_id = "tflowdoc"
+    raw = os.path.join(DATA_DIR, "raw_pdf"); os.makedirs(raw, exist_ok=True)
+    d = fitz.open(); pg = d.new_page(width=300, height=200)
+    pg.insert_text((20, 40), "Artificial Intelligence here", fontsize=12)
+    d.save(os.path.join(raw, f"{doc_id}.pdf")); d.close()
+    db_session.add(DBDocument(id=doc_id, filename="d.pdf", total_pages=1, status="extracted"))
+    db_session.commit()
+    # harness mock → winner + score (không gọi Gemini)
+    monkeypatch.setattr(TH.TranslationHarness, "harmonize_page",
+                        staticmethod(lambda bh, *a: (["Trí tuệ nhân tạo"] * len(bh), [95] * len(bh))))
+    res = _perform_translate_flow(doc_id, "vi", "max", db_session, max_pages=1)
+    assert res["status"] == "done" and res["translated_blocks"] >= 1
+    # TM được lưu theo source text block → Dịch view đọc được
+    from backend.app.services.faithful_html_renderer import block_source_text
+    import fitz as _f
+    fd = _f.open(os.path.join(raw, f"{doc_id}.pdf")); el = build_blocks(fd[0]); fd.close()
+    src = block_source_text(el["blocks"][0])
+    assert TranslatorV2.tm_lookup(src, "vi", db_session) == "Trí tuệ nhân tạo"
+    os.remove(os.path.join(raw, f"{doc_id}.pdf"))

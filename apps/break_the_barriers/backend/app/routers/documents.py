@@ -3,11 +3,11 @@ import re
 import shutil
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Query, HTTPException, Depends, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import APIRouter, UploadFile, File, Query, HTTPException, Depends, Request, BackgroundTasks
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
-from backend.app.database import get_db
+from backend.app.database import get_db, get_background_db
 from backend.app.models import DocumentMetadata, PagePolicyRequest
 from backend.app.models_db import DBDocument, DBPage, DBTranslation, DBUser
 from backend.app.dependencies import get_optional_user
@@ -287,6 +287,82 @@ def get_document_htmlflow(doc_id: str, request: Request,
         "});</script>")
     html = html.replace("</body>", zoom_script + "</body>", 1)
     return HTMLResponse(content=html)
+
+
+def _perform_translate_flow(doc_id: str, lang: str, quality: str, db,
+                            max_pages=None) -> dict:
+    """Dịch tài liệu cho view Dịch hybrid: mỗi trang build_blocks → dịch qua HARNESS
+    (tier max: đa ứng viên+judge+refine) → lưu TM theo source text mỗi block (cùng
+    khoá mà htmlflow?lang đọc). Fail-soft sang batch 'high'."""
+    import fitz
+    from backend.app.services.text_layer import build_blocks
+    from backend.app.services.faithful_html_renderer import block_source_text
+    from backend.app.services.translator_v2 import TranslatorV2
+
+    pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return {"status": "failed", "reason": "pdf_not_found"}
+    context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
+    glossary: list = []
+    fdoc = fitz.open(pdf_path)
+    n = len(fdoc) if not max_pages else min(len(fdoc), max_pages)
+    translated = 0
+    for i in range(n):
+        el = build_blocks(fdoc[i])
+        bh = [{"text": block_source_text(b)} for b in el.get("blocks", [])
+              if block_source_text(b) and not TranslatorV2.is_decoration(block_source_text(b))]
+        if not bh:
+            continue
+        harm = None
+        if quality == "max":
+            try:
+                from backend.app.services.translation_harness import TranslationHarness
+                harm = TranslationHarness.harmonize_page(bh, lang, context, glossary)
+            except Exception as e:
+                logger.warning(f"harness page {i + 1} failed: {e}")
+        if harm is not None:
+            results, scores = harm
+            for blk, tr, sc in zip(bh, results, scores):
+                TranslatorV2.tm_store(blk["text"], lang, tr, db, quality=sc / 100.0)
+                translated += 1
+        else:
+            res = TranslatorV2._gemini_batch_translate(bh, lang, context, glossary, "high")
+            if res:
+                results = res[0]
+                for blk, tr in zip(bh, results):
+                    TranslatorV2.tm_store(blk["text"], lang, tr, db, quality=1.0)
+                    translated += 1
+    fdoc.close()
+    return {"status": "done", "translated_blocks": translated, "pages": n}
+
+
+def run_translate_flow_bg(doc_id: str, lang: str, quality: str, max_pages=None):
+    db = get_background_db()
+    try:
+        _perform_translate_flow(doc_id, lang, quality, db, max_pages)
+    except Exception as e:
+        logging.getLogger(__name__).error(f"translate-flow bg failed {doc_id}: {e}")
+    finally:
+        db.close()
+
+
+@router.post("/api/docs/{doc_id}/translate-flow")
+def translate_flow(doc_id: str,
+                   lang: str = Query("vi"),
+                   quality: str = Query("max"),
+                   async_mode: bool = Query(True),
+                   pages: int = Query(None),
+                   background_tasks: BackgroundTasks = None,
+                   db: Session = Depends(get_db)):
+    """Kích hoạt dịch tài liệu cho view Dịch (qua harness). async_mode → chạy nền."""
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if async_mode and background_tasks is not None:
+        background_tasks.add_task(run_translate_flow_bg, doc_id, lang, quality, pages)
+        return JSONResponse(status_code=202,
+                            content={"status": "translating", "doc_id": doc_id, "lang": lang})
+    return _perform_translate_flow(doc_id, lang, quality, db, pages)
 
 
 def _inject_page_size(html: str, page_num: int, w, h) -> str:
