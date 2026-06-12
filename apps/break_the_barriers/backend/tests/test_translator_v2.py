@@ -203,3 +203,28 @@ def test_anchor_model_is_strong():
     from backend.app.services.translator_v2 import TranslatorV2
     assert TranslatorV2.ANCHOR_MODEL == "gemini-3.5-flash"
     assert TranslatorV2.MODEL == TranslatorV2.ANCHOR_MODEL  # backward-compat alias
+
+
+def test_translate_batch_max_tier_writes_winner_and_score(db_session, monkeypatch):
+    from backend.app.models_db import DBDocument, DBPage, DBTranslation
+    from backend.app.services.translator_v2 import TranslatorV2
+    from backend.app.services import translation_harness as TH
+
+    doc_id = "maxdoc"
+    db_session.add(DBDocument(id=doc_id, filename="d.pdf", total_pages=1, status="extracted"))
+    db_session.add(DBPage(document_id=doc_id, page_num=1, status="raw",
+                          original_html='<p><span id="s1">Artificial Intelligence</span></p>'))
+    db_session.add(DBTranslation(document_id=doc_id, page_num=1, span_id="s1",
+                                 original_text="Artificial Intelligence"))
+    db_session.commit()
+
+    monkeypatch.setattr(TH.TranslationHarness, "harmonize_page",
+                        staticmethod(lambda blocks, *a: (["Trí tuệ nhân tạo"] * len(blocks),
+                                                          [93] * len(blocks))))
+    TranslatorV2.translate_page_batch(doc_id, 1, "vi", {"domain": "tech"}, [],
+                                      db_session, quality="max")
+    row = db_session.query(DBTranslation).filter_by(document_id=doc_id, page_num=1,
+                                                     span_id="s1").first()
+    assert row.translated_text == "Trí tuệ nhân tạo"
+    page = db_session.query(DBPage).filter_by(document_id=doc_id, page_num=1).first()
+    assert page.translation_quality and abs(page.translation_quality - 0.93) < 0.01

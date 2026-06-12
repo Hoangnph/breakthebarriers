@@ -21,6 +21,7 @@ class TranslatorV2:
         "fast":     "gemini-3.1-flash-lite",
         "balanced": "gemini-3.1-flash-lite",
         "high":     "gemini-3.5-flash",
+        "max":      "gemini-3.5-flash",
     }
     MODEL = ANCHOR_MODEL  # backward-compat alias
     TM_QUALITY_THRESHOLD = 0.8
@@ -261,7 +262,32 @@ class TranslatorV2:
 
         # Translate remaining blocks
         if blocks_to_translate:
-            if is_pytest or not api_key:
+            handled = False
+            if quality == "max":
+                from backend.app.services.translation_harness import TranslationHarness
+                harm = TranslationHarness.harmonize_page(
+                    blocks_to_translate, target_lang, context, glossary)
+                if harm is not None:
+                    results, scores = harm
+                    if scores:
+                        page.translation_quality = round(sum(scores) / len(scores) / 100.0, 3)
+                    for block, translated, score in zip(blocks_to_translate, results, scores):
+                        if TranslatorV2.is_decoration(block["text"]):
+                            continue
+                        TranslatorV2.tm_store(block["text"], target_lang, translated,
+                                              db, quality=score / 100.0)
+                        if score < TranslationHarness.SCORE_THRESHOLD:
+                            page.needs_review = True
+                            page.review_reason = f"harness low score {score}"
+                        if len(block["span_ids"]) == 1:
+                            translations[block["span_ids"][0]] = translated
+                        else:
+                            parts = Translator.deinterpolate_translation(translated, block["span_ids"])
+                            translations.update(parts)
+                    handled = True
+            if handled:
+                pass
+            elif is_pytest or not api_key:
                 # Mock: use V1 mock for each block
                 for block in blocks_to_translate:
                     if TranslatorV2.is_decoration(block["text"]):
