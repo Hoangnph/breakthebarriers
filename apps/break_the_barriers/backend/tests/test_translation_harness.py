@@ -21,3 +21,24 @@ def test_parse_judge_json_handles_fences():
     parsed = H._parse_judge_json(raw)
     assert parsed and parsed[0]["best_idx"] == 1
     assert H._parse_judge_json("not json") is None
+
+
+def test_judge_single_and_empty_candidates():
+    blocks = [{"text": "Hello", "span_ids": ["s1"]}]
+    assert H._judge(blocks, [], "vi", {})[0]["score"] == 0           # 0 ứng viên
+    one = H._judge(blocks, [["Xin chào"]], "vi", {})                  # 1 ứng viên → idx 0
+    assert one[0]["best_idx"] == 0 and one[0]["score"] >= 0
+
+
+def test_judge_uses_parsed_result(monkeypatch):
+    blocks = [{"text": "Hello", "span_ids": ["s1"]},
+              {"text": "World", "span_ids": ["s2"]}]
+    cands = [["A0", "B0"], ["A1", "B1"]]
+    monkeypatch.setenv("GEMINI_API_KEY", "x")
+    monkeypatch.setattr(H, "_judge_call",
+                        staticmethod(lambda items: [
+                            {"id": "b0", "best_idx": 1, "score": 92, "critique": "good"},
+                            {"id": "b1", "best_idx": 0, "score": 60, "critique": "weak"}]))
+    out = H._judge(blocks, cands, "vi", {})
+    assert out[0]["best_idx"] == 1 and out[0]["score"] == 92
+    assert out[1]["best_idx"] == 0 and out[1]["score"] == 60

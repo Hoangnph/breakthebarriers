@@ -59,3 +59,51 @@ class TranslationHarness:
         if isinstance(data, dict):
             return data.get("results") or data.get("items")
         return None
+
+    @staticmethod
+    def _judge_call(items: list) -> Optional[list]:
+        """1 lượt Gemini judge structured-output. Tách riêng để test mock được.
+        items: [{"id","source","candidates":[...]}] → [{"id","best_idx","score","critique"}]."""
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return None
+        from google import genai
+        client = genai.Client(api_key=api_key)
+        prompt = (
+            "You judge translations. For each item pick the BEST candidate by meaning "
+            "accuracy, faithfulness to source, fluency, and terminology.\n"
+            'Return ONLY JSON list: '
+            '[{"id":"b0","best_idx":<0-based int>,"score":<0-100 int>,"critique":"short"}].\n'
+            f"Items:\n{json.dumps(items, ensure_ascii=False)}"
+        )
+        resp = client.models.generate_content(
+            model=TranslationHarness.JUDGE_MODEL, contents=prompt,
+            config={"response_mime_type": "application/json"})
+        return TranslationHarness._parse_judge_json(resp.text)
+
+    @staticmethod
+    def _judge(blocks, candidates, target_lang, context) -> List[dict]:
+        n = len(candidates)
+        if n == 0:
+            return [{"best_idx": 0, "score": 0, "critique": "no candidates"} for _ in blocks]
+        if n == 1:
+            return [{"best_idx": 0, "score": 75, "critique": "single"} for _ in blocks]
+        items = [{"id": f"b{bi}", "source": b["text"],
+                  "candidates": [candidates[ci][bi] for ci in range(n)]}
+                 for bi, b in enumerate(blocks)]
+        try:
+            parsed = TranslationHarness._judge_call(items)
+            if not parsed:
+                raise ValueError("judge parse failed")
+            by_id = {p.get("id"): p for p in parsed}
+            out = []
+            for bi in range(len(blocks)):
+                p = by_id.get(f"b{bi}", {})
+                idx = int(p.get("best_idx", 0))
+                idx = idx if 0 <= idx < n else 0
+                out.append({"best_idx": idx, "score": int(p.get("score", 70)),
+                            "critique": str(p.get("critique", ""))})
+            return out
+        except Exception as e:
+            logger.warning(f"judge failed: {e}")
+            return [{"best_idx": 0, "score": 70, "critique": "judge error"} for _ in blocks]
