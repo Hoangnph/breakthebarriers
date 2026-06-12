@@ -107,3 +107,45 @@ class TranslationHarness:
         except Exception as e:
             logger.warning(f"judge failed: {e}")
             return [{"best_idx": 0, "score": 70, "critique": "judge error"} for _ in blocks]
+
+    @staticmethod
+    def _batch_translate_variant(blocks, target_lang, context, glossary,
+                                 model, temperature, style) -> Optional[List[str]]:
+        """Dịch-batch 1 lượt với model/temp/style tường minh. → list[str] aligned blocks."""
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return None
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            lang_name = TranslatorV2.LANG_NAMES.get(target_lang, target_lang)
+            glossary_str = TranslatorV2._format_glossary(glossary)
+            style_line = ("Prioritize literal faithfulness to the source meaning.\n"
+                          if style == "faithful"
+                          else "Prioritize natural fluent phrasing while preserving meaning.\n")
+            input_json = json.dumps(
+                [{"id": f"b{i}", "text": b["text"]} for i, b in enumerate(blocks)],
+                ensure_ascii=False)
+            prompt = (
+                f"Professional translator. Domain: {context.get('domain', 'general')}. "
+                f"Target: {lang_name}.\nGLOSSARY (follow exactly):\n{glossary_str}\n{style_line}"
+                'Return ONLY JSON {"translations":[{"id":"b0","text":"..."},...]}.\n'
+                f"Input:\n{input_json}")
+            resp = client.models.generate_content(
+                model=model, contents=prompt,
+                config={"response_mime_type": "application/json", "temperature": temperature})
+            tmap = {it["id"]: it["text"] for it in json.loads(resp.text)["translations"]}
+            return [tmap.get(f"b{i}", blocks[i]["text"]) for i in range(len(blocks))]
+        except Exception as e:
+            logger.warning(f"variant translate failed ({model}/{style}): {e}")
+            return None
+
+    @staticmethod
+    def _generate_candidates(blocks, target_lang, context, glossary) -> List[List[str]]:
+        out = []
+        for model, temp, style in TranslationHarness.CANDIDATE_VARIANTS:
+            c = TranslationHarness._batch_translate_variant(
+                blocks, target_lang, context, glossary, model, temp, style)
+            if c is not None:
+                out.append(c)
+        return out

@@ -42,3 +42,25 @@ def test_judge_uses_parsed_result(monkeypatch):
     out = H._judge(blocks, cands, "vi", {})
     assert out[0]["best_idx"] == 1 and out[0]["score"] == 92
     assert out[1]["best_idx"] == 0 and out[1]["score"] == 60
+
+
+def test_generate_candidates_aggregates(monkeypatch):
+    blocks = [{"text": "Hello", "span_ids": ["s1"]}]
+    calls = {"n": 0}
+
+    def fake_variant(blocks, tl, ctx, gl, model, temp, style):
+        calls["n"] += 1
+        return [f"{style}-{model}"]
+    monkeypatch.setattr(H, "_batch_translate_variant", staticmethod(fake_variant))
+    cands = H._generate_candidates(blocks, "vi", {}, [])
+    assert calls["n"] == 3 and len(cands) == 3       # 3 biến thể
+    assert all(len(c) == 1 for c in cands)
+
+
+def test_generate_candidates_skips_failed_variant(monkeypatch):
+    blocks = [{"text": "Hello", "span_ids": ["s1"]}]
+    seq = [None, ["ok"], None]
+    monkeypatch.setattr(H, "_batch_translate_variant",
+                        staticmethod(lambda *a, **k: seq.pop(0)))
+    cands = H._generate_candidates(blocks, "vi", {}, [])
+    assert len(cands) == 1                            # bỏ 2 cái None
