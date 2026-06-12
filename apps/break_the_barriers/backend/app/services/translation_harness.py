@@ -209,6 +209,7 @@ class TranslationHarness:
         if refine_items:
             improved = TranslationHarness._refine(refine_items, target_lang, context, glossary)
             for bi, txt in improved.items():
-                results[bi] = txt
-                scores[bi] = max(scores[bi], TranslationHarness.SCORE_THRESHOLD)
+                if TranslationHarness._rule_check(blocks[bi]["text"], txt, glossary, target_lang)[0]:
+                    results[bi] = txt
+                    scores[bi] = max(scores[bi], TranslationHarness.SCORE_THRESHOLD)
         return (results, scores)

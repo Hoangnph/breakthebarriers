@@ -87,10 +87,23 @@ def test_harmonize_selects_winner_and_refines(monkeypatch):
     monkeypatch.setattr(H, "_judge", staticmethod(lambda *a: [
         {"best_idx": 0, "score": 95, "critique": "great"},
         {"best_idx": 1, "score": 60, "critique": "improve"}]))   # block 2 thấp → refine
-    monkeypatch.setattr(H, "_refine", staticmethod(lambda *a, **k: {1: "Thế giới (đã sửa)"}))
+    # bản refine HỢP LỆ (qua rule-check: tỉ lệ độ dài hợp lý) → được nhận
+    monkeypatch.setattr(H, "_refine", staticmethod(lambda *a, **k: {1: "Trái Đất"}))
     results, scores = H.harmonize_page(blocks, "vi", {}, [])
     assert results[0] == "Xin chào" and scores[0] == 95
-    assert results[1] == "Thế giới (đã sửa)" and scores[1] >= H.SCORE_THRESHOLD
+    assert results[1] == "Trái Đất" and scores[1] >= H.SCORE_THRESHOLD
+
+
+def test_harmonize_keeps_winner_when_refine_invalid(monkeypatch):
+    # bản refine RỚT rule-check (chưa dịch) → giữ winner trước refine, KHÔNG nhận bừa
+    blocks = [{"text": "World", "span_ids": ["s2"]}]
+    monkeypatch.setattr(H, "_generate_candidates",
+                        staticmethod(lambda *a: [["Quả đất"], ["Thế giới"]]))
+    monkeypatch.setattr(H, "_judge", staticmethod(lambda *a: [
+        {"best_idx": 0, "score": 60, "critique": "x"}]))
+    monkeypatch.setattr(H, "_refine", staticmethod(lambda *a, **k: {0: "World"}))  # untranslated
+    results, scores = H.harmonize_page(blocks, "vi", {}, [])
+    assert results[0] == "Quả đất"        # giữ winner, không nhận bản refine lỗi
 
 
 def test_harmonize_returns_none_when_no_candidates(monkeypatch):
