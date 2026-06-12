@@ -230,13 +230,16 @@ def get_document_asset(doc_id: str, filename: str):
 
 
 @router.get("/api/docs/{doc_id}/htmlflow")
-def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(get_db)):
+def get_document_htmlflow(doc_id: str, request: Request,
+                          lang: Optional[str] = Query(None),
+                          db: Session = Depends(get_db)):
     """Original PDF → HTML element THẬT (positioned, kiểu pdf2htmlEX), xếp dọc (flow).
-    Render on-the-fly từ PDF bằng PyMuPDF — không cần re-extract/DB."""
+    Render on-the-fly từ PDF bằng PyMuPDF. `lang` (vd vi) → chế độ DỊCH: text mỗi
+    block thay bằng bản dịch tra từ Translation Memory (cùng nền raster đã bỏ text)."""
     import fitz
     from backend.app.services.text_layer import build_blocks, render_text_free_background
     from backend.app.services.layout_analyzer import analyze_layout
-    from backend.app.services.faithful_html_renderer import render_analyzed_flow
+    from backend.app.services.faithful_html_renderer import render_analyzed_flow, block_source_text
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
@@ -251,10 +254,12 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
 
     fdoc = fitz.open(pdf_path)
     pages = []
+    all_blocks = []
     for i in range(len(fdoc)):
         page = fdoc[i]
         el = build_blocks(page)                  # text + layout (trích TRƯỚC redaction)
         t = analyze_layout(el)
+        all_blocks.extend(el.get("blocks", []))
         bg_name = f"{doc_id}-bg-{i + 1}.jpg"
         bg_fp = os.path.join(out_dir, bg_name)
         if not os.path.exists(bg_fp):
@@ -264,7 +269,18 @@ def get_document_htmlflow(doc_id: str, request: Request, db: Session = Depends(g
         pages.append(t)
     fdoc.close()
 
-    html = render_analyzed_flow(pages, asset_base)
+    lang_map = None
+    if lang:                                      # DỊCH: tra TM theo source text mỗi block
+        from backend.app.services.translator_v2 import TranslatorV2
+        lang_map = {}
+        for b in all_blocks:
+            src = block_source_text(b)
+            if src and src not in lang_map:
+                tr = TranslatorV2.tm_lookup(src, lang, db)
+                if tr:
+                    lang_map[src] = tr
+
+    html = render_analyzed_flow(pages, asset_base, lang_map)
     zoom_script = (
         "<script>window.addEventListener('message',e=>{"
         "if(e.data&&e.data.type==='btb-zoom')document.body.style.zoom=String(e.data.zoom);"

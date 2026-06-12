@@ -20,6 +20,7 @@ export default function PreviewPage() {
 
   const [doc, setDoc] = useState<Doc | null>(null)
   const [zoom, setZoom] = useState(1)
+  const [lang, setLang] = useState<"goc" | "vi">("goc")
 
   useEffect(() => {
     async function init() {
@@ -77,7 +78,17 @@ export default function PreviewPage() {
           {doc.filename}
         </span>
 
-        <span className="text-xs font-medium text-indigo-600 flex-shrink-0">Original → HTML</span>
+        {/* Gốc / Dịch toggle */}
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+          <button onClick={() => setLang("goc")}
+                  className={`px-3 py-1 text-xs font-medium ${lang === "goc" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+            Gốc
+          </button>
+          <button onClick={() => setLang("vi")}
+                  className={`px-3 py-1 text-xs font-medium ${lang === "vi" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+            Dịch
+          </button>
+        </div>
 
         {/* Zoom controls */}
         <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
@@ -99,7 +110,7 @@ export default function PreviewPage() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        <LayoutFlow docId={id} apiUrl={API_URL} zoom={zoom} />
+        <LayoutFlow docId={id} apiUrl={API_URL} zoom={zoom} lang={lang} />
       </div>
     </div>
   )

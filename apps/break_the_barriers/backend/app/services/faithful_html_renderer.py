@@ -3,7 +3,7 @@ Trang = container co giãn (aspect-ratio + container-type:inline-size); block đ
 theo %; cỡ chữ theo cqw (tương ứng bề rộng trang) → không còn absolute px cứng.
 Mỗi đoạn = block, mỗi dòng giữ style span thật (font/màu/đậm-nghiêng); ảnh = <img> %."""
 import html as html_lib
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 _FLOW_CSS = """
 *{box-sizing:border-box}
@@ -15,6 +15,7 @@ body{margin:0;background:#8a8d91}
 .pf .col{position:absolute}
 .pf .ln{position:absolute;white-space:nowrap;line-height:1.04;transform-origin:0 0}
 .pf .ln span{white-space:pre}
+.pf .tb{position:absolute;white-space:normal;overflow:visible}
 .pf img{position:absolute;display:block}
 .pf .vec{position:absolute;inset:0;width:100%;height:100%}
 """
@@ -130,9 +131,38 @@ def _render_image(im: Dict[str, Any], w: float, h: float, asset_base: str) -> st
             f'top:{fy / h * 100:.3f}%;width:{fw / w * 100:.3f}%;height:{fh / h * 100:.3f}%">')
 
 
-def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
-    """section định vị relative TRANG (role header/footer giữ 1 hàng); band→cột
-    LỒNG NHAU (cột relative band); block định vị vị trí thật trong section/cột."""
+def block_source_text(blk: Dict[str, Any]) -> str:
+    """Văn bản nguồn của block = nối text mọi span theo dòng (khoá tra TM/dịch)."""
+    return " ".join(s["text"] for line in blk["lines"] for s in line["spans"]).strip()
+
+
+def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: float,
+                             ph: float, page_w: float, lang_map: Dict[str, str]) -> str:
+    """Dịch mode: 1 block = 1 div định vị tại bbox; text dịch WRAP trong khung
+    (font/màu từ span đầu). Bản dịch dài/ngắn khác → tự xuống dòng, không méo."""
+    bx, by, bw, _bh = blk["bbox"]
+    spans = [s for line in blk["lines"] for s in line["spans"]]
+    src = block_source_text(blk)
+    txt = (lang_map or {}).get(src) or src
+    s0 = spans[0] if spans else {}
+    left = (bx - px) / max(pw, 1.0) * 100
+    top = (by - py) / max(ph, 1.0) * 100
+    width = bw / max(pw, 1.0) * 100
+    fs = (s0.get("size", 12.0)) / page_w * 100
+    style = (f'left:{left:.3f}%;top:{top:.3f}%;width:{width:.3f}%;'
+             f'font-size:{fs:.3f}cqw;color:{s0.get("color", "#000")};'
+             f'font-family:{s0.get("font", "sans-serif")};line-height:1.25')
+    if s0.get("bold"):
+        style += ";font-weight:bold"
+    if s0.get("italic"):
+        style += ";font-style:italic"
+    return f'<div class="tb" style="{style}">{_esc(txt)}</div>'
+
+
+def render_analyzed_page(t: Dict[str, Any], asset_base: str = "",
+                         lang_map: Optional[Dict[str, str]] = None) -> str:
+    """section định vị relative TRANG; block định vị thật. Khi `lang_map` (Dịch):
+    mỗi block render text ĐÃ DỊCH wrap trong khung (cùng nền raster đã bỏ text)."""
     w = t.get("page_w") or 900.0
     h = t.get("page_h") or 1260.0
     if w <= 0:
@@ -188,11 +218,17 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "") -> str:
                     f'top:{(cy - sy) / sh * 100:.3f}%;width:{cw / sw * 100:.3f}%;'
                     f'height:{ch / sh * 100:.3f}%">')
                 for b in col["blocks"]:
-                    parts.append(_render_block_at(b, cx, cy, cw, ch, w))
+                    if lang_map is not None:
+                        parts.append(_render_block_translated(b, cx, cy, cw, ch, w, lang_map))
+                    else:
+                        parts.append(_render_block_at(b, cx, cy, cw, ch, w))
                 parts.append('</div>')
         else:
             for b in sec["blocks"]:
-                parts.append(_render_block_at(b, sx, sy, sw, sh, w))
+                if lang_map is not None:
+                    parts.append(_render_block_translated(b, sx, sy, sw, sh, w, lang_map))
+                else:
+                    parts.append(_render_block_at(b, sx, sy, sw, sh, w))
         parts.append('</div>')
 
     parts.append('</div>')
@@ -213,9 +249,11 @@ window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__f
 })();</script>"""
 
 
-def render_analyzed_flow(trees: List[Dict[str, Any]], asset_base: str = "") -> str:
-    """Nhiều trang (đã phân tích layout) xếp dọc → 1 tài liệu HTML responsive."""
-    body = "\n".join(render_analyzed_page(t, asset_base) for t in trees)
+def render_analyzed_flow(trees: List[Dict[str, Any]], asset_base: str = "",
+                         lang_map: Optional[Dict[str, str]] = None) -> str:
+    """Nhiều trang xếp dọc → 1 tài liệu HTML responsive. `lang_map` (Dịch) → render
+    text đã dịch theo block."""
+    body = "\n".join(render_analyzed_page(t, asset_base, lang_map) for t in trees)
     return (
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
