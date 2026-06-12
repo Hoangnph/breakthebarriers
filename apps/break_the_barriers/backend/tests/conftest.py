@@ -81,6 +81,19 @@ def temp_data_dir(tmp_path):
     return data_dir
 
 @pytest.fixture
+def sample_pdf(tmp_path):
+    """1-page PDF deterministic: 1 heading lớn + 1 đoạn body, tạo bằng fitz."""
+    import fitz
+    doc = fitz.open()
+    page = doc.new_page(width=400, height=300)
+    page.insert_text((50, 60), "Hello World Heading", fontsize=24)
+    page.insert_text((50, 110), "This is a body paragraph for testing.", fontsize=11)
+    out = tmp_path / "sample.pdf"
+    doc.save(str(out))
+    doc.close()
+    return str(out)
+
+@pytest.fixture
 def client(db_session):
     """
     Provides a FastAPI test client with mocked DB session.

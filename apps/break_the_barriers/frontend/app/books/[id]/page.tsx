@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Play, RotateCcw, CheckCircle, Circle, Loader, FileText } from "lucide-react"
 import { fetchAPI } from "@/lib/api"
+import { TRANSLATE_LANG_KEY } from "@/lib/constants"
 
 interface Doc {
   id: string
@@ -22,6 +23,24 @@ interface ProgressEvent {
   status: string
   percent: number
   eta_min: number
+}
+
+const LANGS = [
+  { code: "vi", label: "🇻🇳 Tiếng Việt" },
+  { code: "en", label: "🇺🇸 English" },
+  { code: "zh", label: "🇨🇳 中文" },
+  { code: "ja", label: "🇯🇵 日本語" },
+  { code: "ko", label: "🇰🇷 한국어" },
+  { code: "fr", label: "🇫🇷 Français" },
+  { code: "de", label: "🇩🇪 Deutsch" },
+] as const
+
+
+interface PageRow {
+  page_num: number
+  status: string
+  has_original: boolean
+  has_translated: boolean
 }
 
 const PIPELINE_STEPS = ["raw", "extracted", "translated", "compiled"]
@@ -46,11 +65,20 @@ export default function BookDetailPage() {
   const [extracting, setExtracting] = useState(false)
   const [error, setError] = useState("")
   const esRef = useRef<EventSource | null>(null)
+  const [targetLang, setTargetLang] = useState("vi")
+  const [pageRows, setPageRows] = useState<PageRow[]>([])
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollFailRef = useRef(0)
 
   useEffect(() => {
     loadDoc()
     return () => esRef.current?.close()
   }, [id])
+
+  useEffect(() => {
+    const saved = localStorage.getItem(TRANSLATE_LANG_KEY)
+    if (saved && LANGS.some((l) => l.code === saved)) setTargetLang(saved)
+  }, [])
 
   async function loadDoc() {
     try {
@@ -110,13 +138,62 @@ export default function BookDetailPage() {
     try {
       await fetchAPI(`/api/docs/${id}/translate-all`, {
         method: "POST",
-        body: JSON.stringify({ target_lang: "vi" }),
+        body: JSON.stringify({ target_lang: targetLang }),
       })
       startSSE()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Translate thất bại")
     }
   }
+
+  async function loadPages() {
+    try {
+      const rows = await fetchAPI<PageRow[]>(`/api/docs/${id}/pages`)
+      pollFailRef.current = 0
+      setPageRows(rows)
+      const anyTranslating = rows.some((r) => r.status === "translating")
+      if (anyTranslating && !pollRef.current) {
+        pollRef.current = setInterval(loadPages, 3000)
+      } else if (!anyTranslating && pollRef.current) {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      }
+    } catch (e) {
+      console.warn("loadPages failed", e)  // best-effort
+      pollFailRef.current += 1
+      if (pollFailRef.current >= 5 && pollRef.current) {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      }
+    }
+  }
+
+  async function translateOnePage(pageNum: number) {
+    setPageRows((rows) => rows.map((r) =>
+      r.page_num === pageNum ? { ...r, status: "translating" } : r))
+    try {
+      await fetchAPI(`/api/docs/${id}/translate?async_mode=true`, {
+        method: "POST",
+        body: JSON.stringify({ page_num: pageNum, target_lang: targetLang, use_v2: true }),
+      })
+    } catch {
+      setPageRows((rows) => rows.map((r) =>
+        r.page_num === pageNum ? { ...r, status: "failed" } : r))
+      return
+    }
+    if (!pollRef.current) pollRef.current = setInterval(loadPages, 3000)
+  }
+
+  function changeTargetLang(code: string) {
+    setTargetLang(code)
+    localStorage.setItem(TRANSLATE_LANG_KEY, code)
+  }
+
+  useEffect(() => {
+    if (doc && doc.status !== "raw") loadPages()
+    return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null } }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.status, id])
 
   if (!doc) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -215,6 +292,39 @@ export default function BookDetailPage() {
             </button>
           )}
         </div>
+
+        {doc.status !== "raw" && (
+          <div className="mt-6">
+            <div className="flex items-center gap-3 mb-3">
+              <label className="text-xs text-gray-500">Ngôn ngữ dịch</label>
+              <select value={targetLang} onChange={(e) => changeTargetLang(e.target.value)}
+                      className="text-sm border border-gray-200 rounded-md px-2 py-1 bg-white">
+                {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+              </select>
+            </div>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {pageRows.map((r) => {
+                const translating = r.status === "translating"
+                const done = r.has_translated || r.status === "translated" || r.status === "compiled"
+                const failed = r.status === "failed"
+                const label = translating ? "—" : done ? "Dịch lại" : failed ? "Thử lại" : "Dịch trang này"
+                return (
+                  <div key={r.page_num}
+                       className="flex items-center justify-between px-4 py-2 border-b border-gray-100 last:border-b-0 text-sm">
+                    <span className="text-gray-700">Trang {r.page_num}</span>
+                    <span className={translating ? "text-blue-600" : done ? "text-green-600" : failed ? "text-red-600" : "text-gray-400"}>
+                      {translating ? "● Đang dịch..." : done ? "✓ Đã dịch" : failed ? "✗ Lỗi" : "○ Chưa dịch"}
+                    </span>
+                    <button onClick={() => translateOnePage(r.page_num)} disabled={translating}
+                            className="text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                      {label}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

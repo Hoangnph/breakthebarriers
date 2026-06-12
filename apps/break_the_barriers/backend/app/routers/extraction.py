@@ -12,6 +12,7 @@ from backend.app.models import ExtractionResult
 from backend.app.models_db import DBDocument, DBPage, DBTranslation
 from backend.app.core import DATA_DIR, is_mock_run
 from backend.app.services.extractor import Extractor, DoclingExtractor
+from backend.app.services.faithful_extractor import FaithfulExtractor
 from backend.app.services.epub_parser import EpubParser
 
 logger = logging.getLogger(__name__)
@@ -23,8 +24,10 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    db.query(DBPage).filter(DBPage.document_id == doc_id).delete()
-    db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).delete()
+    # synchronize_session=False avoids an extra SELECT to sync the identity map;
+    # these rows are being deleted and immediately re-inserted from scratch.
+    db.query(DBPage).filter(DBPage.document_id == doc_id).delete(synchronize_session=False)
+    db.query(DBTranslation).filter(DBTranslation.document_id == doc_id).delete(synchronize_session=False)
 
     if is_mock_run(doc_id):
         for page_num in range(1, doc.total_pages + 1):
@@ -66,11 +69,11 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
             use_docling = False
             html_files = []
             try:
-                html_files = DoclingExtractor.extract_pdf_to_html(pdf_path, extracted_dir, doc_id)
+                html_files = FaithfulExtractor.extract_pdf(pdf_path, extracted_dir, doc_id)
                 use_docling = True
-                logger.info(f"DoclingExtractor produced {len(html_files)} pages for {doc_id}")
-            except Exception as docling_err:
-                logger.warning(f"DoclingExtractor failed ({docling_err}), falling back to pdftohtml")
+                logger.info(f"FaithfulExtractor produced {len(html_files)} pages for {doc_id}")
+            except Exception as faithful_err:
+                logger.warning(f"FaithfulExtractor failed ({faithful_err}), falling back to pdftohtml")
                 try:
                     html_files = Extractor.extract_pdf_to_html_cli(pdf_path, extracted_dir, doc_id)
                 except Exception as e:
@@ -102,8 +105,35 @@ def _perform_extraction(doc_id: str, db: Session) -> ExtractionResult:
                         img["src"] = f"/api/docs/{doc_id}/assets/{src}"
                 final_html = str(soup)
 
+            layout_json = None
+            layout_path = file_path[:-5] + ".layout.json"  # ".html" -> ".layout.json"
+            if os.path.exists(layout_path):
+                with open(layout_path, "r", encoding="utf-8") as lf:
+                    layout_json = lf.read()
+
+            model_json = None
+            model_path = file_path[:-5] + ".model.json"  # ".html" -> ".model.json"
+            if os.path.exists(model_path):
+                with open(model_path, "r", encoding="utf-8") as mf:
+                    model_json = mf.read()
+
+            # Faithful sidecars (SVG reader)
+            text_layer_json = None
+            tl_path = file_path[:-5] + ".textlayer.json"
+            if os.path.exists(tl_path):
+                with open(tl_path, "r", encoding="utf-8") as tf:
+                    text_layer_json = tf.read()
+            svg_path = None
+            for _ext in (".svg", ".jpg"):
+                _cand = file_path[:-5] + _ext
+                if os.path.exists(_cand):
+                    svg_path = os.path.basename(_cand)
+                    break
+
             spans = Extractor.extract_spans(final_html)
-            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html, status="raw"))
+            db.add(DBPage(document_id=doc_id, page_num=page_num, original_html=final_html,
+                          status="raw", layout_json=layout_json, model_json=model_json,
+                          svg_path=svg_path, text_layer_json=text_layer_json))
             for s in spans:
                 db.add(DBTranslation(document_id=doc_id, page_num=page_num, span_id=s["id"], original_text=s["text"]))
 
@@ -134,12 +164,23 @@ def extract_document(
     background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db)
 ):
-    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    # Lock the document row so concurrent extract calls serialize on it.
+    # with_for_update is a no-op on SQLite (tests) but locks the row on PostgreSQL.
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).with_for_update().first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+
+    # Idempotency guard: reject a second extract while one is already running.
+    # Without this, two concurrent calls each delete-then-insert pages in their
+    # own transaction and both commit, producing duplicate pages.
+    if doc.status == "extracting":
+        raise HTTPException(status_code=409, detail="Extraction already in progress for this document")
+
+    # Claim the job atomically: mark "extracting" and release the row lock on commit.
+    doc.status = "extracting"
+    db.commit()
+
     if async_mode:
-        doc.status = "extracting"
-        db.commit()
         if background_tasks:
             background_tasks.add_task(run_background_extract, doc_id)
         else:

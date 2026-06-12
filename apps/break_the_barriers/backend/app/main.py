@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,16 +14,36 @@ from backend.app.core import DATA_DIR
 
 logging.basicConfig(level=logging.INFO)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Skip DB seeding under pytest — tests manage their own in-memory schema/fixtures.
+    if "pytest" not in sys.modules:
+        Base.metadata.create_all(bind=engine)
+        db = next(get_db())
+        try:
+            if not db.query(DBDocument).filter(DBDocument.id == "clean_code").first():
+                db.add(DBDocument(id="clean_code", filename="Clean_Code.pdf", total_pages=10, status="raw"))
+                db.commit()
+        finally:
+            db.close()
+    yield
+
+
 app = FastAPI(
     title="Smart Documentations API",
     description="API-First Backend for Digitizing and High-Fidelity Translation of PDF books",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # Auth uses Bearer tokens in the Authorization header, not cookies. The CORS
+    # spec forbids allow_credentials=True together with the "*" origin wildcard
+    # (browsers reject it), so credentials stay off and the wildcard is valid.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -39,18 +61,3 @@ app.include_router(jobs.router)
 app.include_router(auth.router)
 app.include_router(books.router)
 app.include_router(glossary.router)
-
-
-@app.on_event("startup")
-def startup_populate():
-    import sys
-    if "pytest" in sys.modules:
-        return
-    Base.metadata.create_all(bind=engine)
-    db = next(get_db())
-    try:
-        if not db.query(DBDocument).filter(DBDocument.id == "clean_code").first():
-            db.add(DBDocument(id="clean_code", filename="Clean_Code.pdf", total_pages=10, status="raw"))
-            db.commit()
-    finally:
-        db.close()

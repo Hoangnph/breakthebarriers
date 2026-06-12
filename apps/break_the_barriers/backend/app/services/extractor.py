@@ -1,14 +1,51 @@
 import re
 import os
+import json
 import html as html_lib
 import subprocess
 import logging
+import dataclasses
 from collections import defaultdict
 from pathlib import Path
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any, Optional
+from backend.app.services.page_image import save_page_image, sample_bg_color
 
 logger = logging.getLogger(__name__)
+
+
+def _figure_cleaning_enabled() -> bool:
+    """Only auto-clean figures outside tests and when an API key exists."""
+    return (not os.getenv("PYTEST_CURRENT_TEST")) and bool(os.getenv("GEMINI_API_KEY"))
+
+
+def _banner_title_block(blocks: List[Dict[str, Any]], fb, page_w: float):
+    """Return the title block overlaid on a banner figure, or None. A banner is a
+    WIDE figure (spans >= _BANNER_MIN_WIDTH_FRAC of the page) holding at most
+    _BANNER_MAX_BLOCKS text blocks, whose largest block is a real title (font size
+    >= _BANNER_MIN_TITLE_SIZE). This excludes example images, icons and captions
+    that merely overlap a small label. bbox format is [x0, y0, w, h]."""
+    from backend.app.services.flow_model import (
+        _BANNER_MAX_BLOCKS, _BANNER_MIN_WIDTH_FRAC, _BANNER_MIN_TITLE_SIZE,
+    )
+    fx, fy, fw, fh = fb
+    if fw <= 0 or fh <= 0 or not page_w or fw < _BANNER_MIN_WIDTH_FRAC * page_w:
+        return None
+    contained = []
+    for blk in blocks:
+        bx, by, bw, bh = blk["bbox"]
+        cx, cy = bx + bw / 2, by + bh / 2
+        if fx <= cx <= fx + fw and fy <= cy <= fy + fh and fw * fh > bw * bh:
+            contained.append(blk)
+    if not contained or len(contained) > _BANNER_MAX_BLOCKS:
+        return None
+
+    def _fsize(b) -> float:
+        return (b.get("font") or {}).get("size") or 0
+
+    primary = max(contained, key=_fsize)
+    return primary if _fsize(primary) >= _BANNER_MIN_TITLE_SIZE else None
+
 
 _DOCLING_RESPONSIVE_CSS = """
 * { box-sizing: border-box; }
@@ -272,6 +309,8 @@ class DoclingExtractor:
                     PdfPipelineOptions, AcceleratorOptions, AcceleratorDevice
                 )
                 pipeline_options = PdfPipelineOptions()
+                pipeline_options.generate_page_images = True
+                pipeline_options.images_scale = 2.0
                 # Use CPU explicitly — MPS on Apple Silicon doesn't support float64
                 pipeline_options.accelerator_options = AcceleratorOptions(
                     num_threads=4, device=AcceleratorDevice.CPU
@@ -307,32 +346,293 @@ class DoclingExtractor:
 
         html_files = []
         for page_no in sorted(pages_items.keys()):
-            page_html = cls._items_to_page_html(pages_items[page_no], page_no)
+            _pages_sorted = sorted(pages_items.keys())
+            _total_pages = len(_pages_sorted)
+            _page_index = _pages_sorted.index(page_no)
+            page_item = doc.pages.get(page_no)
+            page_size = page_item.size if page_item else None
+            # Always derive docling figure boxes + a fallback text build.
+            _docling_html, _docling_blocks, fig_boxes = cls._items_to_page_html(
+                pages_items[page_no], page_no, page_size)
+
+            # PyMuPDF is the primary text source (complete coverage). Build the
+            # docling item list (label + bbox top-left points) for role tagging.
+            from backend.app.services.pdf_text_extractor import extract_text_blocks
+            from backend.app.services.semantic_tagger import tag_blocks
+            from docling_core.types.doc import CoordOrigin
+
+            _page_h_pt = getattr(page_size, "height", None)
+            _docling_items = []
+            if _page_h_pt is not None:
+                for _item, _lvl in pages_items[page_no]:
+                    _prov = getattr(_item, "prov", None)
+                    if not _prov:
+                        continue
+                    _bb = _prov[0].bbox
+                    _tl = _bb if _bb.coord_origin == CoordOrigin.TOPLEFT else _bb.to_top_left_origin(page_height=_page_h_pt)
+                    _docling_items.append({
+                        "label": str(getattr(_item, "label", "text")),
+                        "bbox": [_tl.l, min(_tl.t, _tl.b), _tl.r - _tl.l, abs(_tl.b - _tl.t)],
+                    })
+
+            _pm_blocks = extract_text_blocks(str(pdf_path), page_no)
+            if _pm_blocks:
+                _tagged = tag_blocks(_pm_blocks, _docling_items)
+                page_html, blocks = cls._blocks_to_page_html(_tagged, page_no)
+            else:
+                page_html, blocks = _docling_html, _docling_blocks
+
             file_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.html"))
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(page_html)
             html_files.append(file_path)
 
+            # Render the page raster + build the positioned layout sidecar.
+            # Guarded per-page: a raster failure degrades THIS page to flow HTML
+            # (image=None, blocks=[]) without aborting the whole extraction run.
+            image_name = None
+            pil_img = getattr(page_item.image, "pil_image", None) if (page_item and page_item.image) else None
+            if pil_img is not None and page_size is not None:
+                try:
+                    image_name = save_page_image(pil_img, output_dir, doc_id, page_no)
+                    img_path = os.path.join(output_dir, image_name)
+                    scale_x = pil_img.width / page_size.width
+                    scale_y = pil_img.height / page_size.height
+                    for blk in blocks:
+                        l, t, w, h = blk["bbox"]
+                        bbox_px = (l * scale_x, t * scale_y, (l + w) * scale_x, (t + h) * scale_y)
+                        blk["bg"] = sample_bg_color(img_path, bbox_px)
+                except Exception as raster_err:
+                    logger.warning(f"Page {page_no} raster failed, degrading to flow HTML: {raster_err}")
+                    image_name = None
+
+            layout = {
+                "page_w": page_size.width if page_size else None,
+                "page_h": page_size.height if page_size else None,
+                "image": image_name,
+                "blocks": blocks if image_name else [],
+            }
+            layout_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.layout.json"))
+            with open(layout_path, "w", encoding="utf-8") as f:
+                def _dc_default(o):
+                    if dataclasses.is_dataclass(o) and not isinstance(o, type):
+                        return dataclasses.asdict(o)
+                    raise TypeError(f"Not serializable: {type(o)}")
+                json.dump(layout, f, default=_dc_default)
+
+            # ── PageModel (SP-A): typography + figures + classification ──
+            from backend.app.services.page_model import PageModel, Block, Figure
+            from backend.app.services.typography_extractor import extract_page_fonts
+            from backend.app.services.figure_extractor import crop_figure
+            from backend.app.services.page_classifier import classify_kind
+
+            # PyMuPDF path already carries per-block font; only run the
+            # bbox-matching font extractor for the docling fallback path.
+            fonts = {}
+            if blocks and not blocks[0].get("font"):
+                try:
+                    fonts = extract_page_fonts(str(pdf_path), page_no, blocks)
+                except Exception as e:
+                    logger.warning(f"Font extraction failed p{page_no}: {e}")
+
+            figures = []
+            if pil_img is not None and page_size is not None and fig_boxes:
+                sx = pil_img.width / page_size.width
+                sy = pil_img.height / page_size.height
+                for i, fb in enumerate(fig_boxes, start=1):
+                    try:
+                        fname = crop_figure(pil_img, fb, sx, sy, output_dir, doc_id, page_no, i)
+                        _fig = Figure(bbox=fb, img=fname)
+                        # Only AI-clean genuine banners (wide figure + overlaid
+                        # title), and only the TITLE REGION via inpaint+verify — never
+                        # whole-clean a figure (that destroys content like faces). The
+                        # title block's box is mapped to the cropped figure's pixels so
+                        # the rest of the banner stays pixel-identical.
+                        title = _banner_title_block(blocks, fb, page_size.width)
+                        if title is not None and _figure_cleaning_enabled():
+                            try:
+                                from PIL import Image as _PILImage
+                                from backend.app.services.image_cleaner import (
+                                    clean_banner_inpaint_verified,
+                                )
+                                _cp = os.path.join(output_dir, fname)
+                                fw_px, fh_px = _PILImage.open(_cp).size
+                                fx, fy, fw, fh = fb
+                                tb = title["bbox"]
+                                sxp, syp = fw_px / fw, fh_px / fh
+                                box_px = ((tb[0] - fx) * sxp, (tb[1] - fy) * syp,
+                                          tb[2] * sxp, tb[3] * syp)
+                                _cn = fname.rsplit(".", 1)[0] + ".clean.png"
+                                if clean_banner_inpaint_verified(
+                                        _cp, os.path.join(output_dir, _cn), [box_px]):
+                                    _fig.clean_img = _cn
+                            except Exception as _e:
+                                logger.warning(f"Banner clean failed p{page_no} #{i}: {_e}")
+                        figures.append(_fig)
+                    except Exception as e:
+                        logger.warning(f"Figure crop failed p{page_no} #{i}: {e}")
+
+            # Merge clusters of adjacent figures (a PDF split image, or a row of
+            # images) back into a single faithful crop — restores row layout and
+            # baked captions. Skipped when unrelated body text sits in the region.
+            if pil_img is not None and page_size is not None and len(figures) >= 2:
+                try:
+                    from backend.app.services.figure_grouper import (
+                        plan_merge_groups, crop_group_region)
+                    _figbb = [list(f.bbox) for f in figures]
+                    _blkbb = [list(b["bbox"]) for b in blocks]
+                    _plans = plan_merge_groups(_figbb, _blkbb,
+                                               page_size.width, page_size.height)
+                    if _plans:
+                        _merged_idx: set = set()
+                        _new: list = []
+                        for _gi, _plan in enumerate(_plans, start=1):
+                            _merged_idx.update(_plan["members"])
+                            _gname = f"{doc_id}-{page_no}-figgroup{_gi}.png"
+                            _crop = crop_group_region(
+                                pil_img, _plan["bbox"], page_size.width, page_size.height)
+                            _crop.save(os.path.join(output_dir, _gname))
+                            _new.append(Figure(bbox=_plan["bbox"], img=_gname,
+                                               kind="illustration"))
+                        figures = [f for _k, f in enumerate(figures)
+                                   if _k not in _merged_idx] + _new
+                except Exception as _e:
+                    logger.warning(f"Figure grouping failed p{page_no}: {_e}")
+
+            # ── Faithful figures: per-figure alignment + composite design-region
+            # crop (chat-like icon+text bands → one image, kept centered). ──
+            if page_size is not None:
+                from backend.app.services.design_region import (
+                    infer_figure_align, detect_design_regions)
+                for _f in figures:
+                    _f.align = infer_figure_align(list(_f.bbox), page_size.width)
+                if pil_img is not None and figures:
+                    try:
+                        from backend.app.services.figure_grouper import crop_group_region
+                        _figbb = [list(f.bbox) for f in figures]
+                        _blk = [(b["span_id"], list(b["bbox"])) for b in blocks]
+                        _regs = detect_design_regions(
+                            _figbb, _blk, page_size.width, page_size.height)
+                        if _regs:
+                            _rm_fig: set = set()
+                            _rm_blk: set = set()
+                            _newr: list = []
+                            for _ri, _rg in enumerate(_regs, start=1):
+                                _rm_fig.update(_rg.figure_idx)
+                                _rm_blk.update(_rg.block_ids)
+                                _rname = f"{doc_id}-{page_no}-region{_ri}.png"
+                                crop_group_region(
+                                    pil_img, _rg.bbox,
+                                    page_size.width, page_size.height
+                                ).save(os.path.join(output_dir, _rname))
+                                _newr.append(Figure(bbox=_rg.bbox, img=_rname,
+                                                    kind="content-region", align="center"))
+                            figures = [f for _k, f in enumerate(figures)
+                                       if _k not in _rm_fig] + _newr
+                            blocks = [b for b in blocks
+                                      if b["span_id"] not in _rm_blk]
+                    except Exception as _e:
+                        logger.warning(f"Design-region crop failed p{page_no}: {_e}")
+
+            boxes = {}
+            if image_name and pil_img is not None and page_size is not None:
+                from backend.app.services.page_image import analyze_block_box
+                _bsx = pil_img.width / page_size.width
+                _bsy = pil_img.height / page_size.height
+                _img_path = os.path.join(output_dir, image_name)
+                for b in blocks:
+                    try:
+                        boxes[b["span_id"]] = analyze_block_box(_img_path, b["bbox"], _bsx, _bsy)
+                    except Exception as e:
+                        logger.warning(f"analyze_block_box failed p{page_no} {b['span_id']}: {e}")
+
+            model_blocks = [
+                Block(span_id=b["span_id"], role=b.get("role", "body"), bbox=b["bbox"],
+                      text="", font=b.get("font") or fonts.get(b["span_id"]),
+                      box=boxes.get(b["span_id"]))
+                for b in blocks
+            ]
+            pw = page_size.width if page_size else 1.0
+            ph = page_size.height if page_size else 1.0
+            bg_is_photo = False
+            if image_name and pil_img is not None and page_size is not None:
+                from backend.app.services.page_image import is_photo_background
+                _sx = pil_img.width / page_size.width
+                _sy = pil_img.height / page_size.height
+                bg_is_photo = is_photo_background(
+                    os.path.join(output_dir, image_name), pw, ph,
+                    [b["bbox"] for b in blocks], [f.bbox for f in figures], _sx, _sy)
+            kind = classify_kind(pw, ph, [b["bbox"] for b in blocks],
+                                 [f.bbox for f in figures], bg_is_photo=bg_is_photo)
+            bg_color = blocks[0].get("bg", "#ffffff") if blocks else "#ffffff"
+
+            # ── #0 eligibility: per-figure photo/diagram → page_class + cover ──
+            from backend.app.services.picture_classifier import classify_picture_file
+            from backend.app.services.page_eligibility import classify_page, detect_cover
+            figure_labels = []
+            for _fig in figures:
+                try:
+                    figure_labels.append(
+                        classify_picture_file(os.path.join(output_dir, _fig.img))[0])
+                except Exception as _e:
+                    logger.warning(f"picture classify failed p{page_no} {_fig.img}: {_e}")
+                    figure_labels.append("uncertain")   # safe → preserve
+            _page_area = max(pw * ph, 1.0)
+            _text_ratio = sum(b["bbox"][2] * b["bbox"][3] for b in blocks) / _page_area
+            _fig_ratio = sum(f.bbox[2] * f.bbox[3] for f in figures) / _page_area
+            _has_table = any(b.get("role") == "table" for b in blocks)
+            page_class = classify_page(_text_ratio, _fig_ratio, figure_labels,
+                                       has_table=_has_table, bg_is_photo=bg_is_photo)
+            cover = detect_cover(_page_index, _total_pages, text_ratio=_text_ratio,
+                                 fig_ratio=_fig_ratio, bg_is_photo=bg_is_photo)
+
+            model = PageModel(
+                page_w=pw, page_h=ph, kind=kind,
+                background={"color": bg_color,
+                            "image": image_name if kind != "text" else None},
+                blocks=model_blocks, figures=figures,
+                page_class=page_class, cover=cover,
+            )
+            model_path = os.path.normpath(os.path.join(output_dir, f"{doc_id}-{page_no}.model.json"))
+            with open(model_path, "w", encoding="utf-8") as f:
+                f.write(model.to_json())
+
         return html_files
 
     @staticmethod
-    def _items_to_page_html(items: list, page_no: int) -> str:
+    def _items_to_page_html(items: list, page_no: int, page_size=None):
         """
-        Render a list of (DocItem, level) pairs as a self-contained HTML page.
-        Every translatable text node is wrapped in <span id="sN"> so the
-        existing translator service can locate and replace text without changes.
+        Render (DocItem, level) pairs as a self-contained HTML page AND return a
+        parallel list of positioned text blocks {span_id, bbox:[l,t,w,h] top-left
+        points} so the overlay renderer can place translated text over the raster.
         """
+        from docling_core.types.doc import CoordOrigin
+
         span_counter = [0]
+        blocks: List[dict] = []
+        figures: List[list] = []
+        page_h = getattr(page_size, "height", None)
 
-        def sid() -> str:
+        def record_block(sid: str, item) -> None:
+            prov = getattr(item, "prov", None)
+            if not prov or page_h is None:
+                return
+            bb = prov[0].bbox
+            tl = bb if bb.coord_origin == CoordOrigin.TOPLEFT else bb.to_top_left_origin(page_height=page_h)
+            # to_top_left_origin gives tl.t < tl.b for valid boxes; use min()/abs()
+            # defensively so an unexpected coord ordering can't yield a negative height.
+            top = min(tl.t, tl.b)
+            blocks.append({"span_id": sid, "bbox": [tl.l, top, tl.r - tl.l, abs(tl.b - tl.t)]})
+
+        def wrap(text: str, item=None) -> str:
             span_counter[0] += 1
-            return f"s{span_counter[0]}"
-
-        def wrap(text: str) -> str:
-            return f'<span id="{sid()}">{html_lib.escape(text)}</span>'
+            sid = f"s{span_counter[0]}"
+            if item is not None:
+                record_block(sid, item)
+            return f'<span id="{sid}">{html_lib.escape(text)}</span>'
 
         body_parts: List[str] = []
-        open_list = False  # track whether we're inside a <ul>
+        open_list = False
 
         for item, level in items:
             text: str = getattr(item, "text", "") or ""
@@ -342,10 +642,9 @@ class DoclingExtractor:
                 if not open_list:
                     body_parts.append("<ul>")
                     open_list = True
-                body_parts.append(f"  <li>{wrap(text)}</li>")
+                body_parts.append(f"  <li>{wrap(text, item)}</li>")
                 continue
 
-            # Close any open list before emitting non-list element
             if open_list:
                 body_parts.append("</ul>")
                 open_list = False
@@ -355,20 +654,26 @@ class DoclingExtractor:
 
             if label == "section_header":
                 h = min(max(level + 1, 2), 6)
-                body_parts.append(f"<h{h}>{wrap(text)}</h{h}>")
+                body_parts.append(f"<h{h}>{wrap(text, item)}</h{h}>")
             elif label == "code":
                 body_parts.append(f"<pre><code>{html_lib.escape(text)}</code></pre>")
             elif label == "picture":
+                prov = getattr(item, "prov", None)
+                if prov and page_h is not None:
+                    from docling_core.types.doc import CoordOrigin
+                    bb = prov[0].bbox
+                    tl = bb if bb.coord_origin == CoordOrigin.TOPLEFT else bb.to_top_left_origin(page_height=page_h)
+                    figures.append([tl.l, min(tl.t, tl.b), tl.r - tl.l, abs(tl.b - tl.t)])
                 body_parts.append(f'<figure><img src="" alt="Figure on page {page_no}"/></figure>')
             elif label == "table":
                 body_parts.append(DoclingExtractor._table_text_to_html(text))
             else:
-                body_parts.append(f"<p>{wrap(text)}</p>")
+                body_parts.append(f"<p>{wrap(text, item)}</p>")
 
         if open_list:
             body_parts.append("</ul>")
 
-        return (
+        html = (
             f"<!DOCTYPE html>\n<html>\n<head>\n"
             f'<meta charset="UTF-8">\n'
             f'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
@@ -377,6 +682,47 @@ class DoclingExtractor:
             + "\n".join(body_parts)
             + "\n</body>\n</html>"
         )
+        return html, blocks, figures
+
+    @staticmethod
+    def _blocks_to_page_html(tagged_blocks, page_no):
+        """Build semantic HTML + a parallel block list from PyMuPDF tagged blocks.
+        Mirrors _items_to_page_html's output shape but sourced from PyMuPDF:
+        each returned block carries span_id, bbox, font (FontSpec), role."""
+        parts = []
+        blocks = []
+        open_list = False
+        for i, b in enumerate(tagged_blocks, start=1):
+            sid = f"s{i}"
+            blocks.append({"span_id": sid, "bbox": b["bbox"],
+                           "font": b.get("font"), "role": b.get("role", "body")})
+            span = f'<span id="{sid}">{html_lib.escape(b["text"])}</span>'
+            role = b.get("role", "body")
+            if role == "list":
+                if not open_list:
+                    parts.append("<ul>")
+                    open_list = True
+                parts.append(f"<li>{span}</li>")
+                continue
+            if open_list:
+                parts.append("</ul>")
+                open_list = False
+            if role == "heading":
+                parts.append(f"<h2>{span}</h2>")
+            else:
+                parts.append(f"<p>{span}</p>")
+        if open_list:
+            parts.append("</ul>")
+        html = (
+            f"<!DOCTYPE html>\n<html>\n<head>\n"
+            f'<meta charset="UTF-8">\n'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            f"<style>\n{_DOCLING_RESPONSIVE_CSS}\n</style>\n"
+            f"</head>\n<body>\n"
+            + "\n".join(parts)
+            + "\n</body>\n</html>"
+        )
+        return html, blocks
 
     @staticmethod
     def _table_text_to_html(text: str) -> str:

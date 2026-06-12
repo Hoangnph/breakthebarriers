@@ -121,3 +121,26 @@ Language selector + Dịch tất cả nằm cùng hàng, phía trên page list. 
 - ✅ Optimistic UI (set `translating` ngay) → UX mượt
 - ✅ Translate-all vẫn dùng SSE (không đổi flow)
 - ✅ 1 file duy nhất — không tạo component mới (page.tsx đã lớn nhưng thêm vào hợp lý)
+
+---
+
+## Update 2026-06-02 (sửa đổi sau V2 + Overlay)
+
+Spec gốc viết trước SP7 (TranslatorV2) + overlay. Hai thay đổi đã chốt với người dùng:
+
+### A. Engine V2 cho dịch-1-trang (thay V1)
+
+- `TranslationRequest` thêm `use_v2: bool = True`.
+- `POST /api/docs/{id}/translate` khi `use_v2`:
+  - Load context từ `documents.ai_metadata` (JSON) + glossary từ `document_glossaries` (theo `target_lang`).
+  - Gọi `TranslatorV2.translate_page_batch(doc_id, page_num, target_lang, context, glossary, db, quality)` — 1-3 call/trang, glossary + model routing SP8.
+  - `async_mode=true` → background task (mark `translating` → `translated`/`failed`); sync → trả thẳng `{status, page_num}`.
+- `use_v2=false` giữ path V1 cũ (backward-compat cho test hiện có).
+- Glossary/context rỗng (chưa chạy extract-context) → `translate_page_batch` vẫn chạy với mặc định (degrade mượt).
+
+### B. Đặt ở CẢ Pipeline lẫn Preview
+
+- **Pipeline** (`/books/[id]/page.tsx`): theo spec gốc (lang selector + page list + nút per-page + polling), nhưng gọi với `use_v2:true, async:true`.
+- **Preview** (`/books/[id]/preview/`): thêm nút **"Dịch trang này"** trong sidebar list (mỗi trang) + cho trang hiện tại; target lang lấy từ `localStorage` `btb_translate_lang` (mặc định `vi`). Dịch xong → `has_translated` cập nhật, bật được toggle **Translated** để xem overlay tiếng Việt. Poll `GET /pages` khi có trang `translating`.
+
+Phần còn lại của spec (badge trạng thái, polling 3s, language selector 7 ngôn ngữ) giữ nguyên.

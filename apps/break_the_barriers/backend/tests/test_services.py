@@ -63,7 +63,7 @@ def test_docling_extractor_table_html():
     table_item.prov = []
 
     items = [(table_item, 1)]
-    html = DoclingExtractor._items_to_page_html(items, page_no=1)
+    html, blocks, figures = DoclingExtractor._items_to_page_html(items, page_no=1)
 
     assert "<table>" in html
     assert "<th>" in html

@@ -1,0 +1,91 @@
+"""PageModel: the rich intermediate representation that is the single source of
+truth for both preview rendering and (future SP-B) export."""
+from __future__ import annotations
+import json
+from dataclasses import dataclass, asdict
+from typing import List, Optional, Dict, Any
+
+
+@dataclass
+class FontSpec:
+    size: float            # points, in page-point space
+    weight: int            # 400 normal, 700 bold
+    italic: bool
+    color: str             # "#rrggbb"
+    align: str             # left|center|right|justify
+    family_class: str      # serif|sans|mono
+
+
+@dataclass
+class Block:
+    span_id: str
+    role: str              # heading|body|list|code|table|caption
+    bbox: List[float]      # [l, t, w, h] top-left points
+    text: str
+    font: Optional[FontSpec]
+    box: Optional[Dict[str, Any]] = None   # {"mode":"fill"|"scrim","fill":...} for raster overlay
+
+
+@dataclass
+class Figure:
+    bbox: List[float]      # [l, t, w, h] top-left points
+    img: str               # filename only
+    clean_img: Optional[str] = None   # AI-cleaned (text-removed) variant filename
+    kind: str = "illustration"        # banner | icon | illustration | content-region
+    align: str = "left"               # left | center | right (flow horizontal align)
+
+
+@dataclass
+class PageModel:
+    page_w: float
+    page_h: float
+    kind: str              # text|image|mixed
+    background: Dict[str, Any]   # {"color": "#rrggbb", "image": filename|None}
+    blocks: List[Block]
+    figures: List[Figure]
+    page_class: str = "text"     # text | preserve | regenerable
+    cover: str = "none"          # front | back | none
+    page_num: int = 0            # 1-based page number (for globally-unique flow keys)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "page_w": self.page_w, "page_h": self.page_h, "kind": self.kind,
+            "background": self.background,
+            "blocks": [asdict(b) for b in self.blocks],
+            "figures": [asdict(f) for f in self.figures],
+            "page_class": self.page_class,
+            "cover": self.cover,
+            "page_num": self.page_num,
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=False)
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "PageModel":
+        blocks = []
+        for b in d.get("blocks", []):
+            f = b.get("font")
+            blocks.append(Block(
+                span_id=b["span_id"], role=b.get("role", "body"),
+                bbox=list(b["bbox"]), text=b.get("text", ""),
+                font=FontSpec(**f) if f else None,
+                box=b.get("box"),
+            ))
+        figures = [Figure(bbox=list(f["bbox"]), img=f["img"],
+                          clean_img=f.get("clean_img"),
+                          kind=f.get("kind", "illustration"),
+                          align=f.get("align", "left"))
+                   for f in d.get("figures", [])]
+        return cls(
+            page_w=d["page_w"], page_h=d["page_h"], kind=d.get("kind", "text"),
+            background=d.get("background", {"color": "#ffffff", "image": None}),
+            blocks=blocks, figures=figures,
+            page_class=d.get("page_class", "text"),
+            cover=d.get("cover", "none"),
+            page_num=d.get("page_num", 0),
+        )
+
+    @classmethod
+    def from_json(cls, s: str) -> "PageModel":
+        return cls.from_dict(json.loads(s))

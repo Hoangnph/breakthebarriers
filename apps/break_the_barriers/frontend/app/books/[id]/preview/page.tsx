@@ -1,15 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlignJustify, LayoutTemplate, Columns2, type LucideIcon } from "lucide-react"
+import { ArrowLeft, ZoomIn, ZoomOut } from "lucide-react"
 import { fetchAPI, API_URL } from "@/lib/api"
-import LayoutReader, { type PageInfo } from "./LayoutReader"
-import LayoutSidebar from "./LayoutSidebar"
-import LayoutSplit from "./LayoutSplit"
-
-type Layout = "reader" | "sidebar" | "split"
-type Lang = "en" | "vi"
+import LayoutFlow from "./LayoutFlow"
 
 interface Doc {
   id: string
@@ -18,49 +13,22 @@ interface Doc {
   status: string
 }
 
-const LAYOUT_KEY = "btb_preview_layout"
-const LANG_KEY = "btb_preview_lang"
-
-const LAYOUT_ICONS: Record<Layout, { icon: LucideIcon; label: string }> = {
-  reader:  { icon: AlignJustify,   label: "Reader" },
-  sidebar: { icon: LayoutTemplate, label: "Sidebar" },
-  split:   { icon: Columns2,       label: "Split" },
-}
-
+// Tập trung 1 chức năng: Original PDF → HTML (element thật, relative) ở chế độ Flow.
 export default function PreviewPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
 
   const [doc, setDoc] = useState<Doc | null>(null)
-  const [pages, setPages] = useState<PageInfo[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [layout, setLayout] = useState<Layout>("reader")
-  const [lang, setLang] = useState<Lang>("en")
-  const [html, setHtml] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [zoom, setZoom] = useState(1)
+  const [lang, setLang] = useState<"goc" | "vi">("goc")
 
-  // Restore preferences from localStorage
-  useEffect(() => {
-    const savedLayout = localStorage.getItem(LAYOUT_KEY) as Layout | null
-    const savedLang = localStorage.getItem(LANG_KEY) as Lang | null
-    if (savedLayout && ["reader", "sidebar", "split"].includes(savedLayout)) setLayout(savedLayout)
-    if (savedLang && ["en", "vi"].includes(savedLang)) setLang(savedLang)
-  }, [])
-
-  // Load document + page list on mount
   useEffect(() => {
     async function init() {
       try {
-        const [docs, pageList] = await Promise.all([
-          fetchAPI<Doc[]>("/api/docs"),
-          fetchAPI<PageInfo[]>(`/api/docs/${id}/pages`),
-        ])
+        const docs = await fetchAPI<Doc[]>("/api/docs")
         const found = docs.find((d) => d.id === id)
         if (!found) { router.push("/dashboard"); return }
         setDoc(found)
-        setPages(pageList)
-        if (pageList.length > 0) setCurrentPage(pageList[0].page_num)
       } catch {
         router.push("/dashboard")
       }
@@ -68,44 +36,27 @@ export default function PreviewPage() {
     init()
   }, [id, router])
 
-  // Fetch HTML when page or lang changes (not needed for split)
-  const fetchHtml = useCallback(async (page: number, l: Lang, currentLayout: Layout) => {
-    if (currentLayout === "split") return
-    setLoading(true)
-    setError("")
-    try {
-      const data = await fetchAPI<{ html: string }>(`/api/docs/${id}/pages/${page}?lang=${l}`)
-      setHtml(data.html ?? "")
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Không tải được nội dung")
-      setHtml("")
-    } finally {
-      setLoading(false)
+  // Broadcast zoom to the flow iframe whenever it changes.
+  useEffect(() => {
+    document.querySelectorAll("iframe").forEach((f) =>
+      f.contentWindow?.postMessage({ type: "btb-zoom", zoom }, "*")
+    )
+  }, [zoom])
+
+  // Keyboard zoom: +/-/0
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "+" || e.key === "=") setZoom((z) => Math.min(5, +(z + 0.25).toFixed(2)))
+      else if (e.key === "-" || e.key === "_") setZoom((z) => Math.max(0.25, +(z - 0.25).toFixed(2)))
+      else if (e.key === "0") setZoom(1)
     }
-  }, [id])
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
-  useEffect(() => {
-    if (pages.length === 0) return
-    fetchHtml(currentPage, lang, layout)
-  }, [currentPage, lang, fetchHtml, pages.length])
-
-  // Re-fetch when switching away from split
-  useEffect(() => {
-    if (layout !== "split" && pages.length > 0) fetchHtml(currentPage, lang, layout)
-  }, [layout, currentPage, lang, fetchHtml, pages.length])
-
-  function changeLayout(l: Layout) {
-    setLayout(l)
-    localStorage.setItem(LAYOUT_KEY, l)
-  }
-
-  function changeLang(l: Lang) {
-    setLang(l)
-    localStorage.setItem(LANG_KEY, l)
-  }
-
-  const currentPageInfo = pages.find((p) => p.page_num === currentPage)
-  const canTranslated = currentPageInfo?.has_translated ?? false
+  const zoomIn = () => setZoom((z) => Math.min(5, +(z + 0.25).toFixed(2)))
+  const zoomOut = () => setZoom((z) => Math.max(0.25, +(z - 0.25).toFixed(2)))
+  const zoomFit = () => setZoom(1)
 
   if (!doc) {
     return (
@@ -115,12 +66,8 @@ export default function PreviewPage() {
     )
   }
 
-  const contentProps = { pages, currentPage, html, loading, onPageChange: setCurrentPage }
-  const splitProps = { docId: id, pages, currentPage, apiUrl: API_URL, onPageChange: setCurrentPage }
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Sticky header */}
       <header className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center gap-3 flex-shrink-0 z-10">
         <button onClick={() => router.push(`/books/${id}`)}
                 className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 flex-shrink-0">
@@ -131,49 +78,39 @@ export default function PreviewPage() {
           {doc.filename}
         </span>
 
-        {/* Lang toggle — hidden in split */}
-        {layout !== "split" && (
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-            <button onClick={() => changeLang("en")}
-                    className={`px-3 py-1 text-xs font-medium ${lang === "en" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-              Original
-            </button>
-            <button onClick={() => changeLang("vi")}
-                    disabled={!canTranslated}
-                    className={`px-3 py-1 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed ${lang === "vi" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-              Translated
-            </button>
-          </div>
-        )}
-
-        {/* Layout switcher */}
+        {/* Gốc / Dịch toggle */}
         <div className="flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-          {(["reader", "sidebar", "split"] as Layout[]).map((key) => {
-            const { icon: Icon, label } = LAYOUT_ICONS[key]
-            return (
-              <button key={key} onClick={() => changeLayout(key)} title={label}
-                      className={`px-2.5 py-1.5 ${layout === key ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                <Icon size={15} />
-              </button>
-            )
-          })}
+          <button onClick={() => setLang("goc")}
+                  className={`px-3 py-1 text-xs font-medium ${lang === "goc" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+            Gốc
+          </button>
+          <button onClick={() => setLang("vi")}
+                  className={`px-3 py-1 text-xs font-medium ${lang === "vi" ? "bg-indigo-600 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+            Dịch
+          </button>
         </div>
 
-        <span className="text-xs text-gray-400 flex-shrink-0">
-          {currentPage}/{doc.total_pages}
-        </span>
+        {/* Zoom controls */}
+        <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+          <button onClick={zoomOut} title="Thu nhỏ (-)"
+                  className="px-2 py-1.5 text-gray-500 hover:bg-gray-50">
+            <ZoomOut size={15} />
+          </button>
+          <button onClick={zoomFit} title="Vừa màn hình (0)"
+                  className="px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 border-x border-gray-200 min-w-[3.25rem]">
+            {Math.round(zoom * 100)}%
+          </button>
+          <button onClick={zoomIn} title="Phóng to (+)"
+                  className="px-2 py-1.5 text-gray-500 hover:bg-gray-50">
+            <ZoomIn size={15} />
+          </button>
+        </div>
+
+        <span className="text-xs text-gray-400 flex-shrink-0">{doc.total_pages} trang</span>
       </header>
 
-      {error && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <div key={currentPage} className="flex-1 min-h-0 overflow-hidden">
-        {layout === "reader"  && <LayoutReader  {...contentProps} />}
-        {layout === "sidebar" && <LayoutSidebar {...contentProps} />}
-        {layout === "split"   && <LayoutSplit   {...splitProps} />}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <LayoutFlow docId={id} apiUrl={API_URL} zoom={zoom} lang={lang} />
       </div>
     </div>
   )

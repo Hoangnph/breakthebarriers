@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Dict, Optional
 
 class DocumentMetadata(BaseModel):
@@ -17,6 +17,10 @@ class TranslationRequest(BaseModel):
     page_num: int
     target_lang: str = "vi"
     quality_tier: str = "high"
+    use_v2: bool = True
+
+class PagePolicyRequest(BaseModel):
+    value: str   # auto | base-color | keep-raster | clean-photo
 
 class CompilationRequest(BaseModel):
     page_num: int
@@ -30,8 +34,7 @@ class TranslationItem(BaseModel):
     translated_text: Optional[str] = None
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TranslationUpdate(BaseModel):
     translated_text: str

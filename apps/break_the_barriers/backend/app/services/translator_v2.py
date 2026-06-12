@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import hashlib
@@ -28,6 +29,23 @@ class TranslatorV2:
         "vi": "Vietnamese", "en": "English", "zh": "Chinese",
         "ja": "Japanese", "ko": "Korean", "fr": "French", "de": "German",
     }
+
+    @staticmethod
+    def is_decoration(text: str) -> bool:
+        """Deterministic fallback classifier: True if a fragment is decorative
+        noise (numbers/codes from image design) rather than real content.
+        Content has at least one word of >=4 letters; otherwise digit-heavy or
+        letterless short fragments are decoration."""
+        t = (text or "").strip()
+        if not t:
+            return True
+        longest_word = max((len(w) for w in re.findall(r"[A-Za-zÀ-ỹ]+", t)), default=0)
+        if longest_word >= 4:
+            return False
+        letters = sum(c.isalpha() for c in t)
+        digits = sum(c.isdigit() for c in t)
+        nonspace = sum(1 for c in t if not c.isspace()) or 1
+        return (digits / nonspace >= 0.3) or (letters == 0)
 
     # ── Translation Memory ────────────────────────────────────────────────
 
@@ -246,6 +264,8 @@ class TranslatorV2:
             if is_pytest or not api_key:
                 # Mock: use V1 mock for each block
                 for block in blocks_to_translate:
+                    if TranslatorV2.is_decoration(block["text"]):
+                        continue   # drop decorative noise — no translation written
                     translated = Translator.translate_text_agentic(
                         block["text"], target_lang=target_lang, quality=quality
                     )
@@ -275,11 +295,13 @@ class TranslatorV2:
                     page.needs_review = True
                     page.review_reason = "batch_failed_v1_fallback"
                 else:
-                    batch_translations, has_missing = batch_result
+                    batch_translations, has_missing, content_flags = batch_result
                     if has_missing:
                         page.needs_review = True
                         page.review_reason = "batch_missing_blocks"
-                    for block, translated in zip(blocks_to_translate, batch_translations):
+                    for block, translated, is_content in zip(blocks_to_translate, batch_translations, content_flags):
+                        if not is_content:
+                            continue   # drop decorative noise
                         TranslatorV2.tm_store(block["text"], target_lang, translated, db)
                         if len(block["span_ids"]) == 1:
                             translations[block["span_ids"][0]] = translated
@@ -287,8 +309,13 @@ class TranslatorV2:
                             parts = Translator.deinterpolate_translation(translated, block["span_ids"])
                             translations.update(parts)
 
-        # Write translations to DB
+        # Build a lookup of individual span texts to filter decoration at write time
+        span_text_by_id = {s["id"]: s["text"] for s in spans}
+
+        # Write translations to DB (skip individual decoration spans)
         for span_id, text in translations.items():
+            if TranslatorV2.is_decoration(span_text_by_id.get(span_id, "")):
+                continue  # drop decorative noise even when it appears inside a merged block
             t_row = db.query(DBTranslation).filter(
                 DBTranslation.document_id == doc_id,
                 DBTranslation.page_num == page_num,
@@ -370,7 +397,9 @@ class TranslatorV2:
                 + ("5. Prioritize maximum accuracy and natural fluency; double-check terminology against the glossary\n\n"
                    if quality == "high" else "\n")
                 + f"Input:\n{input_json}\n\n"
-                'Output schema: {"translations":[{"id":"b0","text":"..."},...]}'
+                'Each item also needs "is_content": false for decorative noise '
+                '(page numbers, codes, stray symbols) and true for real content.\n'
+                'Output schema: {"translations":[{"id":"b0","text":"...","is_content":true},...]}'
             )
 
             resp = client.models.generate_content(
@@ -380,16 +409,20 @@ class TranslatorV2:
             )
             data = json.loads(resp.text)
             translated_map = {item["id"]: item["text"] for item in data["translations"]}
+            content_map = {item["id"]: item.get("is_content", True) for item in data["translations"]}
             result = []
+            content_flags = []
             has_missing = False
             for i in range(len(blocks)):
                 key = f"b{i}"
                 if key in translated_map:
                     result.append(translated_map[key])
+                    content_flags.append(bool(content_map.get(key, True)))
                 else:
                     result.append(blocks[i]["text"])
+                    content_flags.append(not TranslatorV2.is_decoration(blocks[i]["text"]))
                     has_missing = True
-            return (result, has_missing)
+            return (result, has_missing, content_flags)
 
         except Exception as e:
             logger.error(f"Gemini batch translate failed: {e}")

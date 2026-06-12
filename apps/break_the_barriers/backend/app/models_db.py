@@ -41,6 +41,10 @@ class DBPage(Base):
     needs_review        = Column(Boolean, default=False)
     review_reason       = Column(Text, nullable=True)
     translation_quality = Column(Float, nullable=True)
+    layout_json         = Column(Text, nullable=True)
+    model_json          = Column(Text, nullable=True)   # PageModel JSON (SP-A)
+    svg_path            = Column(Text, nullable=True)   # faithful visual: "{doc}-{n}.svg" hoặc ".jpg"
+    text_layer_json     = Column(Text, nullable=True)   # lớp text vô hình view Gốc
 
     document = relationship("DBDocument", back_populates="pages")
 
@@ -91,6 +95,7 @@ class DBUser(Base):
     pages_limit = Column(Integer, default=20)
     pages_reset_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     documents = relationship("DBDocument", back_populates="user", lazy="write_only")

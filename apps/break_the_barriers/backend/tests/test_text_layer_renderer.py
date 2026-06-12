@@ -1,0 +1,316 @@
+from backend.app.services.page_model import FontSpec, Block, Figure, PageModel
+from backend.app.services.text_layer_renderer import render_text_layer
+
+
+def _model(kind="text"):
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind=kind,
+        background={"color": "#ffffff", "image": None},
+        blocks=[Block(span_id="s1", role="heading", bbox=[72, 40, 200, 24],
+                      text="INTRODUCTION TO AI",
+                      font=FontSpec(24, 700, False, "#1a1a1a", "left", "sans"))],
+        figures=[Figure(bbox=[0, 100, 200, 150], img="d-1-fig1.png")],
+    )
+
+
+def test_render_uses_translated_text_not_original():
+    html = render_text_layer(_model(), {"s1": "GIỚI THIỆU VỀ AI"},
+                             image_url_base="http://api/assets")
+    assert "GIỚI THIỆU VỀ AI" in html
+    assert "INTRODUCTION TO AI" not in html
+
+
+def test_render_has_no_raster_background_image():
+    html = render_text_layer(_model(), {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="ov-bg"' not in html
+    assert "page-1.png" not in html
+
+
+def test_render_places_figure_image():
+    html = render_text_layer(_model(), {"s1": "X"}, image_url_base="http://api/assets")
+    assert "http://api/assets/d-1-fig1.png" in html
+
+
+def test_render_applies_font_weight_and_color():
+    html = render_text_layer(_model(), {"s1": "X"}, image_url_base="http://api/assets")
+    assert "font-weight:700" in html
+    assert "#1a1a1a" in html
+
+
+def test_render_emits_fit_script_for_absolute_blocks():
+    html = render_text_layer(_model(), {"s1": "X"}, image_url_base="http://api/assets")
+    assert "btb-fit" in html
+
+
+def _two_block_model():
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#ffffff", "image": None},
+        blocks=[
+            Block(span_id="s1", role="body", bbox=[72, 100, 200, 50],
+                  text="A", font=FontSpec(11, 400, False, "#000", "left", "sans")),
+            Block(span_id="s2", role="body", bbox=[72, 200, 200, 50],
+                  text="B", font=FontSpec(11, 400, False, "#000", "left", "sans")),
+        ],
+        figures=[],
+    )
+
+
+def test_render_emits_min_and_max_height_bounds():
+    html = render_text_layer(_two_block_model(), {"s1": "Một", "s2": "Hai"},
+                             image_url_base="http://api/assets")
+    # CSS contains one min-height rule; each block adds one inline min-height.
+    # Count inline-style occurrences by checking the no-space variant used by _pct.
+    # The CSS rule uses "min-height: 100%" (with space), so "min-height:5" or
+    # "min-height:1" only comes from inline styles.
+    # Use max-height which only appears in inline styles (not in _CSS constant).
+    assert html.count("max-height:") == 2
+    assert html.count("min-height:5.938%") == 2  # inline bound per block, CSS-independent
+
+
+def test_render_max_height_uses_slot_not_bbox():
+    # s1 slot = next-top(200) - top(100) = 100pt -> 100/842*100 = 11.876%,
+    # larger than its bbox-height bound 50/842*100 = 5.938%.
+    html = render_text_layer(_two_block_model(), {"s1": "Một", "s2": "Hai"},
+                             image_url_base="http://api/assets")
+    assert "max-height:11.876%" in html   # slot-based, not 5.938%
+    assert "min-height:5.938%" in html     # bbox-height floor
+
+
+def _raster_model(page_class, cover):
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#3c84bf", "image": "page-2.png"},
+        blocks=[Block(span_id="s1", role="body", bbox=[70, 480, 300, 14],
+                      text="", font=FontSpec(11, 400, False, "#000", "left", "sans"),
+                      box={"mode": "scrim", "fill": "rgba(255,255,255,0.55)"})],
+        figures=[],
+        page_class=page_class, cover=cover,
+    )
+
+
+def test_auto_base_color_page_keeps_raster_and_masks():
+    # Faithfulness-first: an AUTO base-color page (regenerable, no manual override)
+    # now keeps the original raster as the truth layer and masks the baked-in text.
+    html = render_text_layer(_raster_model("regenerable", "none"),
+                             {"s1": "Mục lục"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' in html
+    assert "page-2.png" in html
+    assert "rgba(255,255,255,0.9)" in html   # mask raised to opaque to hide original
+    assert "Mục lục" in html
+
+
+def test_preserve_page_keeps_raster_and_box():
+    html = render_text_layer(_raster_model("preserve", "none"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' in html
+    assert "page-2.png" in html
+    assert "rgba(255,255,255,0.9)" in html   # mask opacity raised from sampled 0.55
+
+
+def test_front_cover_keeps_raster_phase1():
+    html = render_text_layer(_raster_model("regenerable", "front"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' in html
+
+
+def _clean_photo_model(clean_image=None):
+    bg = {"color": "#000", "image": "page-1.png"}
+    if clean_image:
+        bg["clean_image"] = clean_image
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed", background=bg,
+        blocks=[Block(span_id="s1", role="heading", bbox=[36, 516, 432, 60],
+                      text="", font=FontSpec(36, 700, False, "#fff", "left", "sans"))],
+        figures=[],
+        page_class="regenerable", cover="front",
+    )
+
+
+def test_clean_photo_uses_clean_image_when_present():
+    html = render_text_layer(_clean_photo_model("page-1.clean.png"),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert "page-1.clean.png" in html
+    # original raster must NOT be referenced (strip the clean name first to avoid substring match)
+    assert "page-1.png" not in html.replace("page-1.clean.png", "")
+
+
+def test_clean_photo_falls_back_to_raster_when_not_cleaned():
+    html = render_text_layer(_clean_photo_model(None),
+                             {"s1": "X"}, image_url_base="http://api/assets")
+    assert "page-1.png" in html
+
+
+def test_clean_photo_text_background_is_transparent():
+    # On a clean-photo page the background is already AI-cleaned, so the overlay
+    # text must NOT carry a scrim/fill box — it sits directly on the clean photo.
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#000", "image": "page-1.png",
+                    "clean_image": "page-1.clean-inpaint.png"},
+        blocks=[Block(span_id="s1", role="heading", bbox=[36, 516, 432, 60], text="",
+                      font=FontSpec(36, 700, False, "#fff", "left", "sans"),
+                      box={"mode": "scrim", "fill": "rgba(255,255,255,0.55)"})],
+        figures=[], page_class="regenerable", cover="front")
+    html = render_text_layer(pm, {"s1": "X"}, image_url_base="http://api/assets")
+    assert "rgba(255,255,255,0.55)" not in html
+
+
+def test_policy_override_forces_base_color_on_preserve():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#000", "image": "page-1.png", "policy_override": "base-color"},
+        blocks=[Block(span_id="s1", role="body", bbox=[70, 480, 300, 14], text="",
+                      font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+        figures=[], page_class="preserve", cover="none")
+    html = render_text_layer(pm, {"s1": "X"}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' not in html          # override base-color drops raster
+
+
+def test_blocks_carry_data_span_and_edit_script():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[Block(span_id="s1", role="body", bbox=[72, 40, 200, 24], text="",
+                      font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+        figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"s1": "Xin chào"}, image_url_base="http://api/assets")
+    assert 'data-span="s1"' in html
+    assert "btb-edit" in html
+
+
+def test_manual_base_color_override_renders_on_white_without_raster():
+    # The manual base-color override is the escape hatch to drop a bad raster:
+    # clean WHITE page, no raster, sampled photo color discarded. (Auto base-color
+    # pages instead keep the raster — see test_auto_base_color_page_keeps_raster_and_masks.)
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="mixed",
+        background={"color": "#3c84bf", "image": "page-2.png",
+                    "policy_override": "base-color"},
+        blocks=[], figures=[], page_class="regenerable", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert 'class="tl-bg"' not in html
+    assert "background:#ffffff" in html
+    assert "#3c84bf" not in html
+
+
+def test_figure_uses_clean_img_when_present():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[],
+        figures=[Figure(bbox=[10, 10, 100, 50], img="f1.png", clean_img="f1.clean.png")],
+        page_class="text", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert "f1.clean.png" in html
+    assert "f1.png" not in html.replace("f1.clean.png", "")
+
+
+def test_figure_falls_back_to_img_without_clean():
+    pm = PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[], figures=[Figure(bbox=[10, 10, 100, 50], img="f1.png")],
+        page_class="text", cover="none")
+    html = render_text_layer(pm, {}, image_url_base="http://api/assets")
+    assert "f1.png" in html
+
+
+import re
+
+
+def _two_block_heading_body():
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[
+            Block(span_id="hd", role="heading", bbox=[72, 40, 200, 24], text="",
+                  font=FontSpec(32, 700, False, "#000", "left", "sans")),
+            Block(span_id="bd", role="body", bbox=[72, 200, 200, 100], text="",
+                  font=FontSpec(11, 400, False, "#000", "left", "sans")),
+        ], figures=[], page_class="text", cover="none")
+
+
+def _maxmin(html, span):
+    m = re.search(r'data-span="%s"[^>]*min-height:([0-9.]+)%%;max-height:([0-9.]+)%%' % span, html)
+    assert m, f"div for {span} not found"
+    return m.group(1), m.group(2)
+
+
+def test_heading_clamps_to_bbox_body_uses_slot():
+    html = render_text_layer(_two_block_heading_body(),
+                             {"hd": "Tiêu đề dài hơn nhiều", "bd": "Thân bài"},
+                             image_url_base="http://api/assets")
+    h_min, h_max = _maxmin(html, "hd")
+    b_min, b_max = _maxmin(html, "bd")
+    assert h_min == h_max
+    assert float(b_max) > float(b_min)
+
+
+def _font_px(html, span):
+    m = re.search(r'data-span="%s"[^>]*font-size:([0-9.]+)px' % span, html)
+    assert m
+    return float(m.group(1))
+
+
+def test_heading_shrinks_more_than_body_for_same_long_text():
+    long = "Một tiêu đề tiếng Việt khá là dài để buộc phải xuống dòng"
+    def _one(role):
+        return PageModel(page_w=595.0, page_h=842.0, kind="text",
+                         background={"color": "#fff", "image": None},
+                         blocks=[Block(span_id="s1", role=role, bbox=[72, 40, 150, 20],
+                                       text="", font=FontSpec(28, 700, False, "#000", "left", "sans"))],
+                         figures=[], page_class="text", cover="none")
+    h_html = render_text_layer(_one("heading"), {"s1": long}, image_url_base="http://api/a")
+    b_html = render_text_layer(_one("body"), {"s1": long}, image_url_base="http://api/a")
+    assert _font_px(h_html, "s1") <= _font_px(b_html, "s1")
+
+
+def test_single_line_body_block_clamps_to_bbox():
+    # A body-role block whose box is ~1 line (h <= font*1.8) clamps to bbox too,
+    # so a mislabelled title (role=body) still fits without wrapping off-region.
+    pm = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                   background={"color": "#fff", "image": None},
+                   blocks=[Block(span_id="t", role="body", bbox=[72, 40, 200, 40], text="",
+                                 font=FontSpec(30, 700, False, "#000", "left", "sans")),
+                           Block(span_id="b2", role="body", bbox=[72, 300, 200, 100], text="",
+                                 font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+                   figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"t": "Tiêu đề", "b2": "x"}, image_url_base="http://api/a")
+    t_min, t_max = _maxmin(html, "t")
+    assert t_min == t_max          # single-line body clamps to bbox (no slot growth)
+
+
+def _toc_model():
+    def blk(span, top):
+        return Block(span_id=span, role="body", bbox=[72, top, 300, 14], text="",
+                     font=FontSpec(11, 400, False, "#000", "left", "sans"))
+    return PageModel(
+        page_w=595.0, page_h=842.0, kind="text",
+        background={"color": "#fff", "image": None},
+        blocks=[blk("s1", 100), blk("s2", 120), blk("s3", 140),
+                Block(span_id="hd", role="heading", bbox=[72, 60, 200, 24], text="",
+                      font=FontSpec(24, 700, False, "#000", "left", "sans"))],
+        figures=[], page_class="text", cover="none")
+
+
+def test_toc_page_renders_flex_entries():
+    html = render_text_layer(_toc_model(),
+                             {"s1": "Lời nói đầu......3", "s2": "Giới thiệu......4",
+                              "s3": "Thuật toán\t 8", "hd": "MỤC LỤC"},
+                             image_url_base="http://api/a")
+    assert 'class="tl-text tl-toc"' in html
+    assert 'class="tl-toc-num">3<' in html
+    assert 'class="tl-toc-title">Lời nói đầu<' in html
+    assert "......" not in html
+    assert '>MỤC LỤC</div>' in html
+
+
+def test_non_toc_page_unchanged():
+    pm = PageModel(page_w=595.0, page_h=842.0, kind="text",
+                   background={"color": "#fff", "image": None},
+                   blocks=[Block(span_id="s1", role="body", bbox=[72, 100, 300, 14],
+                                 text="", font=FontSpec(11, 400, False, "#000", "left", "sans"))],
+                   figures=[], page_class="text", cover="none")
+    html = render_text_layer(pm, {"s1": "Chỉ một mục......3"}, image_url_base="http://api/a")
+    assert 'class="tl-text tl-toc"' not in html

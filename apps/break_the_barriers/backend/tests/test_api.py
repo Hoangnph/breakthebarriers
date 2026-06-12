@@ -71,6 +71,18 @@ def test_extract_document(client):
     response_404 = client.post("/api/docs/invalid_id/extract")
     assert response_404.status_code == 404
 
+def test_extract_rejects_concurrent_call(client, db_session):
+    # A second extract while one is already in progress must be rejected,
+    # preventing the duplicate-pages race (status="extracting" guard).
+    from backend.app.models_db import DBDocument
+    doc = db_session.query(DBDocument).filter(DBDocument.id == "clean_code").first()
+    doc.status = "extracting"
+    db_session.commit()
+
+    response = client.post("/api/docs/clean_code/extract")
+    assert response.status_code == 409
+    assert "progress" in response.json()["detail"].lower()
+
 def test_get_page_content(client):
     # Extract the document first to populate the pages/translations tables
     client.post("/api/docs/clean_code/extract")
@@ -286,6 +298,21 @@ def test_translate_all_doc_not_found(client):
         json={"target_lang": "vi"}
     )
     assert response.status_code == 404
+
+def test_translate_all_rejects_concurrent_call(client, db_session):
+    # A second translate-all while pages are still "translating" must be rejected.
+    from backend.app.models_db import DBPage
+    client.post("/api/docs/clean_code/extract")
+    page = db_session.query(DBPage).filter(DBPage.document_id == "clean_code").first()
+    page.status = "translating"
+    db_session.commit()
+
+    response = client.post(
+        "/api/docs/clean_code/translate-all",
+        json={"target_lang": "vi", "use_v2": False}
+    )
+    assert response.status_code == 409
+    assert "progress" in response.json()["detail"].lower()
 
 def test_translate_all_jobs_visible_in_list(client):
     client.post("/api/docs/clean_code/extract")
@@ -665,3 +692,46 @@ def test_quota_exceeded(client, db_session):
                        headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 402
     assert "Quota" in resp.json()["detail"]
+
+
+def test_translate_page_v2_sync(client):
+    # V2 single-page (default use_v2=True) returns a translated result synchronously.
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "translated"
+    assert data["page_num"] == 1
+
+
+def test_translate_page_v2_async_marks_translating(client, db_session):
+    from backend.app.models_db import DBPage
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate?async_mode=true",
+                       json={"page_num": 2, "target_lang": "vi", "use_v2": True})
+    assert resp.status_code == 202
+    assert resp.json()["status"] == "translating"
+    page = db_session.query(DBPage).filter(
+        DBPage.document_id == "clean_code", DBPage.page_num == 2).first()
+    assert page.status in ("translated", "translating")
+
+
+def test_translate_page_v1_still_supported(client):
+    client.post("/api/docs/clean_code/extract")
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi", "use_v2": False})
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "translated"
+
+
+def test_translate_page_rejects_already_translating(client, db_session):
+    from backend.app.models_db import DBPage
+    client.post("/api/docs/clean_code/extract")
+    page = db_session.query(DBPage).filter(
+        DBPage.document_id == "clean_code", DBPage.page_num == 1).first()
+    page.status = "translating"
+    db_session.commit()
+    resp = client.post("/api/docs/clean_code/translate",
+                       json={"page_num": 1, "target_lang": "vi"})
+    assert resp.status_code == 409
