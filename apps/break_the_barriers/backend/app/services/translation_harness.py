@@ -185,31 +185,35 @@ class TranslationHarness:
     def harmonize_page(blocks, target_lang, context,
                        glossary) -> Optional[Tuple[List[str], List[int]]]:
         """5 bước: candidates → rule-check → judge → refine → (results, scores).
-        Trả None khi KHÔNG sinh được ứng viên nào (caller fallback "high")."""
-        candidates = TranslationHarness._generate_candidates(blocks, target_lang, context, glossary)
-        if not candidates:
+        Trả None khi KHÔNG sinh được ứng viên / lỗi bất ngờ (caller fallback "high")."""
+        try:
+            candidates = TranslationHarness._generate_candidates(blocks, target_lang, context, glossary)
+            if not candidates:
+                return None
+            n = len(candidates)
+            valid = []
+            for bi, b in enumerate(blocks):
+                vs = [ci for ci in range(n)
+                      if TranslationHarness._rule_check(
+                          b["text"], candidates[ci][bi], glossary, target_lang)[0]]
+                valid.append(vs if vs else [0])     # degrade: giữ ứng viên đầu
+            judged = TranslationHarness._judge(blocks, candidates, target_lang, context)
+            results, scores, refine_items = [], [], []
+            for bi, b in enumerate(blocks):
+                j = judged[bi]
+                idx = j["best_idx"] if j["best_idx"] in valid[bi] else valid[bi][0]
+                results.append(candidates[idx][bi])
+                scores.append(j["score"])
+                if j["score"] < TranslationHarness.SCORE_THRESHOLD:
+                    refine_items.append({"block_index": bi, "source": b["text"],
+                                         "current": results[bi], "critique": j["critique"]})
+            if refine_items:
+                improved = TranslationHarness._refine(refine_items, target_lang, context, glossary)
+                for bi, txt in improved.items():
+                    if TranslationHarness._rule_check(blocks[bi]["text"], txt, glossary, target_lang)[0]:
+                        results[bi] = txt
+                        scores[bi] = max(scores[bi], TranslationHarness.SCORE_THRESHOLD)
+            return (results, scores)
+        except Exception as e:                       # fail-soft tổng (spec §8)
+            logger.warning(f"harmonize_page failed, fallback to high: {e}")
             return None
-        n = len(candidates)
-        valid = []
-        for bi, b in enumerate(blocks):
-            vs = [ci for ci in range(n)
-                  if TranslationHarness._rule_check(
-                      b["text"], candidates[ci][bi], glossary, target_lang)[0]]
-            valid.append(vs if vs else [0])     # degrade: giữ ứng viên đầu
-        judged = TranslationHarness._judge(blocks, candidates, target_lang, context)
-        results, scores, refine_items = [], [], []
-        for bi, b in enumerate(blocks):
-            j = judged[bi]
-            idx = j["best_idx"] if j["best_idx"] in valid[bi] else valid[bi][0]
-            results.append(candidates[idx][bi])
-            scores.append(j["score"])
-            if j["score"] < TranslationHarness.SCORE_THRESHOLD:
-                refine_items.append({"block_index": bi, "source": b["text"],
-                                     "current": results[bi], "critique": j["critique"]})
-        if refine_items:
-            improved = TranslationHarness._refine(refine_items, target_lang, context, glossary)
-            for bi, txt in improved.items():
-                if TranslationHarness._rule_check(blocks[bi]["text"], txt, glossary, target_lang)[0]:
-                    results[bi] = txt
-                    scores[bi] = max(scores[bi], TranslationHarness.SCORE_THRESHOLD)
-        return (results, scores)

@@ -109,3 +109,14 @@ def test_harmonize_keeps_winner_when_refine_invalid(monkeypatch):
 def test_harmonize_returns_none_when_no_candidates(monkeypatch):
     monkeypatch.setattr(H, "_generate_candidates", staticmethod(lambda *a: []))
     assert H.harmonize_page([{"text": "x", "span_ids": ["s1"]}], "vi", {}, []) is None
+
+
+def test_harmonize_failsoft_on_unexpected_error(monkeypatch):
+    # lỗi bất ngờ trong orchestration → None (caller fallback "high"), không vỡ trang
+    blocks = [{"text": "Hello", "span_ids": ["s1"]}]
+    monkeypatch.setattr(H, "_generate_candidates", staticmethod(lambda *a: [["Xin chào"]]))
+
+    def boom(*a, **k):
+        raise RuntimeError("unexpected")
+    monkeypatch.setattr(H, "_judge", staticmethod(boom))
+    assert H.harmonize_page(blocks, "vi", {}, []) is None

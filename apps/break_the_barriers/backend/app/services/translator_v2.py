@@ -278,7 +278,7 @@ class TranslatorV2:
                                               db, quality=score / 100.0)
                         if score < TranslationHarness.SCORE_THRESHOLD:
                             page.needs_review = True
-                            page.review_reason = f"harness low score {score}"
+                            page.review_reason = f"harness: {block['span_ids'][0]} score {score}"
                         if len(block["span_ids"]) == 1:
                             translations[block["span_ids"][0]] = translated
                         else:
