@@ -76,3 +76,23 @@ def test_refine_maps_improved_back(monkeypatch):
 
 def test_refine_empty_returns_empty():
     assert H._refine([], "vi", {}, []) == {}
+
+
+def test_harmonize_selects_winner_and_refines(monkeypatch):
+    blocks = [{"text": "Hello", "span_ids": ["s1"]},
+              {"text": "World", "span_ids": ["s2"]}]
+    monkeypatch.setattr(H, "_generate_candidates",
+                        staticmethod(lambda *a: [["Xin chào", "Thế giới"],
+                                                 ["Chào", "Quả đất"]]))
+    monkeypatch.setattr(H, "_judge", staticmethod(lambda *a: [
+        {"best_idx": 0, "score": 95, "critique": "great"},
+        {"best_idx": 1, "score": 60, "critique": "improve"}]))   # block 2 thấp → refine
+    monkeypatch.setattr(H, "_refine", staticmethod(lambda *a, **k: {1: "Thế giới (đã sửa)"}))
+    results, scores = H.harmonize_page(blocks, "vi", {}, [])
+    assert results[0] == "Xin chào" and scores[0] == 95
+    assert results[1] == "Thế giới (đã sửa)" and scores[1] >= H.SCORE_THRESHOLD
+
+
+def test_harmonize_returns_none_when_no_candidates(monkeypatch):
+    monkeypatch.setattr(H, "_generate_candidates", staticmethod(lambda *a: []))
+    assert H.harmonize_page([{"text": "x", "span_ids": ["s1"]}], "vi", {}, []) is None
