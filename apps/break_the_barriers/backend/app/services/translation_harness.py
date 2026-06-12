@@ -149,3 +149,34 @@ class TranslationHarness:
             if c is not None:
                 out.append(c)
         return out
+
+    @staticmethod
+    def _refine_call(payload: list) -> Dict[str, str]:
+        """1 lượt Gemini refine. payload:[{"id","source","current","critique"}] → {id:text}."""
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {}
+        from google import genai
+        client = genai.Client(api_key=api_key)
+        prompt = (
+            "Improve each translation using its critique. Preserve meaning, numbers, glossary.\n"
+            'Return ONLY JSON {"items":[{"id":"r0","text":"<improved>"},...]}.\n'
+            f"Input:\n{json.dumps(payload, ensure_ascii=False)}")
+        resp = client.models.generate_content(
+            model=TranslationHarness.REFINE_MODEL, contents=prompt,
+            config={"response_mime_type": "application/json"})
+        return {it["id"]: it["text"] for it in json.loads(resp.text).get("items", [])}
+
+    @staticmethod
+    def _refine(items, target_lang, context, glossary) -> Dict[int, str]:
+        if not items:
+            return {}
+        payload = [{"id": f"r{k}", "source": it["source"], "current": it["current"],
+                    "critique": it["critique"]} for k, it in enumerate(items)]
+        try:
+            tmap = TranslationHarness._refine_call(payload)
+        except Exception as e:
+            logger.warning(f"refine failed: {e}")
+            return {}
+        return {items[k]["block_index"]: tmap[f"r{k}"]
+                for k in range(len(items)) if f"r{k}" in tmap}

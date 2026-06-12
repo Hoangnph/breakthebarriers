@@ -64,3 +64,15 @@ def test_generate_candidates_skips_failed_variant(monkeypatch):
                         staticmethod(lambda *a, **k: seq.pop(0)))
     cands = H._generate_candidates(blocks, "vi", {}, [])
     assert len(cands) == 1                            # bỏ 2 cái None
+
+
+def test_refine_maps_improved_back(monkeypatch):
+    items = [{"block_index": 2, "source": "Hi", "current": "x", "critique": "weak"}]
+    monkeypatch.setattr(H, "_refine_call",
+                        staticmethod(lambda payload: {"r0": "Xin chào"}))
+    out = H._refine(items, "vi", {}, [])
+    assert out == {2: "Xin chào"}
+
+
+def test_refine_empty_returns_empty():
+    assert H._refine([], "vi", {}, []) == {}
