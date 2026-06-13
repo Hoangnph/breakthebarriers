@@ -240,7 +240,7 @@ def get_document_htmlflow(doc_id: str, request: Request,
     from backend.app.services.text_layer import build_blocks, render_text_free_background, save_pdf_image
     from backend.app.services.layout_analyzer import analyze_layout
     from backend.app.services.faithful_html_renderer import (
-        render_analyzed_flow, render_translated_reflow, block_source_text)
+        render_analyzed_flow, render_dich_mixed, is_design_page, block_source_text)
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
@@ -261,8 +261,8 @@ def get_document_htmlflow(doc_id: str, request: Request,
         el = build_blocks(page)                  # text + layout (trích TRƯỚC redaction)
         t = analyze_layout(el)
         all_blocks.extend(el.get("blocks", []))
-        if lang:
-            # DỊCH = reflow: cần ảnh rời (chèn inline), KHÔNG cần nền raster.
+        if lang and not is_design_page(t):
+            # DỊCH trang nội dung = reflow: cần ảnh rời (chèn inline), không nền raster.
             for im in t.get("images", []):
                 xref = im.get("xref")
                 if not xref:
@@ -272,16 +272,17 @@ def get_document_htmlflow(doc_id: str, request: Request,
                 if os.path.exists(fp) or save_pdf_image(fdoc, xref, fp):
                     im["name"] = name
         else:
+            # Gốc HOẶC trang design ở chế độ Dịch → nền raster (bỏ text) để overlay.
             bg_name = f"{doc_id}-bg-{i + 1}.jpg"
             bg_fp = os.path.join(out_dir, bg_name)
             if not os.path.exists(bg_fp):
-                if not render_text_free_background(page, bg_fp, scale=2.0):   # nền raster (bỏ text)
+                if not render_text_free_background(page, bg_fp, scale=2.0):   # nền raster
                     bg_name = None
             t["bg"] = bg_name
         pages.append(t)
     fdoc.close()
 
-    if lang:                                      # DỊCH: tra TM theo source text → reflow
+    if lang:                                      # DỊCH: tra TM theo source text → mixed render
         from backend.app.services.translator_v2 import TranslatorV2
         lang_map = {}
         for b in all_blocks:
@@ -290,7 +291,7 @@ def get_document_htmlflow(doc_id: str, request: Request,
                 tr = TranslatorV2.tm_lookup(src, lang, db)
                 if tr:
                     lang_map[src] = tr
-        html = render_translated_reflow(pages, lang_map, asset_base)
+        html = render_dich_mixed(pages, lang_map, asset_base)
     else:
         html = render_analyzed_flow(pages, asset_base)
 

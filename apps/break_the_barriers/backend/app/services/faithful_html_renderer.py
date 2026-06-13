@@ -316,39 +316,71 @@ def _page_body_size(t: Dict[str, Any]) -> float:
     return sorted(sizes)[len(sizes) // 2] if sizes else 12.0
 
 
-def render_translated_reflow(trees: List[Dict[str, Any]], lang_map: Dict[str, str],
-                             asset_base: str = "") -> str:
-    """Mỗi trang PDF → 1 trang reflow (trắng, cao tự giãn): section theo thứ tự đọc,
-    band giữ nhiều cột (flex), ảnh chèn đúng vị trí đọc; đoạn body justified."""
-    pages = []
-    for t in trees:
-        w = t.get("page_w") or 900.0
-        body = _page_body_size(t)
-        items = [(s["bbox"][1], "sec", s) for s in t.get("sections", [])]
-        for im in t.get("images", []):
-            if im.get("name"):
-                items.append((im["bbox"][1], "img", im))
-        items.sort(key=lambda x: x[0])
-        parts = ['<div class="dp">']
-        for _, kind, it in items:
-            if kind == "img":
-                name = it["name"]
-                src = f"{asset_base}/{name}" if (asset_base and "://" not in name) else name
-                parts.append(f'<figure><img src="{_esc(src)}" alt=""></figure>')
-            elif it.get("kind") == "band":
-                parts.append('<div class="band">')
-                for col in it["columns"]:
-                    parts.append('<div class="bcol">')
-                    for b in col["blocks"]:
-                        parts.append(_dich_block_html(b, lang_map, w, body))
-                    parts.append('</div>')
-                parts.append('</div>')
-            else:
-                for b in it.get("blocks", []):
+def _reflow_page(t: Dict[str, Any], lang_map: Dict[str, str], asset_base: str = "") -> str:
+    """1 trang reflow (.dp): section theo thứ tự đọc, band giữ cột (flex), ảnh inline."""
+    w = t.get("page_w") or 900.0
+    body = _page_body_size(t)
+    items = [(s["bbox"][1], "sec", s) for s in t.get("sections", [])]
+    for im in t.get("images", []):
+        if im.get("name"):
+            items.append((im["bbox"][1], "img", im))
+    items.sort(key=lambda x: x[0])
+    parts = ['<div class="dp">']
+    for _, kind, it in items:
+        if kind == "img":
+            name = it["name"]
+            src = f"{asset_base}/{name}" if (asset_base and "://" not in name) else name
+            parts.append(f'<figure><img src="{_esc(src)}" alt=""></figure>')
+        elif it.get("kind") == "band":
+            parts.append('<div class="band">')
+            for col in it["columns"]:
+                parts.append('<div class="bcol">')
+                for b in col["blocks"]:
                     parts.append(_dich_block_html(b, lang_map, w, body))
-        parts.append('</div>')
-        pages.append("".join(parts))
+                parts.append('</div>')
+            parts.append('</div>')
+        else:
+            for b in it.get("blocks", []):
+                parts.append(_dich_block_html(b, lang_map, w, body))
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def is_design_page(t: Dict[str, Any]) -> bool:
+    """Trang 'design' = có ảnh nền chiếm >55% diện tích trang (bìa, TOC, banner full).
+    Các trang này KHÔNG hợp reflow → render positioned (nền + text dịch đè đúng vị trí)."""
+    pw = (t.get("page_w") or 1.0)
+    ph = (t.get("page_h") or 1.0)
+    page_area = max(pw * ph, 1.0)
+    for im in t.get("images", []):
+        _, _, iw, ih = im["bbox"]
+        if (iw * ih) / page_area > 0.55:
+            return True
+    return False
+
+
+def render_dich_mixed(pages: List[Dict[str, Any]], lang_map: Dict[str, str],
+                      asset_base: str = "") -> str:
+    """DỊCH thông minh per-page: trang design → positioned (nền raster + text dịch đè,
+    .pf); trang nội dung → reflow (.dp justified). Một tài liệu, cả 2 CSS + fit script."""
+    page_html = []
+    for t in pages:
+        if t.get("bg"):                                  # design page → positioned overlay
+            page_html.append(render_analyzed_page(t, asset_base, lang_map))
+        else:                                            # content page → reflow
+            page_html.append(_reflow_page(t, lang_map, asset_base))
     return (
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-        f"<style>{_REFLOW_CSS}</style></head><body>{''.join(pages)}</body></html>")
+        f"<style>{_FLOW_CSS}{_REFLOW_CSS}</style></head>"
+        f"<body>{''.join(page_html)}{_FIT_SCRIPT}</body></html>")
+
+
+def render_translated_reflow(trees: List[Dict[str, Any]], lang_map: Dict[str, str],
+                             asset_base: str = "") -> str:
+    """Tất cả trang reflow (dùng cho test/đường thuần reflow)."""
+    body = "".join(_reflow_page(t, lang_map, asset_base) for t in trees)
+    return (
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        f"<style>{_REFLOW_CSS}</style></head><body>{body}{_FIT_SCRIPT}</body></html>")

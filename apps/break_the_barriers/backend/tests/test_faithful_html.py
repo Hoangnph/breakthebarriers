@@ -348,3 +348,28 @@ def test_reflow_band_two_columns_and_image():
     html = render_translated_reflow([t], {})
     assert 'class="band"' in html and html.count('class="bcol"') == 2   # 2 cột
     assert "<figure>" in html and "p.png" in html                       # ảnh inline
+
+
+def test_is_design_page_detects_full_bleed_image():
+    from backend.app.services.faithful_html_renderer import is_design_page
+    # ảnh phủ ~full trang → design
+    design = {"page_w": 200, "page_h": 300, "sections": [],
+              "images": [{"bbox": [0, 0, 200, 290]}]}
+    assert is_design_page(design) is True
+    # ảnh nhỏ (diagram) → không design
+    content = {"page_w": 200, "page_h": 300, "sections": [],
+               "images": [{"bbox": [10, 10, 80, 40]}]}
+    assert is_design_page(content) is False
+
+
+def test_render_dich_mixed_picks_mode_per_page():
+    from backend.app.services.faithful_html_renderer import render_dich_mixed
+    blk = {"bbox": [10, 10, 120, 20], "lines": [{"bbox": [10, 10, 120, 12], "spans": [{
+        "text": "Hi", "size": 10.0, "font": "s", "color": "#000", "bold": False, "italic": False}]}]}
+    design = {"page_w": 200, "page_h": 200, "bg": "bg.jpg", "images": [], "drawings": [],
+              "sections": [{"kind": "full", "bbox": [10, 10, 120, 20], "blocks": [blk]}]}
+    content = {"page_w": 200, "page_h": 200, "images": [], "drawings": [],
+               "sections": [{"kind": "full", "bbox": [10, 10, 120, 20], "blocks": [blk]}]}
+    html = render_dich_mixed([design, content], {})
+    assert 'class="pf"' in html      # design page → positioned
+    assert 'class="dp"' in html      # content page → reflow
