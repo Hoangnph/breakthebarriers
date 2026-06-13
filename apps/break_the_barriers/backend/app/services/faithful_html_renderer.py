@@ -264,3 +264,91 @@ def render_analyzed_flow(trees: List[Dict[str, Any]], asset_base: str = "",
         "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
         f"<style>{_FLOW_CSS}</style></head><body>{body}{_FIT_SCRIPT}</body></html>")
+
+
+# ── DỊCH = reflow thông minh: giữ cấu trúc (cột/heading/ảnh, thứ tự đọc) nhưng để
+#    chữ CHẢY tự nhiên (page cao tự co giãn), justify, font tương ứng — KHÔNG co/đè. ──
+
+_REFLOW_CSS = """
+*{box-sizing:border-box}
+body{margin:0;background:#8a8d91;font-family:Arial,Helvetica,sans-serif}
+.dp{position:relative;width:96%;max-width:860px;margin:18px auto;background:#fff;
+    container-type:inline-size;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:6% 7%}
+.dp h2{margin:.7em 0 .35em;line-height:1.25;font-weight:bold}
+.dp p{margin:.45em 0;text-align:justify;line-height:1.5;hyphens:auto}
+.dp .band{display:flex;gap:6%;align-items:flex-start}
+.dp .band>.bcol{flex:1;min-width:0}
+.dp figure{margin:1.1em 0;text-align:center}
+.dp figure img{max-width:100%;height:auto;border-radius:2px}
+"""
+
+
+def _dich_block_html(blk: Dict[str, Any], lang_map: Optional[Dict[str, str]],
+                     page_w: float, body_size: float) -> str:
+    """1 block dịch → heading (<h2>) nếu font lớn/đậm, ngược lại đoạn justified (<p>)."""
+    spans = [s for line in blk["lines"] for s in line["spans"]]
+    if not spans:
+        return ""
+    src = block_source_text(blk)
+    txt = (lang_map or {}).get(src) or src
+    s0 = spans[0]
+    size = s0.get("size", 12.0)
+    fs = size / max(page_w, 1.0) * 100
+    color = s0.get("color", "#000000")
+    heading = size >= body_size * 1.18 or (s0.get("bold") and len(txt) < 80)
+    tag = "h2" if heading else "p"
+    style = f"font-size:{fs:.3f}cqw;color:{color}"
+    if s0.get("bold"):
+        style += ";font-weight:bold"
+    if s0.get("italic"):
+        style += ";font-style:italic"
+    return f'<{tag} style="{style}">{_esc(txt)}</{tag}>'
+
+
+def _page_body_size(t: Dict[str, Any]) -> float:
+    sizes = []
+    for sec in t.get("sections", []):
+        blocks = sec.get("blocks") or [b for c in sec.get("columns", []) for b in c["blocks"]]
+        for b in blocks:
+            sp = [s for line in b["lines"] for s in line["spans"]]
+            if sp:
+                sizes.append(sp[0].get("size", 12.0))
+    return sorted(sizes)[len(sizes) // 2] if sizes else 12.0
+
+
+def render_translated_reflow(trees: List[Dict[str, Any]], lang_map: Dict[str, str],
+                             asset_base: str = "") -> str:
+    """Mỗi trang PDF → 1 trang reflow (trắng, cao tự giãn): section theo thứ tự đọc,
+    band giữ nhiều cột (flex), ảnh chèn đúng vị trí đọc; đoạn body justified."""
+    pages = []
+    for t in trees:
+        w = t.get("page_w") or 900.0
+        body = _page_body_size(t)
+        items = [(s["bbox"][1], "sec", s) for s in t.get("sections", [])]
+        for im in t.get("images", []):
+            if im.get("name"):
+                items.append((im["bbox"][1], "img", im))
+        items.sort(key=lambda x: x[0])
+        parts = ['<div class="dp">']
+        for _, kind, it in items:
+            if kind == "img":
+                name = it["name"]
+                src = f"{asset_base}/{name}" if (asset_base and "://" not in name) else name
+                parts.append(f'<figure><img src="{_esc(src)}" alt=""></figure>')
+            elif it.get("kind") == "band":
+                parts.append('<div class="band">')
+                for col in it["columns"]:
+                    parts.append('<div class="bcol">')
+                    for b in col["blocks"]:
+                        parts.append(_dich_block_html(b, lang_map, w, body))
+                    parts.append('</div>')
+                parts.append('</div>')
+            else:
+                for b in it.get("blocks", []):
+                    parts.append(_dich_block_html(b, lang_map, w, body))
+        parts.append('</div>')
+        pages.append("".join(parts))
+    return (
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        f"<style>{_REFLOW_CSS}</style></head><body>{''.join(pages)}</body></html>")

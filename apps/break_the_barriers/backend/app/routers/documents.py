@@ -237,9 +237,10 @@ def get_document_htmlflow(doc_id: str, request: Request,
     Render on-the-fly từ PDF bằng PyMuPDF. `lang` (vd vi) → chế độ DỊCH: text mỗi
     block thay bằng bản dịch tra từ Translation Memory (cùng nền raster đã bỏ text)."""
     import fitz
-    from backend.app.services.text_layer import build_blocks, render_text_free_background
+    from backend.app.services.text_layer import build_blocks, render_text_free_background, save_pdf_image
     from backend.app.services.layout_analyzer import analyze_layout
-    from backend.app.services.faithful_html_renderer import render_analyzed_flow, block_source_text
+    from backend.app.services.faithful_html_renderer import (
+        render_analyzed_flow, render_translated_reflow, block_source_text)
 
     doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
     if not doc:
@@ -260,17 +261,27 @@ def get_document_htmlflow(doc_id: str, request: Request,
         el = build_blocks(page)                  # text + layout (trích TRƯỚC redaction)
         t = analyze_layout(el)
         all_blocks.extend(el.get("blocks", []))
-        bg_name = f"{doc_id}-bg-{i + 1}.jpg"
-        bg_fp = os.path.join(out_dir, bg_name)
-        if not os.path.exists(bg_fp):
-            if not render_text_free_background(page, bg_fp, scale=2.0):   # nền raster (bỏ text)
-                bg_name = None
-        t["bg"] = bg_name
+        if lang:
+            # DỊCH = reflow: cần ảnh rời (chèn inline), KHÔNG cần nền raster.
+            for im in t.get("images", []):
+                xref = im.get("xref")
+                if not xref:
+                    continue
+                name = f"{doc_id}-img-{xref}.png"
+                fp = os.path.join(out_dir, name)
+                if os.path.exists(fp) or save_pdf_image(fdoc, xref, fp):
+                    im["name"] = name
+        else:
+            bg_name = f"{doc_id}-bg-{i + 1}.jpg"
+            bg_fp = os.path.join(out_dir, bg_name)
+            if not os.path.exists(bg_fp):
+                if not render_text_free_background(page, bg_fp, scale=2.0):   # nền raster (bỏ text)
+                    bg_name = None
+            t["bg"] = bg_name
         pages.append(t)
     fdoc.close()
 
-    lang_map = None
-    if lang:                                      # DỊCH: tra TM theo source text mỗi block
+    if lang:                                      # DỊCH: tra TM theo source text → reflow
         from backend.app.services.translator_v2 import TranslatorV2
         lang_map = {}
         for b in all_blocks:
@@ -279,8 +290,10 @@ def get_document_htmlflow(doc_id: str, request: Request,
                 tr = TranslatorV2.tm_lookup(src, lang, db)
                 if tr:
                     lang_map[src] = tr
+        html = render_translated_reflow(pages, lang_map, asset_base)
+    else:
+        html = render_analyzed_flow(pages, asset_base)
 
-    html = render_analyzed_flow(pages, asset_base, lang_map)
     zoom_script = (
         "<script>window.addEventListener('message',e=>{"
         "if(e.data&&e.data.type==='btb-zoom')document.body.style.zoom=String(e.data.zoom);"

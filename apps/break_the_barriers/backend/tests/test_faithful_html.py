@@ -314,3 +314,37 @@ def test_perform_translate_flow_via_harness(db_session, monkeypatch):
     src = block_source_text(el["blocks"][0])
     assert TranslatorV2.tm_lookup(src, "vi", db_session) == "Trí tuệ nhân tạo"
     os.remove(os.path.join(raw, f"{doc_id}.pdf"))
+
+
+def test_render_translated_reflow_justified_headings():
+    from backend.app.services.faithful_html_renderer import render_translated_reflow, block_source_text
+    head = {"bbox": [10, 10, 200, 30], "lines": [{"bbox": [10, 10, 200, 24], "spans": [{
+        "text": "Big Heading", "size": 24.0, "font": "sans-serif", "color": "#000",
+        "bold": True, "italic": False}]}]}
+    body = {"bbox": [10, 50, 200, 80], "lines": [{"bbox": [10, 50, 200, 12], "spans": [{
+        "text": "Body sentence here", "size": 10.0, "font": "sans-serif", "color": "#000",
+        "bold": False, "italic": False}]}]}
+    t = {"page_w": 300, "page_h": 400, "images": [],
+         "sections": [{"kind": "full", "bbox": [10, 10, 200, 120], "blocks": [head, body]}]}
+    lm = {block_source_text(head): "Tiêu Đề Lớn", block_source_text(body): "Câu nội dung dịch"}
+    html = render_translated_reflow([t], lm)
+    assert "<h2" in html and "Tiêu Đề Lớn" in html             # heading
+    assert "<p" in html and "Câu nội dung dịch" in html        # body
+    assert "text-align:justify" in html                         # justified
+    assert 'class="dp"' in html                                 # trang reflow
+
+
+def test_reflow_band_two_columns_and_image():
+    from backend.app.services.faithful_html_renderer import render_translated_reflow
+    blkL = {"bbox": [10, 60, 80, 20], "lines": [{"bbox": [10, 60, 80, 12], "spans": [
+        {"text": "left", "size": 10.0, "font": "s", "color": "#000", "bold": False, "italic": False}]}]}
+    blkR = {"bbox": [110, 60, 80, 20], "lines": [{"bbox": [110, 60, 80, 12], "spans": [
+        {"text": "right", "size": 10.0, "font": "s", "color": "#000", "bold": False, "italic": False}]}]}
+    t = {"page_w": 300, "page_h": 400,
+         "images": [{"bbox": [10, 10, 180, 40], "name": "p.png"}],
+         "sections": [{"kind": "band", "bbox": [10, 60, 180, 30],
+                       "columns": [{"bbox": [10, 60, 80, 20], "blocks": [blkL]},
+                                   {"bbox": [110, 60, 80, 20], "blocks": [blkR]}]}]}
+    html = render_translated_reflow([t], {})
+    assert 'class="band"' in html and html.count('class="bcol"') == 2   # 2 cột
+    assert "<figure>" in html and "p.png" in html                       # ảnh inline
