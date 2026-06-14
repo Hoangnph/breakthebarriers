@@ -103,16 +103,15 @@ class BatchTranslator:
         return reqs
 
     @staticmethod
-    def parse_batch_results(items: List[dict]) -> Dict[str, List[str]]:
-        """[{key, text(JSON)}] → {key: [text theo block]}. Bỏ qua bản hỏng."""
-        out: Dict[str, List[str]] = {}
+    def parse_batch_results(items: List[dict]) -> Dict[str, Dict[str, str]]:
+        """[{key, text(JSON)}] → {key: {id: text}}. Giữ id để align theo SỐ BLOCK
+        khi chốt (model hay trả số bản dịch khác số block). Bỏ qua bản hỏng."""
+        out: Dict[str, Dict[str, str]] = {}
         for it in items:
             key = it.get("key")
             try:
                 tr = json.loads(it["text"])["translations"]
-                tmap = {t["id"]: t["text"] for t in tr}
-                n = len(tmap)
-                out[key] = [tmap[f"b{i}"] for i in range(n) if f"b{i}" in tmap]
+                out[key] = {t["id"]: t["text"] for t in tr}
             except Exception:
                 logger.warning(f"batch result parse skip {key}")
                 continue
@@ -200,10 +199,13 @@ class BatchTranslator:
                 continue
             cands = []
             for vi in range(len(TranslationHarness.CANDIDATE_VARIANTS)):
-                c = parsed.get(f"p{pi}:v{vi}")
-                # chỉ nhận ứng viên khớp số block của trang
-                if c and len(c) == len(blocks):
-                    cands.append(c)
+                tmap = parsed.get(f"p{pi}:v{vi}")
+                if not tmap:
+                    continue
+                # ALIGN theo số block: id thiếu → fallback source (như đường online)
+                # → model trả số bản dịch khác số block KHÔNG làm rớt cả trang.
+                cand = [tmap.get(f"b{i}") or blocks[i]["text"] for i in range(len(blocks))]
+                cands.append(cand)
             if not cands:
                 continue
             harm = TranslationHarness.harmonize_page(
@@ -212,5 +214,9 @@ class BatchTranslator:
                 continue
             results, scores = harm
             for b, tr, sc in zip(blocks, results, scores):
-                rows.append((b["text"], tr, sc))
+                src = b["text"]
+                # bỏ block CHƯA dịch (mọi variant fallback source) → không nhuộm
+                # English vào TM; htmlflow tự fallback source khi TM thiếu.
+                if tr and tr.strip().lower() != src.strip().lower():
+                    rows.append((src, tr, sc))
         return rows

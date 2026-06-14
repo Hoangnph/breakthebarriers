@@ -56,16 +56,17 @@ def test_build_candidate_requests_one_per_page_per_variant():
     assert 0.0 <= r0["temperature"] <= 1.0
 
 
-def test_parse_batch_results_maps_keys_to_block_translations():
-    """Kết quả batch (key → JSON translations) → {key: [text theo block]}."""
+def test_parse_batch_results_maps_keys_to_id_text_map():
+    """Kết quả batch (key → JSON translations) → {key: {id: text}} (giữ id để
+    align theo số block khi chốt)."""
     raw = [
         {"key": "p0:v0",
          "text": '{"translations":[{"id":"b0","text":"Xin chào"},{"id":"b1","text":"Khối hai"}]}'},
         {"key": "p1:v0", "text": '{"translations":[{"id":"b0","text":"Trang hai"}]}'},
     ]
     out = BatchTranslator.parse_batch_results(raw)
-    assert out["p0:v0"] == ["Xin chào", "Khối hai"]
-    assert out["p1:v0"] == ["Trang hai"]
+    assert out["p0:v0"] == {"b0": "Xin chào", "b1": "Khối hai"}
+    assert out["p1:v0"] == {"b0": "Trang hai"}
 
 
 def test_parse_batch_results_skips_malformed():
@@ -73,7 +74,7 @@ def test_parse_batch_results_skips_malformed():
            {"key": "p0:v1", "text": '{"translations":[{"id":"b0","text":"OK"}]}'}]
     out = BatchTranslator.parse_batch_results(raw)
     assert "p0:v0" not in out
-    assert out["p0:v1"] == ["OK"]
+    assert out["p0:v1"] == {"b0": "OK"}
 
 
 # ── Submit / poll: bọc SDK, mock (không gọi mạng) ──
@@ -186,16 +187,51 @@ def test_harmonize_accepts_pregenerated_candidates(monkeypatch):
 
 
 def test_finalize_from_batch_builds_tm_rows(monkeypatch):
-    """parse_map (key→candidates) + pages → list (source, translation, score) lưu TM."""
+    """parse_map (key→{id:text}) + pages → list (source, translation, score) lưu TM."""
     from backend.app.services.translation_harness import TranslationHarness
     monkeypatch.setattr(TranslationHarness, "_judge",
                         lambda b, c, lang, ctx: [{"best_idx": 0, "score": 88, "critique": "ok"}
                                                  for _ in b])
     pages = [[{"text": "Hello"}, {"text": "World"}]]
-    parsed = {"p0:v0": ["Xin chào", "Thế giới"], "p0:v1": ["Chào", "TG"]}
+    parsed = {"p0:v0": {"b0": "Xin chào", "b1": "Thế giới"},
+              "p0:v1": {"b0": "Chào", "b1": "TG"}}
     rows = BatchTranslator.finalize(pages, parsed, "vi", {"domain": "general"}, [])
     assert ("Hello", "Xin chào", 88) in rows
     assert ("World", "Thế giới", 88) in rows
+
+
+def test_finalize_skips_untranslated_blocks(monkeypatch):
+    """Block mà MỌI ứng viên đều fallback source (==English) → KHÔNG lưu TM (tránh
+    nhuộm English; htmlflow tự fallback source). Chỉ lưu bản dịch thật."""
+    from backend.app.services.translation_harness import TranslationHarness
+    monkeypatch.setattr(TranslationHarness, "_judge",
+                        lambda b, c, lang, ctx: [{"best_idx": 0, "score": 80, "critique": "ok"}
+                                                 for _ in b])
+    pages = [[{"text": "Hello"}, {"text": "Untranslated"}]]
+    # b1 thiếu ở mọi variant → fallback "Untranslated" (==source) → bỏ
+    parsed = {"p0:v0": {"b0": "Xin chào"}}
+    rows = BatchTranslator.finalize(pages, parsed, "vi", {"domain": "general"}, [])
+    srcs = {r[0] for r in rows}
+    assert "Hello" in srcs
+    assert "Untranslated" not in srcs        # KHÔNG lưu block còn nguyên English
+
+
+def test_finalize_aligns_candidate_when_model_returns_fewer(monkeypatch):
+    """LỖI THẬT: model trả ÍT bản dịch hơn số block (gộp/tách) → KHÔNG loại trang;
+    align theo số block, id thiếu → fallback source (như đường online)."""
+    from backend.app.services.translation_harness import TranslationHarness
+    monkeypatch.setattr(TranslationHarness, "_judge",
+                        lambda b, c, lang, ctx: [{"best_idx": 0, "score": 85, "critique": "ok"}
+                                                 for _ in b])
+    pages = [[{"text": "Hello"}, {"text": "World"}, {"text": "Three"}]]   # 3 block
+    # model chỉ trả b0,b1 (thiếu b2) → trang KHÔNG bị bỏ; b0,b1 dịch, b2 (chưa
+    # dịch) bỏ qua lưu — KHÁC hẳn cũ (mismatch len → rớt CẢ trang).
+    parsed = {"p0:v0": {"b0": "Xin chào", "b1": "Thế giới"}}
+    rows = BatchTranslator.finalize(pages, parsed, "vi", {"domain": "general"}, [])
+    srcs = {r[0] for r in rows}
+    assert "Hello" in srcs and "World" in srcs        # 2 block dịch được giữ
+    assert "Three" not in srcs                         # block chưa dịch → bỏ
+    assert ("Hello", "Xin chào", 85) in rows
 
 
 # ── Endpoint: ước tính (khách xem trước khi chọn) ──
