@@ -373,3 +373,63 @@ def test_render_dich_mixed_picks_mode_per_page():
     html = render_dich_mixed([design, content], {})
     assert 'class="pf"' in html      # design page → positioned
     assert 'class="dp"' in html      # content page → reflow
+
+
+def test_translated_design_block_grows_to_room_not_crammed():
+    """Trang design: block dịch (tiêu đề hero) KHÔNG bị khóa vào chiều cao hộp
+    tiếng Anh + co nhỏ. Box dùng height = khoảng trống tới đáy trang (cqw cố định
+    → clientHeight ổn định cho fitTB) → giữ cỡ chữ lớn như gốc, chỉ co khi text
+    thật sự vượt khoảng trống."""
+    # Tiêu đề ở top trang cao → còn nhiều chỗ phía dưới.
+    title = {"bbox": [100, 100, 400, 60],
+             "lines": [{"bbox": [100, 100, 400, 60], "spans": [{
+                 "text": "Title EN", "size": 80.0, "color": "#ffffff",
+                 "font": "Arial", "bold": True, "italic": False}]}]}
+    t = {"page_w": 1000, "page_h": 1400, "images": [], "drawings": [], "bg": None,
+         "sections": [{"kind": "full", "role": "", "bbox": [100, 100, 400, 60],
+                       "blocks": [title]}]}
+    lang_map = {"Title EN": "TIÊU ĐỀ TIẾNG VIỆT DÀI HƠN RẤT NHIỀU SO VỚI GỐC"}
+    html = render_analyzed_page(t, lang_map=lang_map)
+    # box cao = khoảng trống tới đáy: (1400-100)/1000*100 = 130cqw (KHÔNG 6%)
+    assert "height:130.000cqw" in html
+    assert "overflow:hidden" in html  # vẫn cắt nếu thật sự tràn khoảng trống
+    # giữ cỡ chữ gốc 80/1000*100 = 8cqw (không hạ sẵn ở server → fitTB co khi cần)
+    assert "font-size:8.000cqw" in html
+    # cỡ gốc LƯU ở data-fs để fitTB reset về ĐÚNG cỡ (KHÔNG xóa về inherit 16px)
+    assert 'data-fs="8.000cqw"' in html
+
+
+def test_translated_design_block_room_stops_at_next_block_no_overlap():
+    """Tiêu đề hero KHÔNG được tràn đè phụ đề bên dưới: room (chiều cao box) =
+    khoảng cách tới TOP của block kế dưới, không phải tới đáy trang → fitTB co vừa
+    khoảng trống đó, hai block không chồng nhau (vd bìa: title + subtitle)."""
+    title = {"bbox": [100, 100, 400, 60],
+             "lines": [{"bbox": [100, 100, 400, 60], "spans": [{
+                 "text": "Title EN", "size": 80.0, "color": "#fff",
+                 "font": "Arial", "bold": True, "italic": False}]}]}
+    subtitle = {"bbox": [100, 400, 400, 30],
+                "lines": [{"bbox": [100, 400, 400, 30], "spans": [{
+                    "text": "Sub EN", "size": 30.0, "color": "#fff",
+                    "font": "Arial", "bold": False, "italic": False}]}]}
+    t = {"page_w": 1000, "page_h": 1400, "images": [], "drawings": [], "bg": None,
+         "sections": [
+             {"kind": "full", "role": "", "bbox": [100, 100, 400, 60], "blocks": [title]},
+             {"kind": "full", "role": "", "bbox": [100, 400, 400, 30], "blocks": [subtitle]}]}
+    lang_map = {"Title EN": "TIÊU ĐỀ DÀI", "Sub EN": "PHỤ ĐỀ DÀI"}
+    html = render_analyzed_page(t, lang_map=lang_map)
+    # title room = next_top(400) - by(100) = 300 → 300/1000*100 = 30cqw (KHÔNG 130)
+    assert "height:30.000cqw" in html
+    assert "height:130.000cqw" not in html
+
+
+def test_fit_script_is_layout_stable_and_guarded():
+    """fitTB không được co chữ khi layout/cqw chưa ổn định (clientHeight tí xíu)
+    → phải có guard ngưỡng clientHeight; và phải lên lịch chạy lại sau khi layout
+    settle (requestAnimationFrame) để phục hồi cỡ chữ nếu lần đầu chạy quá sớm."""
+    from backend.app.services.faithful_html_renderer import _FIT_SCRIPT
+    # guard: bỏ qua khi clientHeight quá nhỏ (layout chưa sẵn) → không over-shrink
+    assert "clientHeight>" in _FIT_SCRIPT
+    # chạy lại sau layout ổn định (idempotent, reset rồi mới co)
+    assert "requestAnimationFrame" in _FIT_SCRIPT
+    # reset cỡ chữ về data-fs (cỡ gốc inline) — KHÔNG xóa '' (sẽ về inherit 16px)
+    assert "data-fs" in _FIT_SCRIPT

@@ -136,10 +136,35 @@ def block_source_text(blk: Dict[str, Any]) -> str:
     return " ".join(s["text"] for line in blk["lines"] for s in line["spans"]).strip()
 
 
+def _collect_block_tops(t: Dict[str, Any]) -> List[float]:
+    """Top-Y (sorted) của MỌI block văn bản + ảnh trên trang → để 1 block dịch biết
+    block kế dưới ở đâu mà KHÔNG tràn đè (room = next_top - by)."""
+    tops: List[float] = []
+    for sec in t.get("sections", []):
+        if sec.get("kind") == "band":
+            for col in sec.get("columns", []):
+                for b in col.get("blocks", []):
+                    tops.append(b["bbox"][1])
+        else:
+            for b in sec.get("blocks", []):
+                tops.append(b["bbox"][1])
+    for im in t.get("images", []):
+        tops.append(im["bbox"][1])
+    return sorted(tops)
+
+
 def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: float,
-                             ph: float, page_w: float, lang_map: Dict[str, str]) -> str:
+                             ph: float, page_w: float, lang_map: Dict[str, str],
+                             page_h: float = 0.0,
+                             obstacles: Optional[List[float]] = None) -> str:
     """Dịch mode: 1 block = 1 div định vị tại bbox; text dịch WRAP trong khung
-    (font/màu từ span đầu). Bản dịch dài/ngắn khác → tự xuống dòng, không méo."""
+    (font/màu từ span đầu). Bản dịch dài/ngắn khác → tự xuống dòng, không méo.
+
+    Tiếng Việt dài hơn gốc ~30%: KHÔNG khóa cứng chiều cao hộp tiếng Anh (sẽ co
+    chữ tí xíu, phá vỡ thứ bậc thị giác — vd tiêu đề bìa). Thay vào đó box cao tự
+    nhiên (`height:auto`) neo tại top-left gốc, chỉ giới hạn `max-height` =
+    khoảng trống tới đáy trang → giữ cỡ chữ lớn như gốc, chỉ co khi thật sự thiếu
+    chỗ (fitTB)."""
     bx, by, bw, bh = blk["bbox"]
     spans = [s for line in blk["lines"] for s in line["spans"]]
     src = block_source_text(blk)
@@ -148,17 +173,29 @@ def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: floa
     left = (bx - px) / max(pw, 1.0) * 100
     top = (by - py) / max(ph, 1.0) * 100
     width = bw / max(pw, 1.0) * 100
-    height = bh / max(ph, 1.0) * 100
     fs = (s0.get("size", 12.0)) / page_w * 100
-    # height + overflow:hidden + script auto-shrink → bản dịch dài KHÔNG tràn/đè khung
-    style = (f'left:{left:.3f}%;top:{top:.3f}%;width:{width:.3f}%;height:{height:.3f}%;'
+    # CHIỀU CAO box = khoảng cách tới block kế DƯỚI (không phải đáy trang) → tiêu
+    # đề/đoạn giữ cỡ lớn lấp khoảng trống NHƯNG không tràn đè block sau. Height cố
+    # định (cqw) để clientHeight ổn định cho fitTB; box trong suốt, text neo top.
+    by_margin = by + max(bh * 0.5, 4.0)             # bỏ qua chính block + block cùng hàng
+    next_top = page_h if page_h > 0 else by + bh
+    for ot in (obstacles or ()):                    # sorted tăng dần
+        if ot > by_margin:
+            next_top = min(next_top, ot)
+            break
+    room = (next_top - by) / page_w * 100
+    room = max(room, bh / page_w * 100)             # tối thiểu = chiều cao gốc
+    style = (f'left:{left:.3f}%;top:{top:.3f}%;width:{width:.3f}%;'
+             f'height:{room:.3f}cqw;overflow:hidden;'
              f'font-size:{fs:.3f}cqw;color:{s0.get("color", "#000")};'
              f'font-family:{s0.get("font", "sans-serif")};line-height:1.2')
     if s0.get("bold"):
         style += ";font-weight:bold"
     if s0.get("italic"):
         style += ";font-style:italic"
-    return f'<div class="tb" style="{style}">{_esc(txt)}</div>'
+    # data-fs = cỡ gốc (cqw). fitTB reset font về ĐÂY (KHÔNG xóa inline → inherit
+    # 16px). Cỡ chữ vốn nằm inline (không có rule CSS) nên reset='' = mất cỡ.
+    return f'<div class="tb" data-fs="{fs:.3f}cqw" style="{style}">{_esc(txt)}</div>'
 
 
 def render_analyzed_page(t: Dict[str, Any], asset_base: str = "",
@@ -170,6 +207,9 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "",
     if w <= 0:
         w = 900.0
     parts: List[str] = [f'<div class="pf" style="aspect-ratio:{w:.2f}/{h:.2f}">']
+
+    # Dịch: cần biết top mọi block/ảnh để 1 block không tràn đè block kế dưới.
+    obstacles = _collect_block_tops(t) if lang_map is not None else None
 
     bg = t.get("bg")
     if bg:
@@ -221,14 +261,14 @@ def render_analyzed_page(t: Dict[str, Any], asset_base: str = "",
                     f'height:{ch / sh * 100:.3f}%">')
                 for b in col["blocks"]:
                     if lang_map is not None:
-                        parts.append(_render_block_translated(b, cx, cy, cw, ch, w, lang_map))
+                        parts.append(_render_block_translated(b, cx, cy, cw, ch, w, lang_map, h, obstacles))
                     else:
                         parts.append(_render_block_at(b, cx, cy, cw, ch, w))
                 parts.append('</div>')
         else:
             for b in sec["blocks"]:
                 if lang_map is not None:
-                    parts.append(_render_block_translated(b, sx, sy, sw, sh, w, lang_map))
+                    parts.append(_render_block_translated(b, sx, sy, sw, sh, w, lang_map, h, obstacles))
                 else:
                     parts.append(_render_block_at(b, sx, sy, sw, sh, w))
         parts.append('</div>')
@@ -246,11 +286,23 @@ e.style.transform=base;var b=e.clientWidth,t=e.scrollWidth;
 if(b>2&&t>2){var r=b/t;if(r<0.5)r=0.5;if(r>2)r=2;
 if(Math.abs(r-1)>0.01)e.style.transform=base+(base?' ':'')+'scaleX('+r.toFixed(4)+')';}}}
 function fitTB(){var l=document.querySelectorAll('.pf .tb');for(var i=0;i<l.length;i++){
-var e=l[i];e.style.fontSize='';var fs=parseFloat(getComputedStyle(e).fontSize),g=0;
-while(e.scrollHeight>e.clientHeight+1&&fs>5&&g<60){fs*=0.95;e.style.fontSize=fs+'px';g++;}}}
+var e=l[i];
+// reset về cỡ GỐC (data-fs, đơn vị cqw) — KHÔNG xóa '' vì cỡ nằm inline, xóa sẽ
+// về inherit 16px. Idempotent: lần co nhầm trước sẽ được phục hồi đúng cỡ.
+e.style.fontSize=e.getAttribute('data-fs')||'';
+// Guard: bỏ qua khi clientHeight quá nhỏ (cqw/layout chưa ổn định) → không
+// over-shrink. Chỉ co khi text THẬT SỰ tràn khoảng trống (height=room).
+if(e.clientHeight>16){var fs=parseFloat(getComputedStyle(e).fontSize),g=0;
+while(e.scrollHeight>e.clientHeight+1&&fs>5&&g<60){fs*=0.95;e.style.fontSize=fs+'px';g++;}}}}
 function all(){fit();fitTB();}
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
-window.addEventListener('load',all);
+// chạy nhiều mốc + sau layout settle (rAF kép) để có ít nhất 1 lần chạy khi
+// cqw đã resolve → cỡ chữ đúng, không kẹt ở giá trị co nhầm lúc đầu.
+function sched(){requestAnimationFrame(function(){requestAnimationFrame(all);});}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sched);
+window.addEventListener('load',sched);
+// gọi trực tiếp (không qua rAF) đề phòng môi trường throttle rAF → luôn có lần
+// chạy sau khi layout/cqw ổn định, reset-rồi-co đúng cỡ.
+setTimeout(all,350);setTimeout(all,900);setTimeout(all,1600);
 window.addEventListener('resize',function(){clearTimeout(window.__ft);window.__ft=setTimeout(all,150);});
 })();</script>"""
 
