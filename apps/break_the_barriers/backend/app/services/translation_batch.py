@@ -129,45 +129,43 @@ class BatchTranslator:
 
     @staticmethod
     def submit(requests: List[dict]) -> Optional[str]:
-        """Nộp 1 batch job (inline GenerateContentRequest). → tên job."""
+        """Nộp 1 batch job. `src` = list InlinedRequestDict (mỗi request mang model
+        riêng → trộn được flash-lite/flash trong 1 job). key gắn vào metadata; kết
+        quả map lại theo THỨ TỰ (build tất định). → tên job."""
         client = BatchTranslator._client()
         inlined = [{
-            "key": r["key"],
-            "request": {
-                "model": r["model"],
-                "contents": [{"parts": [{"text": r["prompt"]}], "role": "user"}],
-                "generation_config": {
-                    "response_mime_type": "application/json",
-                    "temperature": r["temperature"],
-                },
-            },
+            "model": r["model"],
+            "contents": [{"role": "user", "parts": [{"text": r["prompt"]}]}],
+            "config": {"response_mime_type": "application/json",
+                       "temperature": r["temperature"]},
+            "metadata": {"key": r["key"]},
         } for r in requests]
-        job = client.batches.create(src=inlined)
+        # model top-level (bắt buộc) = model request đầu; mỗi request tự override.
+        job = client.batches.create(model=requests[0]["model"], src=inlined)
         return getattr(job, "name", None)
 
     @staticmethod
     def poll(job_name: str) -> str:
-        """Trạng thái job: JOB_STATE_PENDING|RUNNING|SUCCEEDED|FAILED|..."""
+        """Trạng thái job dạng STRING 'JOB_STATE_*' (SDK trả enum JobState → .name)."""
         client = BatchTranslator._client()
         job = client.batches.get(name=job_name)
-        return getattr(job, "state", "JOB_STATE_PENDING")
+        state = getattr(job, "state", None)
+        # enum JobState → .name; nếu đã là str (mock/test) → giữ nguyên
+        return getattr(state, "name", None) or str(state or "JOB_STATE_PENDING")
 
     @staticmethod
-    def fetch_results(job_name: str) -> List[dict]:
-        """Job đã SUCCEEDED → [{key, text}] từ inlined_responses (hoặc file)."""
+    def fetch_results(job_name: str) -> List[str]:
+        """Job SUCCEEDED → list text THEO THỨ TỰ inlined_responses (caller zip với
+        keys tái tạo từ build_candidate_requests). '' cho response lỗi/thiếu."""
         client = BatchTranslator._client()
         job = client.batches.get(name=job_name)
         dest = getattr(job, "dest", None)
-        out: List[dict] = []
         inlined = getattr(dest, "inlined_responses", None) if dest else None
+        out: List[str] = []
         for r in (inlined or []):
-            key = getattr(r, "key", None) or (r.get("key") if isinstance(r, dict) else None)
-            resp = getattr(r, "response", None) or (r.get("response") if isinstance(r, dict) else None)
-            text = None
-            if resp is not None:
-                text = getattr(resp, "text", None) or (resp.get("text") if isinstance(resp, dict) else None)
-            if key and text:
-                out.append({"key": key, "text": text})
+            resp = getattr(r, "response", None)
+            text = getattr(resp, "text", None) if resp is not None else None
+            out.append(text or "")
         return out
 
     # ── Chốt kết quả: judge+refine online trên candidates batch (giữ max) ──

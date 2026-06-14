@@ -95,20 +95,47 @@ class _FakeClient:
         self.batches = _FakeBatches()
 
 
-def test_submit_returns_job_name(monkeypatch):
+def test_submit_returns_job_name_and_builds_inlined(monkeypatch):
     fake = _FakeClient()
     monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: fake))
-    reqs = [{"key": "p0:v0", "model": "gemini-3.5-flash", "temperature": 0.4,
-             "prompt": "x"}]
+    reqs = [{"key": "p0:v0", "model": "gemini-3.1-flash-lite", "temperature": 0.2,
+             "prompt": "x"},
+            {"key": "p0:v1", "model": "gemini-3.5-flash", "temperature": 0.4,
+             "prompt": "y"}]
     job = BatchTranslator.submit(reqs)
     assert job == "batches/abc123"
-    assert fake.batches.created is not None
+    kw = fake.batches.created
+    assert kw["model"] == "gemini-3.1-flash-lite"          # model top-level (bắt buộc)
+    src = kw["src"]
+    assert len(src) == 2
+    # mỗi request mang model RIÊNG (trộn flash-lite/flash trong 1 job) + key ở metadata
+    assert src[0]["model"] == "gemini-3.1-flash-lite"
+    assert src[1]["model"] == "gemini-3.5-flash"
+    assert src[0]["metadata"]["key"] == "p0:v0"
+    assert src[0]["config"]["response_mime_type"] == "application/json"
 
 
 def test_poll_returns_state(monkeypatch):
     fake = _FakeClient()
     monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: fake))
     assert BatchTranslator.poll("batches/abc123") == "JOB_STATE_RUNNING"
+
+
+def test_poll_normalizes_enum_state_to_name(monkeypatch):
+    """SDK trả enum JobState → poll phải trả STRING '.name' (endpoint so sánh str)."""
+    import enum
+
+    class JobState(enum.Enum):
+        JOB_STATE_SUCCEEDED = "ok"
+
+    class _B:
+        def get(self, name):
+            return type("J", (), {"state": JobState.JOB_STATE_SUCCEEDED})()
+
+    class _C:
+        batches = _B()
+    monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: _C()))
+    assert BatchTranslator.poll("batches/x") == "JOB_STATE_SUCCEEDED"
 
 
 # ── Chốt kết quả batch: tái dùng judge/refine của harness với candidates có sẵn ──
@@ -170,13 +197,18 @@ def test_estimate_endpoint_returns_both_modes(client, db_session, tmp_path):
     os.remove(os.path.join(raw, f"{doc_id}.pdf"))
 
 
-def test_fetch_results_extracts_inlined(monkeypatch):
+def test_fetch_results_returns_texts_in_order(monkeypatch):
+    """inlined_responses → list text theo THỨ TỰ; response lỗi → '' (giữ vị trí)."""
     class _Resp:
         def __init__(self, t): self.text = t
     class _Item:
-        def __init__(self, k, t): self.key = k; self.response = _Resp(t)
+        def __init__(self, resp): self.response = resp
     class _Dest:
-        inlined_responses = [_Item("p0:v0", '{"translations":[{"id":"b0","text":"X"}]}')]
+        inlined_responses = [
+            _Item(_Resp('{"translations":[{"id":"b0","text":"X"}]}')),
+            _Item(None),                                  # lỗi → giữ '' đúng vị trí
+            _Item(_Resp("Y")),
+        ]
     class _Job:
         dest = _Dest()
     class _B:
@@ -185,4 +217,4 @@ def test_fetch_results_extracts_inlined(monkeypatch):
         batches = _B()
     monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: _C()))
     out = BatchTranslator.fetch_results("batches/x")
-    assert out == [{"key": "p0:v0", "text": '{"translations":[{"id":"b0","text":"X"}]}'}]
+    assert out == ['{"translations":[{"id":"b0","text":"X"}]}', "", "Y"]

@@ -453,10 +453,13 @@ def translate_batch_status(doc_id: str, job: str = Query(...),
     if os.path.exists(meta_path):
         with open(meta_path, encoding="utf-8") as f:
             lang = _json.load(f).get("lang", "vi")
-    raw = BatchTranslator.fetch_results(job)
-    parsed = BatchTranslator.parse_batch_results(raw)
     pages = _doc_pages_blocks(doc_id) or []
     context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
+    # keys tái tạo tất định từ cùng build → zip với text theo THỨ TỰ.
+    reqs = BatchTranslator.build_candidate_requests(pages, lang, context, [])
+    texts = BatchTranslator.fetch_results(job)
+    pairs = [{"key": r["key"], "text": t} for r, t in zip(reqs, texts)]
+    parsed = BatchTranslator.parse_batch_results(pairs)
     rows = BatchTranslator.finalize(pages, parsed, lang, context, [])
     for src, tr, sc in rows:
         TranslatorV2.tm_store(src, lang, tr, db, quality=sc / 100.0)
