@@ -183,11 +183,15 @@ class TranslationHarness:
 
     @staticmethod
     def harmonize_page(blocks, target_lang, context,
-                       glossary) -> Optional[Tuple[List[str], List[int]]]:
+                       glossary, candidates=None) -> Optional[Tuple[List[str], List[int]]]:
         """5 bước: candidates → rule-check → judge → refine → (results, scores).
-        Trả None khi KHÔNG sinh được ứng viên / lỗi bất ngờ (caller fallback "high")."""
+        Trả None khi KHÔNG sinh được ứng viên / lỗi bất ngờ (caller fallback "high").
+
+        `candidates` (tuỳ chọn): ứng viên dựng sẵn (vd từ Gemini Batch) → bỏ qua
+        bước sinh online, vẫn judge+refine online → giữ chất lượng max."""
         try:
-            candidates = TranslationHarness._generate_candidates(blocks, target_lang, context, glossary)
+            if candidates is None:
+                candidates = TranslationHarness._generate_candidates(blocks, target_lang, context, glossary)
             if not candidates:
                 return None
             n = len(candidates)

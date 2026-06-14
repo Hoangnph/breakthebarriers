@@ -360,6 +360,109 @@ def run_translate_flow_bg(doc_id: str, lang: str, quality: str, max_pages=None):
         db.close()
 
 
+# ── Dịch SỐ LƯỢNG LỚN qua Gemini Batch (tier max) + ước tính ETA cho khách ──
+
+def _doc_pages_blocks(doc_id: str):
+    """[[{'text':...}]] theo từng trang PDF (cùng segmentation mà Dịch render đọc)."""
+    import fitz
+    from backend.app.services.text_layer import build_blocks
+    from backend.app.services.faithful_html_renderer import block_source_text
+    from backend.app.services.translator_v2 import TranslatorV2
+    pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return None
+    fdoc = fitz.open(pdf_path)
+    pages = []
+    for i in range(len(fdoc)):
+        el = build_blocks(fdoc[i])
+        bh = [{"text": block_source_text(b)} for b in el.get("blocks", [])
+              if block_source_text(b) and not TranslatorV2.is_decoration(block_source_text(b))]
+        pages.append(bh)
+    fdoc.close()
+    return pages
+
+
+def _batch_job_path(job_name: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9_.-]", "_", job_name or "")
+    d = os.path.join(DATA_DIR, "batch_jobs")
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, f"{safe}.json")
+
+
+@router.get("/api/docs/{doc_id}/translate-estimate")
+def translate_estimate(doc_id: str, quality: str = Query("max"),
+                       db: Session = Depends(get_db)):
+    """Ước tính RÕ RÀNG thời gian chờ 2 chế độ (online vs batch) cho khách chọn."""
+    from backend.app.services.translation_batch import BatchTranslator
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    pdf_path = os.path.join(DATA_DIR, "raw_pdf", f"{doc_id}.pdf")
+    if os.path.exists(pdf_path):
+        import fitz
+        fdoc = fitz.open(pdf_path); n = len(fdoc); fdoc.close()
+    else:
+        n = doc.total_pages or 0
+    return BatchTranslator.estimate(n, quality)
+
+
+@router.post("/api/docs/{doc_id}/translate-batch")
+def translate_batch_submit(doc_id: str, lang: str = Query("vi"),
+                           quality: str = Query("max"),
+                           db: Session = Depends(get_db)):
+    """Nộp 1 Gemini Batch job (sinh ứng viên tier max, bất đồng bộ ~50% rẻ hơn).
+    Trả tên job + ETA. Khi xong, gọi translate-batch-status để chốt vào TM."""
+    from backend.app.services.translation_batch import BatchTranslator
+    doc = db.query(DBDocument).filter(DBDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    pages = _doc_pages_blocks(doc_id)
+    if pages is None:
+        raise HTTPException(status_code=404, detail="PDF not found")
+    context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
+    reqs = BatchTranslator.build_candidate_requests(pages, lang, context, [])
+    try:
+        job_name = BatchTranslator.submit(reqs)
+    except Exception as e:
+        logger.error(f"batch submit failed {doc_id}: {e}")
+        raise HTTPException(status_code=502, detail=f"batch_submit_failed: {e}")
+    import json as _json
+    with open(_batch_job_path(job_name), "w", encoding="utf-8") as f:
+        _json.dump({"doc_id": doc_id, "lang": lang, "quality": quality}, f)
+    est = BatchTranslator.estimate(len([p for p in pages if p]), quality)
+    return JSONResponse(status_code=202, content={
+        "status": "submitted", "job": job_name, "doc_id": doc_id,
+        "eta": est["batch"]["eta_text"], "cost_note": est["batch"]["cost_note"]})
+
+
+@router.get("/api/docs/{doc_id}/translate-batch-status")
+def translate_batch_status(doc_id: str, job: str = Query(...),
+                           db: Session = Depends(get_db)):
+    """Tra trạng thái job. Khi SUCCEEDED → tải kết quả, judge+refine online, lưu TM."""
+    from backend.app.services.translation_batch import BatchTranslator
+    from backend.app.services.translator_v2 import TranslatorV2
+    import json as _json
+    try:
+        state = BatchTranslator.poll(job)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"poll_failed: {e}")
+    if state != "JOB_STATE_SUCCEEDED":
+        return {"status": "pending", "state": state, "job": job}
+    meta_path = _batch_job_path(job)
+    lang = "vi"
+    if os.path.exists(meta_path):
+        with open(meta_path, encoding="utf-8") as f:
+            lang = _json.load(f).get("lang", "vi")
+    raw = BatchTranslator.fetch_results(job)
+    parsed = BatchTranslator.parse_batch_results(raw)
+    pages = _doc_pages_blocks(doc_id) or []
+    context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
+    rows = BatchTranslator.finalize(pages, parsed, lang, context, [])
+    for src, tr, sc in rows:
+        TranslatorV2.tm_store(src, lang, tr, db, quality=sc / 100.0)
+    return {"status": "done", "job": job, "translated_blocks": len(rows)}
+
+
 @router.post("/api/docs/{doc_id}/translate-flow")
 def translate_flow(doc_id: str,
                    lang: str = Query("vi"),
