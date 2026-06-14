@@ -422,6 +422,41 @@ def test_translated_design_block_room_stops_at_next_block_no_overlap():
     assert "height:130.000cqw" not in html
 
 
+def test_split_toc_entries():
+    """Tách block TOC gộp nhiều mục 'tiêu đề … số' → list (title, num)."""
+    from backend.app.services.faithful_html_renderer import _split_toc_entries
+    txt = "LỜI NÓI ĐẦU.........3 GIỚI THIỆU......4 Thuật toán : Bộ não của AI\t 8"
+    out = _split_toc_entries(txt)
+    assert [n for _, n in out] == ["3", "4", "8"]
+    assert out[0][0] == "LỜI NÓI ĐẦU"
+    assert out[2][0] == "Thuật toán : Bộ não của AI"
+    # văn xuôi bình thường (không leader chấm/tab) → KHÔNG nhận nhầm là TOC
+    assert _split_toc_entries("Câu này kết thúc bằng số 5") == []
+
+
+def test_toc_block_renders_dotted_leader_rows():
+    """Block dịch chứa nhiều mục TOC → mỗi mục 1 hàng: tiêu đề + dotted leader +
+    số trang canh phải (class te/tt/tl/tn), KHÔNG còn 1 đoạn dính số lộn xộn."""
+    blk = {"bbox": [50, 100, 500, 30], "lines": [{"bbox": [50, 100, 500, 30], "spans": [{
+        "text": "FOREWORD", "size": 10.0, "color": "#003", "font": "Arial",
+        "bold": False, "italic": False}]}]}
+    t = {"page_w": 600, "page_h": 800, "images": [], "drawings": [], "bg": None,
+         "sections": [{"kind": "full", "role": "", "bbox": [50, 100, 500, 30],
+                       "blocks": [blk]}]}
+    lang_map = {"FOREWORD": "LỜI NÓI ĐẦU.........3 GIỚI THIỆU......4 Thuật toán\t 8"}
+    html = render_analyzed_page(t, lang_map=lang_map)
+    assert 'class="tb toc"' in html
+    assert html.count('class="te"') == 3        # 3 hàng mục
+    assert 'class="tl"' in html                  # dotted leader
+    assert 'class="tn">3<' in html and 'class="tn">8<' in html  # số canh phải
+    assert "LỜI NÓI ĐẦU" in html
+
+
+def test_toc_leader_css_present():
+    from backend.app.services.faithful_html_renderer import _FLOW_CSS
+    assert ".tb.toc" in _FLOW_CSS and "dotted" in _FLOW_CSS
+
+
 def test_fit_script_is_layout_stable_and_guarded():
     """fitTB không được co chữ khi layout/cqw chưa ổn định (clientHeight tí xíu)
     → phải có guard ngưỡng clientHeight; và phải lên lịch chạy lại sau khi layout

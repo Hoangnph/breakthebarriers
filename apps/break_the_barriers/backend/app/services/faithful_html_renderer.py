@@ -3,6 +3,7 @@ Trang = container co giãn (aspect-ratio + container-type:inline-size); block đ
 theo %; cỡ chữ theo cqw (tương ứng bề rộng trang) → không còn absolute px cứng.
 Mỗi đoạn = block, mỗi dòng giữ style span thật (font/màu/đậm-nghiêng); ảnh = <img> %."""
 import html as html_lib
+import re
 from typing import Dict, Any, List, Optional
 
 _FLOW_CSS = """
@@ -16,9 +17,36 @@ body{margin:0;background:#8a8d91}
 .pf .ln{position:absolute;white-space:nowrap;line-height:1.04;transform-origin:0 0}
 .pf .ln span{white-space:pre}
 .pf .tb{position:absolute;white-space:normal;overflow:hidden}
+.pf .tb.toc{white-space:normal}
+.pf .tb.toc .te{display:flex;align-items:baseline;gap:.35em;line-height:1.7}
+.pf .tb.toc .tt{flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .tb.toc .tl{flex:1 1 auto;min-width:1.2em;border-bottom:1px dotted currentColor;
+    position:relative;top:-.28em}
+.pf .tb.toc .tn{flex:0 0 auto;font-variant-numeric:tabular-nums}
 .pf img{position:absolute;display:block}
 .pf .vec{position:absolute;inset:0;width:100%;height:100%}
 """
+
+
+# Mục lục: block dịch hay gộp NHIỀU mục "tiêu đề … số trang" (leader = chấm/tab)
+# vào một khối → tách lại từng mục để render hàng có dotted-leader + số canh phải.
+_TOC_ENTRY = re.compile(r'(.+?)\s*(?:\.{2,}|…+|\t+)\s*(\d{1,3})(?=\s|$)')
+
+
+def _split_toc_entries(txt: str):
+    """[(title, num)] nếu `txt` là chuỗi mục lục (mỗi mục = tiêu đề + leader
+    chấm/tab + số). Văn xuôi thường (không leader) → [] (không nhận nhầm)."""
+    out = []
+    pos, covered = 0, 0
+    for m in _TOC_ENTRY.finditer(txt):
+        title = m.group(1).strip()
+        if title:
+            out.append((title, m.group(2)))
+            covered += m.end() - m.start()
+    # cần phủ phần lớn text → tránh nhận nhầm 1 câu kết bằng số
+    if out and covered >= 0.6 * len(txt.strip()):
+        return out
+    return []
 
 
 def _vector_svg(drawings: List[Dict[str, Any]], w: float, h: float) -> str:
@@ -193,6 +221,16 @@ def _render_block_translated(blk: Dict[str, Any], px: float, py: float, pw: floa
         style += ";font-weight:bold"
     if s0.get("italic"):
         style += ";font-style:italic"
+    # Mục lục: block gộp nhiều mục → tách thành hàng (tiêu đề + dotted leader + số
+    # canh phải) cho chuẩn xuất bản, thay vì 1 đoạn dính số lộn xộn.
+    entries = _split_toc_entries(txt)
+    if entries:
+        rows = "".join(
+            f'<div class="te"><span class="tt">{_esc(t)}</span>'
+            f'<span class="tl"></span><span class="tn">{_esc(n)}</span></div>'
+            for t, n in entries)
+        return (f'<div class="tb toc" data-fs="{fs:.3f}cqw" style="{style}">'
+                f'{rows}</div>')
     # data-fs = cỡ gốc (cqw). fitTB reset font về ĐÂY (KHÔNG xóa inline → inherit
     # 16px). Cỡ chữ vốn nằm inline (không có rule CSS) nên reset='' = mất cỡ.
     return f'<div class="tb" data-fs="{fs:.3f}cqw" style="{style}">{_esc(txt)}</div>'
