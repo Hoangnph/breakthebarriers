@@ -407,56 +407,70 @@ def _save_job_meta(job: str, meta: dict):
         _json.dump(meta, f)
 
 
-def _finalize_batch_into_tm(doc_id: str, job: str, db) -> dict:
-    """Tải kết quả batch → judge+refine online → lưu TM. IDEMPOTENT: nếu đã 'done'
-    thì BỎ QUA (tránh chốt lại = gọi judge/refine lần nữa, tốn phí)."""
+def _batch_overall_state(meta: dict) -> str:
+    """Tổng trạng thái các job (group theo model) trong meta."""
+    from backend.app.services.translation_batch import BatchTranslator
+    jobs = meta.get("jobs", [])
+    states = []
+    for jm in jobs:
+        try:
+            states.append(BatchTranslator.poll(jm["job"]))
+        except Exception as e:
+            logger.warning(f"batch poll {jm.get('job')} error: {e}")
+            states.append("JOB_STATE_PENDING")
+    return BatchTranslator.aggregate_state(states)
+
+
+def _finalize_batch_into_tm(group_id: str, db) -> dict:
+    """Tải kết quả TẤT CẢ job (group theo model) → judge+refine online → lưu TM.
+    IDEMPOTENT: đã 'done' → BỎ QUA (tránh chốt lại = judge/refine lần nữa, tốn phí)."""
     from backend.app.services.translation_batch import BatchTranslator
     from backend.app.services.translator_v2 import TranslatorV2
-    meta = _load_job_meta(job)
+    meta = _load_job_meta(group_id)
     if meta.get("status") == "done":
         return {"status": "done", "translated_blocks": meta.get("translated_blocks", 0),
                 "skipped": True}
+    doc_id = meta.get("doc_id")
     lang = meta.get("lang", "vi")
     pages = _doc_pages_blocks(doc_id) or []
     context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
-    # keys tái tạo tất định từ cùng build → zip với text theo THỨ TỰ.
-    reqs = BatchTranslator.build_candidate_requests(pages, lang, context, [])
-    texts = BatchTranslator.fetch_results(job)
-    pairs = [{"key": r["key"], "text": t} for r, t in zip(reqs, texts)]
+    # mỗi job giữ keys theo thứ tự → fetch text rồi zip với keys của job đó.
+    pairs = []
+    for jm in meta.get("jobs", []):
+        texts = BatchTranslator.fetch_results(jm["job"])
+        for k, t in zip(jm.get("keys", []), texts):
+            pairs.append({"key": k, "text": t})
     parsed = BatchTranslator.parse_batch_results(pairs)
     rows = BatchTranslator.finalize(pages, parsed, lang, context, [])
     for src, tr, sc in rows:
         TranslatorV2.tm_store(src, lang, tr, db, quality=sc / 100.0)
     meta.update({"status": "done", "translated_blocks": len(rows)})
-    _save_job_meta(job, meta)
-    return {"status": "done", "job": job, "translated_blocks": len(rows)}
+    _save_job_meta(group_id, meta)
+    return {"status": "done", "group": group_id, "translated_blocks": len(rows)}
 
 
-def run_batch_poll_bg(doc_id: str, job: str, interval: int = 60,
+def run_batch_poll_bg(group_id: str, interval: int = 60,
                       max_seconds: int = 24 * 3600):
-    """Nền: poll job định kỳ; khi SUCCEEDED → tự chốt vào TM (khách khỏi bấm tay).
-    Dừng khi thành công / lỗi / quá hạn. Mất khi server restart → status endpoint
-    vẫn là fallback thủ công."""
-    from backend.app.services.translation_batch import BatchTranslator
+    """Nền: poll TẤT CẢ job định kỳ; khi tất cả SUCCEEDED → tự chốt vào TM (khách
+    khỏi bấm tay). Dừng khi xong / lỗi / quá hạn. Mất khi server restart → status
+    endpoint vẫn là fallback thủ công."""
     db = get_background_db()
     try:
         waited = 0
         while waited <= max_seconds:
-            try:
-                state = BatchTranslator.poll(job)
-            except Exception as e:
-                logger.warning(f"batch poll {job} error: {e}")
-                state = "JOB_STATE_PENDING"
+            meta = _load_job_meta(group_id)
+            if meta.get("status") == "done":
+                return
+            state = _batch_overall_state(meta)
             if state in ("JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"):
                 try:
-                    _finalize_batch_into_tm(doc_id, job, db)
+                    _finalize_batch_into_tm(group_id, db)
                 except Exception as e:
-                    logger.error(f"batch finalize {job} failed: {e}")
+                    logger.error(f"batch finalize {group_id} failed: {e}")
                 return
             if state in ("JOB_STATE_FAILED", "JOB_STATE_EXPIRED", "JOB_STATE_CANCELLED"):
-                meta = _load_job_meta(job)
                 meta["status"] = state.lower()
-                _save_job_meta(job, meta)
+                _save_job_meta(group_id, meta)
                 return
             time.sleep(interval)
             waited += interval
@@ -498,37 +512,40 @@ def translate_batch_submit(doc_id: str, lang: str = Query("vi"),
     context = {"domain": "general", "title": doc_id, "author": None, "style": "formal"}
     reqs = BatchTranslator.build_candidate_requests(pages, lang, context, [])
     try:
-        job_name = BatchTranslator.submit(reqs)
+        jobs = BatchTranslator.submit(reqs)        # [{job, model, keys}] (1/model)
     except Exception as e:
         logger.error(f"batch submit failed {doc_id}: {e}")
         raise HTTPException(status_code=502, detail=f"batch_submit_failed: {e}")
-    _save_job_meta(job_name, {"doc_id": doc_id, "lang": lang, "quality": quality,
-                              "status": "submitted"})
-    if background_tasks is not None:           # auto-poll: tự chốt khi xong
-        background_tasks.add_task(run_batch_poll_bg, doc_id, job_name)
+    group_id = jobs[0]["job"] if jobs else f"group-{doc_id}"
+    _save_job_meta(group_id, {"doc_id": doc_id, "lang": lang, "quality": quality,
+                              "status": "submitted", "jobs": jobs})
+    if background_tasks is not None:               # auto-poll: tự chốt khi xong
+        background_tasks.add_task(run_batch_poll_bg, group_id)
     est = BatchTranslator.estimate(len([p for p in pages if p]), quality)
     return JSONResponse(status_code=202, content={
-        "status": "submitted", "job": job_name, "doc_id": doc_id,
+        "status": "submitted", "job": group_id, "doc_id": doc_id,
+        "n_jobs": len(jobs),
         "eta": est["batch"]["eta_text"], "cost_note": est["batch"]["cost_note"]})
 
 
 @router.get("/api/docs/{doc_id}/translate-batch-status")
 def translate_batch_status(doc_id: str, job: str = Query(...),
                            db: Session = Depends(get_db)):
-    """Tra trạng thái job. Đã chốt (auto-poll) → trả done ngay; nếu SUCCEEDED mà
-    chưa chốt → chốt (idempotent). Là fallback thủ công cho auto-poll."""
-    from backend.app.services.translation_batch import BatchTranslator
+    """Tra trạng thái group (nhiều job). Đã chốt (auto-poll) → done ngay; tất cả
+    SUCCEEDED mà chưa chốt → chốt (idempotent). Fallback thủ công cho auto-poll."""
     meta = _load_job_meta(job)
     if meta.get("status") == "done":
         return {"status": "done", "job": job,
                 "translated_blocks": meta.get("translated_blocks", 0)}
+    if not meta.get("jobs"):
+        raise HTTPException(status_code=404, detail="batch group not found")
     try:
-        state = BatchTranslator.poll(job)
+        state = _batch_overall_state(meta)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"poll_failed: {e}")
     if state not in ("JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"):
         return {"status": "pending", "state": state, "job": job}
-    return _finalize_batch_into_tm(doc_id, job, db)
+    return _finalize_batch_into_tm(job, db)
 
 
 @router.post("/api/docs/{doc_id}/translate-flow")

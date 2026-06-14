@@ -95,24 +95,54 @@ class _FakeClient:
         self.batches = _FakeBatches()
 
 
-def test_submit_returns_job_name_and_builds_inlined(monkeypatch):
-    fake = _FakeClient()
+class _SeqBatches:
+    """create() trả job tên tăng dần để phân biệt nhiều job (group theo model)."""
+    def __init__(self):
+        self.calls = []
+        self.n = 0
+
+    def create(self, **kw):
+        self.calls.append(kw)
+        self.n += 1
+        return type("J", (), {"name": f"batches/job{self.n}"})()
+
+
+class _SeqClient:
+    def __init__(self):
+        self.batches = _SeqBatches()
+
+
+def test_submit_groups_by_model_one_job_per_model(monkeypatch):
+    """Gemini Batch BẮT BUỘC 1 model/job → group theo model: flash-lite (v0) và
+    flash (v1,v2) thành 2 job; mỗi job giữ keys theo thứ tự để map kết quả."""
+    fake = _SeqClient()
     monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: fake))
-    reqs = [{"key": "p0:v0", "model": "gemini-3.1-flash-lite", "temperature": 0.2,
-             "prompt": "x"},
-            {"key": "p0:v1", "model": "gemini-3.5-flash", "temperature": 0.4,
-             "prompt": "y"}]
-    job = BatchTranslator.submit(reqs)
-    assert job == "batches/abc123"
-    kw = fake.batches.created
-    assert kw["model"] == "gemini-3.1-flash-lite"          # model top-level (bắt buộc)
-    src = kw["src"]
-    assert len(src) == 2
-    # mỗi request mang model RIÊNG (trộn flash-lite/flash trong 1 job) + key ở metadata
-    assert src[0]["model"] == "gemini-3.1-flash-lite"
-    assert src[1]["model"] == "gemini-3.5-flash"
-    assert src[0]["metadata"]["key"] == "p0:v0"
-    assert src[0]["config"]["response_mime_type"] == "application/json"
+    reqs = [
+        {"key": "p0:v0", "model": "gemini-3.1-flash-lite", "temperature": 0.2, "prompt": "a"},
+        {"key": "p0:v1", "model": "gemini-3.5-flash", "temperature": 0.4, "prompt": "b"},
+        {"key": "p0:v2", "model": "gemini-3.5-flash", "temperature": 0.7, "prompt": "c"},
+    ]
+    jobs = BatchTranslator.submit(reqs)
+    assert len(jobs) == 2                               # 2 model → 2 job
+    by_model = {c["model"]: c for c in fake.batches.calls}
+    # mỗi job CHỈ chứa request đúng model của nó
+    assert all(r["model"] == "gemini-3.1-flash-lite"
+               for r in by_model["gemini-3.1-flash-lite"]["src"])
+    assert len(by_model["gemini-3.5-flash"]["src"]) == 2
+    # keys lưu theo job để map text→key
+    lite_job = next(j for j in jobs if j["model"] == "gemini-3.1-flash-lite")
+    assert lite_job["keys"] == ["p0:v0"]
+    flash_job = next(j for j in jobs if j["model"] == "gemini-3.5-flash")
+    assert flash_job["keys"] == ["p0:v1", "p0:v2"]
+
+
+def test_aggregate_state_all_succeeded_else_pending(monkeypatch):
+    agg = BatchTranslator.aggregate_state
+    assert agg(["JOB_STATE_SUCCEEDED", "JOB_STATE_SUCCEEDED"]) == "JOB_STATE_SUCCEEDED"
+    assert agg(["JOB_STATE_SUCCEEDED", "JOB_STATE_RUNNING"]) == "JOB_STATE_RUNNING"
+    # bất kỳ job lỗi → tổng = lỗi
+    assert agg(["JOB_STATE_SUCCEEDED", "JOB_STATE_FAILED"]) == "JOB_STATE_FAILED"
+    assert agg(["JOB_STATE_EXPIRED", "JOB_STATE_SUCCEEDED"]) == "JOB_STATE_EXPIRED"
 
 
 def test_poll_returns_state(monkeypatch):
@@ -236,54 +266,69 @@ def test_finalize_into_tm_is_idempotent(client, db_session, monkeypatch, tmp_pat
     _make_pdf(os.path.join(raw, f"{doc_id}.pdf"), pages=1)
     db_session.add(DBDocument(id=doc_id, filename="b.pdf", total_pages=1, status="extracted"))
     db_session.commit()
-    job = "batches/fin1"
-    with open(docs._batch_job_path(job), "w") as f:
-        json.dump({"doc_id": doc_id, "lang": "vi", "quality": "max"}, f)
+    group = "batches/jobA"
+    # group gồm 2 job (group theo model): lite (v0) + flash (v1,v2)
+    with open(docs._batch_job_path(group), "w") as f:
+        json.dump({"doc_id": doc_id, "lang": "vi", "quality": "max", "status": "submitted",
+                   "jobs": [{"job": "batches/jobA", "model": "gemini-3.1-flash-lite",
+                             "keys": ["p0:v0"]},
+                            {"job": "batches/jobB", "model": "gemini-3.5-flash",
+                             "keys": ["p0:v1", "p0:v2"]}]}, f)
 
-    # mock: judge chọn ứng viên 0; fetch trả ứng viên cho mỗi (trang×variant)
     monkeypatch.setattr(TranslationHarness, "_judge",
                         lambda b, c, lang, ctx: [{"best_idx": 0, "score": 95, "critique": "ok"} for _ in b])
     calls = {"fetch": 0}
     def fake_fetch(jn):
         calls["fetch"] += 1
-        # 1 trang × 3 variant; mỗi variant 1 block
-        return ['{"translations":[{"id":"b0","text":"NỘI DUNG TRANG"}]}'] * 3
+        return ['{"translations":[{"id":"b0","text":"NỘI DUNG TRANG"}]}']  # mỗi job 1 key→1 text
     monkeypatch.setattr(BatchTranslator, "fetch_results", staticmethod(fake_fetch))
 
-    r1 = docs._finalize_batch_into_tm(doc_id, job, db_session)
+    r1 = docs._finalize_batch_into_tm(group, db_session)
     assert r1["status"] == "done" and r1["translated_blocks"] >= 1
-    r2 = docs._finalize_batch_into_tm(doc_id, job, db_session)
+    r2 = docs._finalize_batch_into_tm(group, db_session)
     assert r2.get("skipped") is True          # lần 2 bỏ qua
-    assert calls["fetch"] == 1                 # KHÔNG fetch/chốt lại
+    assert calls["fetch"] == 2                 # 2 job fetch ở lần 1; lần 2 KHÔNG fetch lại
     os.remove(os.path.join(raw, f"{doc_id}.pdf"))
 
 
+def _write_group_meta(docs, group, jobs_states):
+    """Ghi sidecar group với danh sách job (chưa done)."""
+    import json
+    jobs = [{"job": f"batches/j{i}", "model": "m", "keys": ["p0:v0"]}
+            for i in range(len(jobs_states))]
+    with open(docs._batch_job_path(group), "w") as f:
+        json.dump({"doc_id": "d1", "lang": "vi", "status": "submitted", "jobs": jobs}, f)
+
+
 def test_run_batch_poll_bg_finalizes_on_success(monkeypatch):
-    """Poller: poll tới khi SUCCEEDED → gọi finalize đúng 1 lần rồi dừng."""
+    """Poller: poll tới khi TẤT CẢ job SUCCEEDED → finalize đúng 1 lần rồi dừng."""
     from backend.app.routers import documents as docs
     from backend.app.services.translation_batch import BatchTranslator
-
+    group = "batches/grpOK"
+    _write_group_meta(docs, group, ["x"])      # 1 job trong group
     states = iter(["JOB_STATE_PENDING", "JOB_STATE_RUNNING", "JOB_STATE_SUCCEEDED"])
     monkeypatch.setattr(BatchTranslator, "poll", staticmethod(lambda j: next(states)))
     monkeypatch.setattr(docs.time, "sleep", lambda s: None)
     monkeypatch.setattr(docs, "get_background_db", lambda: _DummyDB())
     fin = {"n": 0}
     monkeypatch.setattr(docs, "_finalize_batch_into_tm",
-                        lambda doc_id, job, db: fin.__setitem__("n", fin["n"] + 1) or {"status": "done"})
-    docs.run_batch_poll_bg("d1", "batches/x", interval=0, max_seconds=100)
+                        lambda group_id, db: fin.__setitem__("n", fin["n"] + 1) or {"status": "done"})
+    docs.run_batch_poll_bg(group, interval=0, max_seconds=100)
     assert fin["n"] == 1
 
 
 def test_run_batch_poll_bg_stops_on_failure(monkeypatch):
     from backend.app.routers import documents as docs
     from backend.app.services.translation_batch import BatchTranslator
+    group = "batches/grpFail"
+    _write_group_meta(docs, group, ["x"])
     monkeypatch.setattr(BatchTranslator, "poll", staticmethod(lambda j: "JOB_STATE_FAILED"))
     monkeypatch.setattr(docs.time, "sleep", lambda s: None)
     monkeypatch.setattr(docs, "get_background_db", lambda: _DummyDB())
     fin = {"n": 0}
     monkeypatch.setattr(docs, "_finalize_batch_into_tm",
                         lambda *a: fin.__setitem__("n", fin["n"] + 1))
-    docs.run_batch_poll_bg("d1", "batches/x", interval=0, max_seconds=100)
+    docs.run_batch_poll_bg(group, interval=0, max_seconds=100)
     assert fin["n"] == 0                        # job lỗi → KHÔNG chốt
 
 

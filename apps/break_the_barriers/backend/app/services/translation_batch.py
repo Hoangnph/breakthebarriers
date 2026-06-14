@@ -128,21 +128,41 @@ class BatchTranslator:
         return genai.Client(api_key=api_key)
 
     @staticmethod
-    def submit(requests: List[dict]) -> Optional[str]:
-        """Nộp 1 batch job. `src` = list InlinedRequestDict (mỗi request mang model
-        riêng → trộn được flash-lite/flash trong 1 job). key gắn vào metadata; kết
-        quả map lại theo THỨ TỰ (build tất định). → tên job."""
+    def submit(requests: List[dict]) -> List[dict]:
+        """Nộp batch. Gemini Batch BẮT BUỘC 1 model/job (không trộn model) → group
+        theo model, mỗi nhóm 1 job. Trả [{job, model, keys}] (keys theo thứ tự để
+        map text→key khi chốt)."""
+        from collections import OrderedDict
         client = BatchTranslator._client()
-        inlined = [{
-            "model": r["model"],
-            "contents": [{"role": "user", "parts": [{"text": r["prompt"]}]}],
-            "config": {"response_mime_type": "application/json",
-                       "temperature": r["temperature"]},
-            "metadata": {"key": r["key"]},
-        } for r in requests]
-        # model top-level (bắt buộc) = model request đầu; mỗi request tự override.
-        job = client.batches.create(model=requests[0]["model"], src=inlined)
-        return getattr(job, "name", None)
+        groups: "OrderedDict[str, List[dict]]" = OrderedDict()
+        for r in requests:
+            groups.setdefault(r["model"], []).append(r)
+        out: List[dict] = []
+        for model, reqs in groups.items():
+            inlined = [{
+                "model": model,
+                "contents": [{"role": "user", "parts": [{"text": r["prompt"]}]}],
+                "config": {"response_mime_type": "application/json",
+                           "temperature": r["temperature"]},
+                "metadata": {"key": r["key"]},
+            } for r in reqs]
+            job = client.batches.create(model=model, src=inlined)
+            out.append({"job": getattr(job, "name", None), "model": model,
+                        "keys": [r["key"] for r in reqs]})
+        return out
+
+    @staticmethod
+    def aggregate_state(states: List[str]) -> str:
+        """Tổng trạng thái nhiều job: lỗi nếu BẤT KỲ job lỗi; SUCCEEDED nếu TẤT CẢ
+        thành công; còn lại → RUNNING (đang chờ)."""
+        terminal_fail = ("JOB_STATE_FAILED", "JOB_STATE_EXPIRED", "JOB_STATE_CANCELLED")
+        for s in states:
+            if s in terminal_fail:
+                return s
+        ok = ("JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED")
+        if states and all(s in ok for s in states):
+            return "JOB_STATE_SUCCEEDED"
+        return "JOB_STATE_RUNNING"
 
     @staticmethod
     def poll(job_name: str) -> str:
