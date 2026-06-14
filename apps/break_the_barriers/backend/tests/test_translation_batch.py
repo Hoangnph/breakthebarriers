@@ -218,3 +218,74 @@ def test_fetch_results_returns_texts_in_order(monkeypatch):
     monkeypatch.setattr(BatchTranslator, "_client", staticmethod(lambda: _C()))
     out = BatchTranslator.fetch_results("batches/x")
     assert out == ['{"translations":[{"id":"b0","text":"X"}]}', "", "Y"]
+
+
+# ── Auto-poll nền + chốt idempotent (tránh judge/refine 2 lần = tốn phí) ──
+
+def test_finalize_into_tm_is_idempotent(client, db_session, monkeypatch, tmp_path):
+    """Chốt lần 1 → lưu TM + đánh dấu done; lần 2 → BỎ QUA (không chốt lại)."""
+    import os, json
+    from backend.app.models_db import DBDocument
+    from backend.app.core import DATA_DIR
+    from backend.app.routers import documents as docs
+    from backend.app.services.translation_batch import BatchTranslator
+    from backend.app.services.translation_harness import TranslationHarness
+
+    doc_id = "batchfin"
+    raw = os.path.join(DATA_DIR, "raw_pdf"); os.makedirs(raw, exist_ok=True)
+    _make_pdf(os.path.join(raw, f"{doc_id}.pdf"), pages=1)
+    db_session.add(DBDocument(id=doc_id, filename="b.pdf", total_pages=1, status="extracted"))
+    db_session.commit()
+    job = "batches/fin1"
+    with open(docs._batch_job_path(job), "w") as f:
+        json.dump({"doc_id": doc_id, "lang": "vi", "quality": "max"}, f)
+
+    # mock: judge chọn ứng viên 0; fetch trả ứng viên cho mỗi (trang×variant)
+    monkeypatch.setattr(TranslationHarness, "_judge",
+                        lambda b, c, lang, ctx: [{"best_idx": 0, "score": 95, "critique": "ok"} for _ in b])
+    calls = {"fetch": 0}
+    def fake_fetch(jn):
+        calls["fetch"] += 1
+        # 1 trang × 3 variant; mỗi variant 1 block
+        return ['{"translations":[{"id":"b0","text":"NỘI DUNG TRANG"}]}'] * 3
+    monkeypatch.setattr(BatchTranslator, "fetch_results", staticmethod(fake_fetch))
+
+    r1 = docs._finalize_batch_into_tm(doc_id, job, db_session)
+    assert r1["status"] == "done" and r1["translated_blocks"] >= 1
+    r2 = docs._finalize_batch_into_tm(doc_id, job, db_session)
+    assert r2.get("skipped") is True          # lần 2 bỏ qua
+    assert calls["fetch"] == 1                 # KHÔNG fetch/chốt lại
+    os.remove(os.path.join(raw, f"{doc_id}.pdf"))
+
+
+def test_run_batch_poll_bg_finalizes_on_success(monkeypatch):
+    """Poller: poll tới khi SUCCEEDED → gọi finalize đúng 1 lần rồi dừng."""
+    from backend.app.routers import documents as docs
+    from backend.app.services.translation_batch import BatchTranslator
+
+    states = iter(["JOB_STATE_PENDING", "JOB_STATE_RUNNING", "JOB_STATE_SUCCEEDED"])
+    monkeypatch.setattr(BatchTranslator, "poll", staticmethod(lambda j: next(states)))
+    monkeypatch.setattr(docs.time, "sleep", lambda s: None)
+    monkeypatch.setattr(docs, "get_background_db", lambda: _DummyDB())
+    fin = {"n": 0}
+    monkeypatch.setattr(docs, "_finalize_batch_into_tm",
+                        lambda doc_id, job, db: fin.__setitem__("n", fin["n"] + 1) or {"status": "done"})
+    docs.run_batch_poll_bg("d1", "batches/x", interval=0, max_seconds=100)
+    assert fin["n"] == 1
+
+
+def test_run_batch_poll_bg_stops_on_failure(monkeypatch):
+    from backend.app.routers import documents as docs
+    from backend.app.services.translation_batch import BatchTranslator
+    monkeypatch.setattr(BatchTranslator, "poll", staticmethod(lambda j: "JOB_STATE_FAILED"))
+    monkeypatch.setattr(docs.time, "sleep", lambda s: None)
+    monkeypatch.setattr(docs, "get_background_db", lambda: _DummyDB())
+    fin = {"n": 0}
+    monkeypatch.setattr(docs, "_finalize_batch_into_tm",
+                        lambda *a: fin.__setitem__("n", fin["n"] + 1))
+    docs.run_batch_poll_bg("d1", "batches/x", interval=0, max_seconds=100)
+    assert fin["n"] == 0                        # job lỗi → KHÔNG chốt
+
+
+class _DummyDB:
+    def close(self): pass

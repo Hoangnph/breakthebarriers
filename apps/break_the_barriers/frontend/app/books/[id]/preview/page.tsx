@@ -63,14 +63,33 @@ export default function PreviewPage() {
     setShowModeModal(false)
     setTransStatus("running")
     try {
-      // Số lượng lớn: nộp Gemini Batch (bất đồng bộ, rẻ ~50%). Trả job + ETA.
+      // Số lượng lớn: nộp Gemini Batch (bất đồng bộ, rẻ ~50%). Backend auto-poll
+      // tự chốt vào TM khi xong; frontend cũng poll để tự refresh view khi done.
       const r = await fetchAPI<{ job: string; eta: string }>(
         `/api/docs/${id}/translate-batch?lang=vi&quality=max`, { method: "POST" })
       setBatchInfo({ job: r.job, eta: r.eta })
       setTransStatus("done")
+      pollBatch(r.job)
     } catch {
       setTransStatus("error")
     }
+  }
+
+  function pollBatch(job: string) {
+    // poll mỗi 60s tới khi backend báo done → tự refresh bản Dịch (khỏi bấm tay).
+    const timer = setInterval(async () => {
+      try {
+        const s = await fetchAPI<{ status: string; translated_blocks?: number }>(
+          `/api/docs/${id}/translate-batch-status?job=${encodeURIComponent(job)}`)
+        if (s.status === "done") {
+          clearInterval(timer)
+          setBatchInfo(null)
+          setReloadKey((k) => k + 1)   // tự nạp lại bản dịch mới
+        }
+      } catch {
+        /* tiếp tục poll ở lần sau */
+      }
+    }, 60000)
   }
 
   useEffect(() => {
@@ -178,7 +197,7 @@ export default function PreviewPage() {
       {batchInfo && (
         <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
           <span className="font-semibold">Đã nộp dịch số lượng lớn (Batch).</span>
-          <span>Bản dịch sẽ sẵn sàng sau {batchInfo.eta} Bấm “Làm mới” để xem khi xong.</span>
+          <span>Bản dịch sẽ sẵn sàng sau {batchInfo.eta} Hệ thống tự cập nhật khi xong — bạn không cần làm gì.</span>
           <span className="text-amber-500 font-mono truncate">{batchInfo.job}</span>
         </div>
       )}
